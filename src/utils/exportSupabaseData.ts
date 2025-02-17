@@ -2,6 +2,22 @@
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
+// Definindo o tipo para as tabelas do Supabase
+type SupabaseTables = 
+  | "events"
+  | "batches"
+  | "tickets"
+  | "payment_preferences"
+  | "user_profiles"
+  | "user_roles"
+  | "loyalty_points_history"
+  | "rewards"
+  | "reward_redemptions"
+  | "referrals"
+  | "referral_uses"
+  | "saved_cards"
+  | "ticket_participants";
+
 // Função auxiliar para formatar os valores para SQL
 const formatValue = (value: any): string => {
   if (value === null) return 'NULL';
@@ -27,7 +43,7 @@ VALUES\n${values};
 };
 
 export const exportSupabaseData = async () => {
-  const tables = [
+  const tables: SupabaseTables[] = [
     'events',
     'batches',
     'tickets',

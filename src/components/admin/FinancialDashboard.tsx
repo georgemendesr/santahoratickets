@@ -20,7 +20,6 @@ export function FinancialDashboard() {
         .limit(10);
 
       if (error) throw error;
-      console.log("Financial metrics:", events);
       return events;
     },
   });
@@ -36,7 +35,7 @@ export function FinancialDashboard() {
 
       if (error) throw error;
 
-      const metrics = data.reduce((acc: any, curr) => {
+      const metrics = data.reduce((acc: Record<string, number>, curr) => {
         const type = curr.payment_type || "outros";
         acc[type] = (acc[type] || 0) + 1;
         return acc;
@@ -44,7 +43,7 @@ export function FinancialDashboard() {
 
       return Object.entries(metrics).map(([name, value]) => ({
         name,
-        value,
+        value: value as number,
       }));
     },
   });
@@ -64,15 +63,15 @@ export function FinancialDashboard() {
 
       if (error) throw error;
 
-      const salesByDay = data.reduce((acc: any, curr) => {
+      const salesByDay = data.reduce((acc: Record<string, number>, curr) => {
         const date = format(new Date(curr.created_at), "dd/MM", { locale: ptBR });
-        acc[date] = (acc[date] || 0) + Number(curr.total_amount);
+        acc[date] = (acc[date] || 0) + Number(curr.total_amount || 0);
         return acc;
       }, {});
 
       return Object.entries(salesByDay).map(([date, amount]) => ({
         date,
-        amount,
+        amount: amount as number,
       }));
     },
   });

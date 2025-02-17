@@ -20,11 +20,10 @@ const AdminFinanceiro = () => {
   const { data: financialData } = useQuery({
     queryKey: ["financial-export-data"],
     queryFn: async () => {
-      // Usando o tipo correto da tabela events
       const { data, error } = await supabase
-        .from('events')
-        .select('title, date, gross_revenue, net_revenue, approved_tickets')
-        .order('date', { ascending: false });
+        .from("events")
+        .select("title, date, gross_revenue, net_revenue, approved_tickets")
+        .order("date", { ascending: false });
 
       if (error) throw error;
       return data;

@@ -22,7 +22,20 @@ const AdminFinanceiro = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("events")
-        .select("title, date, gross_revenue, net_revenue, approved_tickets")
+        .select(`
+          title,
+          date,
+          gross_revenue,
+          net_revenue,
+          approved_tickets,
+          pending_tickets,
+          total_checkins,
+          pending_orders,
+          view_count,
+          staff_count,
+          checked_in_count,
+          refunded_tickets
+        `)
         .order("date", { ascending: false });
 
       if (error) throw error;

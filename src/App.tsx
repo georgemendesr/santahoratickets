@@ -1,26 +1,26 @@
 
-import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import EventDetails from "@/pages/EventDetails";
+import CreateEvent from "@/pages/CreateEvent";
+import EditEvent from "@/pages/EditEvent";
+import DuplicateEvent from "@/pages/DuplicateEvent";
 import Checkout from "@/pages/Checkout";
-import PaymentStatus from "@/pages/PaymentStatus";
 import CheckoutFinish from "@/pages/CheckoutFinish";
+import PaymentStatus from "@/pages/PaymentStatus";
+import ValidateTicket from "@/pages/ValidateTicket";
+import Vouchers from "@/pages/Vouchers";
+import Rewards from "@/pages/Rewards";
 import Admin from "@/pages/Admin";
-import AdminFinancial from "@/pages/AdminFinancial";
 import AdminUsers from "@/pages/AdminUsers";
 import AdminVouchers from "@/pages/AdminVouchers";
+import AdminFinanceiro from "@/pages/AdminFinanceiro";
 import AdminBatches from "@/pages/AdminBatches";
 import AdminParticipants from "@/pages/AdminParticipants";
 import AdminParticipantsList from "@/pages/AdminParticipantsList";
 import AdminParticipantsSales from "@/pages/AdminParticipantsSales";
-import CreateEvent from "@/pages/CreateEvent";
-import EditEvent from "@/pages/EditEvent";
-import DuplicateEvent from "@/pages/DuplicateEvent";
 import Profile from "@/pages/Profile";
-import Rewards from "@/pages/Rewards";
-import ValidateTicket from "@/pages/ValidateTicket";
-import Vouchers from "@/pages/Vouchers";
 import NotFound from "@/pages/NotFound";
 
 const router = createBrowserRouter([
@@ -33,28 +33,48 @@ const router = createBrowserRouter([
     element: <Auth />,
   },
   {
-    path: "/evento/:id",
+    path: "/events/:eventId",
     element: <EventDetails />,
   },
   {
-    path: "/checkout/finish",
+    path: "/events/create",
+    element: <CreateEvent />,
+  },
+  {
+    path: "/events/:eventId/edit",
+    element: <EditEvent />,
+  },
+  {
+    path: "/events/:eventId/duplicate",
+    element: <DuplicateEvent />,
+  },
+  {
+    path: "/checkout/:eventId",
+    element: <Checkout />,
+  },
+  {
+    path: "/checkout/:eventId/finish",
     element: <CheckoutFinish />,
   },
   {
-    path: "/payment-status",
+    path: "/payment/:paymentId/status",
     element: <PaymentStatus />,
   },
   {
-    path: "/checkout",
-    element: <Checkout />,
+    path: "/validate-ticket",
+    element: <ValidateTicket />,
+  },
+  {
+    path: "/vouchers",
+    element: <Vouchers />,
+  },
+  {
+    path: "/rewards",
+    element: <Rewards />,
   },
   {
     path: "/admin",
     element: <Admin />,
-  },
-  {
-    path: "/admin/financial",
-    element: <AdminFinancial />,
   },
   {
     path: "/admin/users",
@@ -63,6 +83,10 @@ const router = createBrowserRouter([
   {
     path: "/admin/vouchers",
     element: <AdminVouchers />,
+  },
+  {
+    path: "/admin/financeiro",
+    element: <AdminFinanceiro />,
   },
   {
     path: "/admin/batches",
@@ -81,32 +105,8 @@ const router = createBrowserRouter([
     element: <AdminParticipantsSales />,
   },
   {
-    path: "/edit/:id",
-    element: <EditEvent />,
-  },
-  {
-    path: "/events/create",
-    element: <CreateEvent />,
-  },
-  {
-    path: "/events/:id/duplicate",
-    element: <DuplicateEvent />,
-  },
-  {
     path: "/profile",
     element: <Profile />,
-  },
-  {
-    path: "/rewards",
-    element: <Rewards />,
-  },
-  {
-    path: "/validate-ticket",
-    element: <ValidateTicket />,
-  },
-  {
-    path: "/vouchers",
-    element: <Vouchers />,
   },
   {
     path: "*",

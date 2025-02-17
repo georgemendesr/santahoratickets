@@ -12,7 +12,7 @@ import { exportFinancialData } from "@/utils/exportFinancialData";
 import { exportSupabaseData } from "@/utils/exportSupabaseData";
 import { toast } from "sonner";
 
-const AdminFinancial = () => {
+const AdminFinanceiro = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
   const { isAdmin } = useRole(session);
@@ -82,4 +82,4 @@ const AdminFinancial = () => {
   );
 };
 
-export default AdminFinancial;
+export default AdminFinanceiro;

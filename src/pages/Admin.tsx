@@ -15,7 +15,7 @@ import {
   Ticket,
   TrendingUp
 } from "lucide-react";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import {
   BarChart,
   Bar,
@@ -55,12 +55,12 @@ const Admin = () => {
   const totalTickets = dashboardData?.reduce((acc, event) => acc + (event?.approved_tickets || 0), 0) || 0;
 
   return (
-    <MainLayout>
-      <div className="container max-w-7xl mx-auto py-8">
+    <AdminLayout>
+      <div className="container max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Painel Administrativo</h1>
           <Button 
-            onClick={() => navigate("/criar-evento")}
+            onClick={() => navigate("/events/create")}
             className="flex items-center gap-2"
           >
             <PlusCircle className="h-4 w-4" />
@@ -185,7 +185,7 @@ const Admin = () => {
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={() => navigate("/eventos")}
+                onClick={() => navigate("/admin/eventos")}
               >
                 Ver Eventos
               </Button>
@@ -204,7 +204,7 @@ const Admin = () => {
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={() => navigate("/admin/usuarios")}
+                onClick={() => navigate("/admin/users")}
               >
                 Ver Usuários
               </Button>
@@ -250,7 +250,7 @@ const Admin = () => {
           </Card>
         </div>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 };
 

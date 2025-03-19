@@ -20,6 +20,7 @@ import AdminBatches from "@/pages/AdminBatches";
 import AdminParticipants from "@/pages/AdminParticipants";
 import AdminParticipantsList from "@/pages/AdminParticipantsList";
 import AdminParticipantsSales from "@/pages/AdminParticipantsSales";
+import AdminEventos from "@/pages/AdminEventos";
 import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
 import VoucherDesignerRoute from "@/components/voucher/VoucherDesignerRoute";
@@ -76,6 +77,10 @@ const router = createBrowserRouter([
   {
     path: "/admin",
     element: <Admin />,
+  },
+  {
+    path: "/admin/eventos",
+    element: <AdminEventos />,
   },
   {
     path: "/admin/users",

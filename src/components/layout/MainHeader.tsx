@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
-import { Ticket, LayoutTemplate, Users, User, PlusCircle, Settings } from "lucide-react";
+import { Ticket, LayoutTemplate, Users, User, PlusCircle, Settings, CalendarDays } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function MainHeader() {
@@ -48,14 +48,15 @@ export function MainHeader() {
                   <Link to="/admin">
                     <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                       <Settings className="h-4 w-4 mr-2" />
-                      Sistema
+                      Dashboard
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <Link to="/admin">
+                  <Link to="/admin/eventos">
                     <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                      Admin
+                      <CalendarDays className="h-4 w-4 mr-2" />
+                      Eventos
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
@@ -70,20 +71,6 @@ export function MainHeader() {
                   <Link to="/admin/participants">
                     <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                       Participantes
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Link to="/admin/participants/list">
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                      Listar Participantes
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Link to="/admin/participants/sales">
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                      Vendas
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>

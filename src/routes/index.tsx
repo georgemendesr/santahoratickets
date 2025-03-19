@@ -1,23 +1,25 @@
 
 import { useAuth } from "@/hooks/useAuth";
-// Import default exports correctly
-import Index from "@/pages/Index";
-import Auth from "@/pages/Auth";
-import Profile from "@/pages/Profile";
-import EventDetails from "@/pages/EventDetails";
-import Rewards from "@/pages/Rewards";
-import MyVouchers from "@/pages/MyVouchers";
+import { lazy } from "react";
+
+// Use lazy loading para evitar circular dependencies
+const Index = lazy(() => import("@/pages/Index"));
+const Auth = lazy(() => import("@/pages/Auth"));
+const Profile = lazy(() => import("@/pages/Profile"));
+const EventDetails = lazy(() => import("@/pages/EventDetails"));
+const Rewards = lazy(() => import("@/pages/Rewards"));
+const MyVouchers = lazy(() => import("@/pages/MyVouchers"));
 // Admin imports
-import Admin from "@/pages/Admin";
-import AdminEventos from "@/pages/AdminEventos";
-import AdminUsers from "@/pages/AdminUsers";
-import AdminFinanceiro from "@/pages/AdminFinanceiro";
-import AdminVouchers from "@/pages/AdminVouchers";
-import AdminAnalytics from "@/pages/AdminAnalytics";
-import AdminParticipants from "@/pages/AdminParticipants";
-import AdminBatches from "@/pages/AdminBatches";
-import AdminParticipantsList from "@/pages/AdminParticipantsList";
-import AdminParticipantsSales from "@/pages/AdminParticipantsSales";
+const Admin = lazy(() => import("@/pages/Admin"));
+const AdminEventos = lazy(() => import("@/pages/AdminEventos"));
+const AdminUsers = lazy(() => import("@/pages/AdminUsers"));
+const AdminFinanceiro = lazy(() => import("@/pages/AdminFinanceiro"));
+const AdminVouchers = lazy(() => import("@/pages/AdminVouchers"));
+const AdminAnalytics = lazy(() => import("@/pages/AdminAnalytics"));
+const AdminParticipants = lazy(() => import("@/pages/AdminParticipants"));
+const AdminBatches = lazy(() => import("@/pages/AdminBatches"));
+const AdminParticipantsList = lazy(() => import("@/pages/AdminParticipantsList"));
+const AdminParticipantsSales = lazy(() => import("@/pages/AdminParticipantsSales"));
 
 export const routes = [
   {

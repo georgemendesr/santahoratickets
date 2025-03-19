@@ -6,6 +6,7 @@ import { MapPin, Calendar, Clock, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getImageUrl } from "@/integrations/supabase/utils";
 import { ShareButtons } from "./ShareButtons";
+import { getEventUrl } from "@/utils/navigation";
 
 interface EventCardProps {
   event: Event;
@@ -42,7 +43,7 @@ export function EventCard({
     if (onPurchase) {
       onPurchase();
     } else {
-      window.location.href = `/eventos/${event.id}`;
+      window.location.href = getEventUrl(event.id);
     }
   };
   
@@ -51,11 +52,11 @@ export function EventCard({
     : "aspect-[16/9]";
   
   // Create the event URL for sharing
-  const eventUrl = `${window.location.origin}/eventos/${event.id}`;
+  const eventUrl = `${window.location.origin}${getEventUrl(event.id)}`;
   
   return (
     <Card className="overflow-hidden border border-muted/20 bg-card/50 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300">
-      <Link to={`/eventos/${event.id}`} className="block">
+      <Link to={getEventUrl(event.id)} className="block">
         <div className={`relative ${imageHeightClass} group`}>
           <img
             src={imageUrl}

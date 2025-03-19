@@ -7,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useFeedback } from "@/context/FeedbackContext";
 
 interface BatchFormProps {
   eventId: string;
@@ -30,17 +31,17 @@ export const BatchForm = ({ eventId, orderNumber, onCancel, onSuccess }: BatchFo
   const [maxPurchase, setMaxPurchase] = useState("5");
   const [batchGroup, setBatchGroup] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { showLoading, hideLoading, showSuccess, showError } = useFeedback();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    showLoading("Salvando lote...");
 
     try {
       // Validações básicas
       if (!title || !price || !totalTickets || !startDate || !startTime) {
-        toast.error("Preencha todos os campos obrigatórios");
-        setIsSubmitting(false);
-        return;
+        throw new Error("Preencha todos os campos obrigatórios");
       }
 
       const batchData = {
@@ -49,7 +50,7 @@ export const BatchForm = ({ eventId, orderNumber, onCancel, onSuccess }: BatchFo
         total_tickets: parseInt(totalTickets),
         available_tickets: parseInt(totalTickets),
         start_date: `${startDate}T${startTime}:00Z`,
-        end_date: endDate ? `${endDate}T${endTime}:00Z` : null,
+        end_date: endDate ? `${endDate}T${endTime || "00:00"}:00Z` : null,
         visibility,
         is_visible: isVisible,
         description: description || null,
@@ -74,22 +75,28 @@ export const BatchForm = ({ eventId, orderNumber, onCancel, onSuccess }: BatchFo
       }
 
       console.log("Lote criado com sucesso:", data);
-      toast.success("Lote criado com sucesso!");
+      showSuccess("Lote criado com sucesso!");
       
       // Limpar formulário
       setTitle("");
       setPrice("");
       setTotalTickets("");
+      setStartDate("");
+      setStartTime("");
+      setEndDate("");
+      setEndTime("");
       setDescription("");
+      setBatchGroup("");
       
       // Notificar o componente pai do sucesso
       onSuccess();
       
     } catch (error) {
       console.error('Erro ao criar lote:', error);
-      toast.error(error instanceof Error ? error.message : "Erro ao criar lote");
+      showError(error instanceof Error ? error.message : "Erro ao criar lote");
     } finally {
       setIsSubmitting(false);
+      hideLoading();
     }
   };
 

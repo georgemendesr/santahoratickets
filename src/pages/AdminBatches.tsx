@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -9,6 +9,7 @@ import { NoEventSelected } from "@/components/batch-management/NoEventSelected";
 import { useBatchOrderNumber } from "@/hooks/useBatchOrderNumber";
 import { Button } from "@/components/ui/button";
 import { useNavigation } from "@/hooks/useNavigation";
+import { toast } from "sonner";
 
 const AdminBatches = () => {
   const { goToAdminEvents } = useNavigation();
@@ -35,6 +36,7 @@ const AdminBatches = () => {
 
   const handleSuccess = () => {
     incrementOrderNumber();
+    toast.success("Lote criado com sucesso!");
   };
 
   return (

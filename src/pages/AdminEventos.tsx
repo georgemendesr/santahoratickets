@@ -59,7 +59,6 @@ const AdminEventos = () => {
   });
 
   const handleGerenciarLotes = (eventId: string) => {
-    // Corrigido para usar a rota de administração de lotes
     navigate(`/admin/batches?event_id=${eventId}`);
   };
 

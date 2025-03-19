@@ -7,6 +7,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { BatchForm } from "@/components/batch-management/BatchForm";
 import { NoEventSelected } from "@/components/batch-management/NoEventSelected";
 import { useBatchOrderNumber } from "@/hooks/useBatchOrderNumber";
+import { Button } from "@/components/ui/button";
 
 const AdminBatches = () => {
   const navigate = useNavigate();

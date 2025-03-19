@@ -34,7 +34,7 @@ export function EventHeader() {
   };
 
   return (
-    <div className="relative h-[80vh] flex items-center justify-center overflow-hidden">
+    <div className="relative h-[100vh] flex items-center justify-center overflow-hidden">
       {/* Background com overlay */}
       <div className="absolute inset-0">
         <div className="relative h-full w-full">
@@ -50,11 +50,11 @@ export function EventHeader() {
       {/* Logo centralizada */}
       <div className="relative z-20 container mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="relative group animate-fade-in">
+          <div className="relative group animate-bounce">
             <img 
               src="/lovable-uploads/84e088a9-3b7b-41d9-9ef3-dd2894f717cf.png" 
               alt="Logo HORA" 
-              className="h-48 mx-auto hover:scale-105 transition-transform duration-300 filter drop-shadow-xl"
+              className="h-64 mx-auto hover:scale-105 transition-transform duration-300 filter drop-shadow-xl"
             />
           </div>
         </div>

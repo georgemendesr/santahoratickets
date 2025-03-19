@@ -56,7 +56,7 @@ export default function Index() {
   if (error) {
     return (
       <MainLayout>
-        <div className="min-h-screen">
+        <div className="min-h-screen bg-background">
           <div className="container mx-auto px-4 py-16">
             <div className="text-center">
               <p className="text-lg text-red-600">Erro ao carregar eventos. Por favor, tente novamente mais tarde.</p>
@@ -70,7 +70,7 @@ export default function Index() {
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="min-h-screen">
+        <div className="min-h-screen bg-background">
           <div className="container mx-auto px-4 py-16">
             <div className="text-center">
               <p className="text-lg">Carregando eventos...</p>
@@ -81,24 +81,7 @@ export default function Index() {
     );
   }
 
-  if (!currentEvent) {
-    return (
-      <MainLayout>
-        <div className="min-h-screen">
-          <div className="container mx-auto px-4 py-16">
-            <div className="text-center">
-              <p className="text-lg text-muted-foreground">
-                Nenhum evento disponível no momento.
-              </p>
-            </div>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  const batchInfo = getBatchInfo(currentEvent);
-
+  // Renderizar mesmo sem eventos, para mostrar pelo menos o EventHeader
   return (
     <MainLayout>
       <div className="min-h-screen">
@@ -106,12 +89,14 @@ export default function Index() {
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="max-w-5xl mx-auto space-y-16">
-            <EventCard 
-              event={currentEvent} 
-              batchInfo={batchInfo}
-              onPurchase={handlePurchase}
-              isPending={false}
-            />
+            {currentEvent && (
+              <EventCard 
+                event={currentEvent} 
+                batchInfo={getBatchInfo(currentEvent)}
+                onPurchase={handlePurchase}
+                isPending={false}
+              />
+            )}
             <BenefitsSection />
           </div>
         </div>

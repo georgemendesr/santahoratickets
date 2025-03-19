@@ -35,7 +35,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   }, [location]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/20 via-background to-background">
+    <div className="min-h-screen flex flex-col">
       <MainHeader />
       
       {/* Menu de navegação - só mostra se estiver logado */}

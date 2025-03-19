@@ -11,7 +11,6 @@ import {
 import { Link } from "react-router-dom";
 import { Ticket, PencilRuler, PlusCircle } from "lucide-react";
 import { useNavigation } from "@/hooks/useNavigation";
-import { ROUTES } from "@/routes";
 
 const AdminVouchers = () => {
   const { goToAdminEvents, goToAdminBatches } = useNavigation();

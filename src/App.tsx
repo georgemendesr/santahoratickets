@@ -46,6 +46,12 @@ const createRoutes = () => {
     path: "/admin/types",
     element: <Navigate to="/admin/lotes" replace />,
   });
+  
+  // Add redirect from /admin/batches to /admin/lotes
+  routerConfig.push({
+    path: "/admin/batches",
+    element: <Navigate to="/admin/lotes" replace />,
+  });
 
   return routerConfig;
 };

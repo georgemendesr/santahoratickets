@@ -12,11 +12,11 @@ export const useNavigation = () => {
   }, [navigate]);
 
   const goToRewards = useCallback(() => {
-    navigate('/rewards');
+    navigate('/recompensas');
   }, [navigate]);
 
   const goToMyVouchers = useCallback(() => {
-    navigate('/my-vouchers');
+    navigate('/meus-vouchers');
   }, [navigate]);
 
   const goToAdminEvents = useCallback(() => {

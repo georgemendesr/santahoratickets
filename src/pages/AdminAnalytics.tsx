@@ -36,6 +36,12 @@ const AdminAnalytics = () => {
 
   if (!isAdmin) return null;
 
+  // Garantir que sempre temos um valor válido para 'to'
+  const safeRange = {
+    from: dateRange.from,
+    to: dateRange.to || new Date() // Fallback para data atual se to for undefined
+  };
+
   return (
     <AdminLayout>
       <div className="container mx-auto py-8">

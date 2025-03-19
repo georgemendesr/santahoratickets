@@ -4,12 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from "recharts";
+import { DateRange } from "react-day-picker";
 
 interface EventPerformanceProps {
-  dateRange: {
-    from: Date;
-    to: Date;
-  };
+  dateRange: DateRange;
 }
 
 type EventData = {
@@ -25,6 +23,11 @@ export function EventPerformance({ dateRange }: EventPerformanceProps) {
     queryKey: ["event-performance", dateRange.from, dateRange.to],
     queryFn: async () => {
       try {
+        // Verificar se temos datas válidas para consulta
+        if (!dateRange.from || !dateRange.to) {
+          return [] as EventData[];
+        }
+        
         // Buscar eventos no período selecionado
         const { data: events, error: eventsError } = await supabase
           .from("events")

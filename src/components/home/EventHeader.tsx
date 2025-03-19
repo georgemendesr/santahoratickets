@@ -40,7 +40,7 @@ export function EventHeader() {
         <div className="relative h-full w-full">
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-background z-10" />
           <img 
-            src="/lovable-uploads/3932db3c-50e4-470f-b6df-55c45faf431c.png"
+            src="/lovable-uploads/119af9cc-42be-4a86-9205-53a5ac40e5dd.png"
             alt="Ambiente do bar"
             className="w-full h-full object-cover"
           />

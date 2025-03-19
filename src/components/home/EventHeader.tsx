@@ -5,6 +5,8 @@ import { Event } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export function EventHeader() {
   const navigate = useNavigate();
@@ -13,18 +15,30 @@ export function EventHeader() {
     queryKey: ["featured-event"],
     queryFn: async () => {
       try {
-        // Get the most recent event, even if it already happened
+        // Buscar o próximo evento (com data futura)
+        const today = new Date().toISOString().split('T')[0];
+        
         const { data, error } = await supabase
           .from("events")
           .select()
-          .order('date', { ascending: false })  // Order by descending date to get the most recent
+          .eq("status", "published")
+          .gte("date", today)
+          .order('date', { ascending: true })
           .limit(1)
           .maybeSingle();
 
         if (error) throw error;
-        return data as Event;
+        
+        if (data) {
+          return {
+            ...data,
+            formattedDate: format(new Date(data.date), "EEEE, dd 'de' MMMM", { locale: ptBR })
+          } as Event & { formattedDate: string };
+        }
+        
+        return null;
       } catch (error) {
-        console.error("Failed to fetch event:", error);
+        console.error("Falha ao carregar evento em destaque:", error);
         return null;
       }
     },
@@ -38,19 +52,19 @@ export function EventHeader() {
 
   return (
     <div className="relative h-[50vh] flex items-center justify-center">
-      {/* Background with darker overlay */}
+      {/* Background com overlay mais escuro */}
       <div className="absolute inset-0">
         <div className="relative h-full w-full">
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-transparent z-10" />
           <img 
             src="/lovable-uploads/41a95ecf-db21-429e-949c-f125b594e382.png"
-            alt="Bar ambiente"
+            alt="HORA - Ambiente"
             className="w-full h-full object-cover"
           />
         </div>
       </div>
 
-      {/* Centered content */}
+      {/* Conteúdo centralizado */}
       <div className="relative z-20 container mx-auto px-4 text-center">
         <div className="max-w-4xl mx-auto">
           <div className="relative mb-6">
@@ -62,20 +76,25 @@ export function EventHeader() {
           </div>
           
           {event && (
-            <div className="mt-8">
+            <div className="space-y-6">
+              <div className="text-white space-y-2">
+                <h2 className="text-xl md:text-2xl font-semibold">{event.title}</h2>
+                <p className="text-lg opacity-90 capitalize">{event.formattedDate} • {event.time}</p>
+              </div>
+              
               <Button 
                 size="lg" 
                 className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-lg px-8 py-6"
                 onClick={handleEventDetails}
               >
-                Ver Próximo Evento <ArrowRight className="ml-2 h-5 w-5" />
+                Ver Detalhes <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Atmospheric elements */}
+      {/* Elementos atmosféricos */}
       <div className="absolute inset-0 pointer-events-none z-10">
         <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />

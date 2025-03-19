@@ -8,6 +8,8 @@ import { EventHeader } from "@/components/home/EventHeader";
 import { EventCard } from "@/components/home/EventCard";
 import { BenefitsSection } from "@/components/home/BenefitsSection";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -19,11 +21,19 @@ export default function Index() {
         const { data, error } = await supabase
           .from("events")
           .select("*")
-          .order("date", { ascending: false })  // Changed to descending to get most recent events first
-          .limit(5);  // Limit to 5 most recent events
+          .eq("status", "published")
+          .order("date", { ascending: true })  // Mostrar primeiro os eventos mais próximos
+          .limit(6);  // Limitar a 6 eventos na página inicial
 
         if (error) throw error;
-        return data as Event[];
+        
+        // Formatar as datas dos eventos
+        const formattedEvents = data.map(event => ({
+          ...event,
+          formattedDate: format(new Date(event.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+        }));
+        
+        return formattedEvents as (Event & { formattedDate: string })[];
       } catch (error) {
         console.error("Erro ao carregar eventos:", error);
         throw error;
@@ -33,19 +43,15 @@ export default function Index() {
 
   const featuredEvent = events?.[0];
 
-  const handlePurchase = () => {
-    if (featuredEvent) {
-      navigate(`/events/${featuredEvent.id}`);
-    } else {
-      toast.error("Evento não encontrado");
-    }
+  const handlePurchase = (eventId: string) => {
+    navigate(`/events/${eventId}`);
   };
 
   const getBatchInfo = (event: Event) => {
     const today = new Date();
     const eventDate = new Date(event.date);
     
-    // If event already happened, show a special batch info
+    // Se o evento já aconteceu, mostrar uma informação especial de lote
     if (eventDate < today) {
       return { name: "Evento Passado", class: "text-gray-600" };
     }
@@ -66,9 +72,9 @@ export default function Index() {
         <EventHeader />
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="max-w-5xl mx-auto space-y-16">
+          <div className="max-w-7xl mx-auto space-y-16">
             <div>
-              <h2 className="text-3xl font-bold mb-8 text-center">Eventos</h2>
+              <h2 className="text-3xl font-bold mb-8 text-center">Próximos Eventos</h2>
               
               {error && (
                 <div className="text-center py-8">
@@ -93,9 +99,12 @@ export default function Index() {
                   {events.map((event) => (
                     <EventCard 
                       key={event.id}
-                      event={event} 
+                      event={{
+                        ...event,
+                        date: event.formattedDate
+                      }}
                       batchInfo={getBatchInfo(event)}
-                      onPurchase={() => navigate(`/events/${event.id}`)}
+                      onPurchase={() => handlePurchase(event.id)}
                       isPending={false}
                     />
                   ))}

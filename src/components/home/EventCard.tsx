@@ -3,8 +3,6 @@ import { Link } from "react-router-dom";
 import { Event } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { MapPin, Calendar, Clock, Ticket } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { getImageUrl } from "@/integrations/supabase/utils";
 
@@ -19,17 +17,17 @@ interface EventCardProps {
 }
 
 export function EventCard({ event, batchInfo, onPurchase, isPending }: EventCardProps) {
-  // Check if the image is a URL or a local path
+  // Verificar se a imagem é uma URL ou um caminho local
   const imageUrl = event.image?.startsWith("/") 
     ? event.image 
     : getImageUrl(event.image).publicUrl || "/lovable-uploads/c07e81e6-595c-4636-8fef-1f61c7240f65.png";
   
-  // Format the date in Portuguese
+  // Verificar se o evento já aconteceu
   const eventDate = new Date(event.date);
   const isPastEvent = eventDate < new Date();
   
   return (
-    <Card className="overflow-hidden border border-muted/20 bg-card/50 backdrop-blur-sm shadow-lg">
+    <Card className="overflow-hidden border border-muted/20 bg-card/50 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300">
       <Link to={`/events/${event.id}`} className="block">
         <div className="relative aspect-[16/9] group">
           <img
@@ -38,27 +36,30 @@ export function EventCard({ event, batchInfo, onPurchase, isPending }: EventCard
             className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="absolute top-3 right-3">
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${batchInfo.class} bg-white/90`}>
+              {batchInfo.name}
+            </span>
+          </div>
         </div>
       </Link>
-      <CardHeader>
-        <CardTitle className="flex justify-between items-center">
-          <span>{event.title}</span>
-          <span className={batchInfo.class}>{batchInfo.name}</span>
-        </CardTitle>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xl line-clamp-1">{event.title}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-3 pb-4">
+        <p className="text-sm text-muted-foreground line-clamp-2">{event.description}</p>
         <div className="space-y-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            <span>{format(new Date(event.date), "PPPP", { locale: ptBR })}</span>
+            <Calendar className="h-4 w-4 text-[#8B5CF6]" />
+            <span>{event.date}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
+            <Clock className="h-4 w-4 text-[#8B5CF6]" />
             <span>{event.time}</span>
           </div>
           <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            <span>{event.location}</span>
+            <MapPin className="h-4 w-4 text-[#8B5CF6]" />
+            <span className="line-clamp-1">{event.location}</span>
           </div>
         </div>
       </CardContent>

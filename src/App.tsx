@@ -1,6 +1,6 @@
 
 import React, { Suspense, lazy } from "react";
-import { createBrowserRouter, RouterProvider, Navigate, PathMatch } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Navigate, Outlet, useParams } from "react-router-dom";
 import { FeedbackProvider } from "./context/FeedbackContext";
 import { routes } from "./routes";
 
@@ -10,6 +10,12 @@ const LoadingFallback = () => (
     <div className="h-16 w-16 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
   </div>
 );
+
+// Create a wrapper component for event redirects
+const EventsRedirect = () => {
+  const { eventId } = useParams();
+  return <Navigate to={`/eventos/${eventId}`} replace />;
+};
 
 // Adicione um redirecionamento de '/events/' para '/eventos/'
 const createRoutes = () => {
@@ -26,7 +32,7 @@ const createRoutes = () => {
   // Add redirects for common wrong URLs
   routerConfig.push({
     path: "/events/:eventId",
-    element: <Navigate to={params => `/eventos/${params.eventId}`} replace />,
+    element: <EventsRedirect />,
   });
 
   return routerConfig;

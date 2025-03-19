@@ -1,6 +1,6 @@
 
 import React, { Suspense, lazy } from "react";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import { FeedbackProvider } from "./context/FeedbackContext";
 import { routes } from "./routes";
 
@@ -11,17 +11,29 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Construct the router with the routes from routes/index.tsx
-const router = createBrowserRouter(
-  routes.map(route => ({
+// Adicione um redirecionamento de '/events/' para '/eventos/'
+const createRoutes = () => {
+  // Base routes
+  const routerConfig = routes.map(route => ({
     path: route.path,
     element: (
       <Suspense fallback={<LoadingFallback />}>
         {React.createElement(route.component)}
       </Suspense>
     ),
-  }))
-);
+  }));
+
+  // Add redirects for common wrong URLs
+  routerConfig.push({
+    path: "/events/:eventId",
+    element: <Navigate to={match => `/eventos/${match.params.eventId}`} replace />,
+  });
+
+  return routerConfig;
+};
+
+// Construct the router with the routes from routes/index.tsx
+const router = createBrowserRouter(createRoutes());
 
 function App() {
   return (

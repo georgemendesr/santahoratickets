@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,12 +7,23 @@ import { ProfileDialog } from "@/components/event-details/ProfileDialog";
 import { EventLayout } from "@/components/event-details/EventLayout";
 import { EventDetailsContent } from "@/components/event-details/EventDetailsContent";
 import { useEventDetails } from "@/hooks/useEventDetails";
+import { normalizeEventUrl } from "@/utils/navigation";
+import { useEffect } from "react";
 
 const EventDetails = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
   const { session } = useAuth();
   const { isAdmin } = useRole(session);
+  
+  useEffect(() => {
+    const currentPath = window.location.pathname;
+    const normalizedPath = normalizeEventUrl(currentPath);
+    
+    if (normalizedPath !== currentPath) {
+      navigate(normalizedPath, { replace: true });
+    }
+  }, [navigate]);
   
   const {
     event,
@@ -61,7 +71,6 @@ const EventDetails = () => {
       return;
     }
     
-    // Redirecionar para a página de checkout
     navigate(`/checkout/${event.id}`);
   };
 
@@ -72,7 +81,7 @@ const EventDetails = () => {
 
   const handleEdit = () => {
     if (!event?.id) return;
-    navigate(`/events/${event.id}/edit`);
+    navigate(`/eventos/${event.id}/edit`);
   };
 
   if (isLoading) {

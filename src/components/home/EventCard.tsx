@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Event } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -71,6 +70,7 @@ export function EventCard({
           </div>
         </div>
       </Link>
+      
       <CardHeader className="pb-2">
         <CardTitle className="text-xl line-clamp-1">{event.title}</CardTitle>
       </CardHeader>

@@ -1,7 +1,6 @@
 
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../routes';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { MainHeader } from '@/components/layout/MainHeader';
 import { MainFooter } from '@/components/layout/MainFooter';
@@ -30,7 +29,7 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
         description: "Você não tem permissão para acessar esta página",
         variant: "destructive",
       });
-      navigate(ROUTES.PUBLIC.HOME);
+      navigate('/');
     }
   }, [loading, isAdmin, requiresAdmin, navigate, toast]);
   

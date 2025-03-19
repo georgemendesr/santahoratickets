@@ -1,6 +1,5 @@
 
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { ROUTES } from "./routes";
 import { FeedbackProvider } from "./context/FeedbackContext";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
@@ -28,69 +27,71 @@ import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
 import VoucherDesignerRoute from "@/components/voucher/VoucherDesignerRoute";
 
+// Define routes directly here instead of importing from routes/index.tsx
+// to avoid circular dependencies
 const router = createBrowserRouter([
   {
-    path: ROUTES.PUBLIC.HOME,
+    path: "/",
     element: <Index />,
   },
   {
-    path: ROUTES.AUTH.LOGIN,
+    path: "/auth",
     element: <Auth />,
   },
   {
-    path: ROUTES.PUBLIC.EVENT_DETAILS,
+    path: "/eventos/:eventId",
     element: <EventDetails />,
   },
   {
-    path: ROUTES.PUBLIC.CREATE_EVENT,
+    path: "/eventos/criar",
     element: <CreateEvent />,
   },
   {
-    path: ROUTES.PUBLIC.EDIT_EVENT,
+    path: "/eventos/:eventId/editar",
     element: <EditEvent />,
   },
   {
-    path: ROUTES.PUBLIC.DUPLICATE_EVENT,
+    path: "/eventos/:eventId/duplicar",
     element: <DuplicateEvent />,
   },
   {
-    path: ROUTES.PUBLIC.CHECKOUT,
+    path: "/checkout/:eventId",
     element: <Checkout />,
   },
   {
-    path: ROUTES.PUBLIC.CHECKOUT_FINISH,
+    path: "/checkout/:eventId/finalizar",
     element: <CheckoutFinish />,
   },
   {
-    path: ROUTES.PUBLIC.PAYMENT_STATUS,
+    path: "/pagamento/status/:orderId",
     element: <PaymentStatus />,
   },
   {
-    path: ROUTES.PUBLIC.VALIDATE_TICKET,
+    path: "/validar-ingresso",
     element: <ValidateTicket />,
   },
   {
-    path: ROUTES.PUBLIC.VOUCHERS,
+    path: "/vouchers",
     element: <Vouchers />,
   },
   {
-    path: ROUTES.PUBLIC.REWARDS,
+    path: "/recompensas",
     element: <Rewards />,
   },
   {
-    path: ROUTES.ADMIN.DASHBOARD,
+    path: "/admin",
     element: <Admin />,
   },
   {
-    path: ROUTES.ADMIN.EVENTS,
+    path: "/admin/eventos",
     element: <AdminEventos />,
   },
   {
-    path: ROUTES.ADMIN.USERS,
+    path: "/admin/usuarios",
     element: <AdminUsers />,
   },
   {
-    path: ROUTES.ADMIN.VOUCHERS,
+    path: "/admin/vouchers",
     element: <AdminVouchers />,
   },
   {
@@ -98,31 +99,31 @@ const router = createBrowserRouter([
     element: <VoucherDesignerRoute />,
   },
   {
-    path: ROUTES.ADMIN.FINANCEIRO,
+    path: "/admin/financeiro",
     element: <AdminFinanceiro />,
   },
   {
-    path: ROUTES.ADMIN.ANALYTICS,
+    path: "/admin/analytics",
     element: <AdminAnalytics />,
   },
   {
-    path: ROUTES.ADMIN.BATCHES,
+    path: "/admin/lotes",
     element: <AdminBatches />,
   },
   {
-    path: ROUTES.ADMIN.PARTICIPANTS,
+    path: "/admin/participantes",
     element: <AdminParticipants />,
   },
   {
-    path: ROUTES.ADMIN.PARTICIPANTS_LIST,
+    path: "/admin/participantes/lista",
     element: <AdminParticipantsList />,
   },
   {
-    path: ROUTES.ADMIN.PARTICIPANTS_SALES,
+    path: "/admin/participantes/vendas",
     element: <AdminParticipantsSales />,
   },
   {
-    path: ROUTES.PUBLIC.PROFILE,
+    path: "/profile",
     element: <Profile />,
   },
   {

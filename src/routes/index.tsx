@@ -1,24 +1,28 @@
+
 import { useAuth } from "@/hooks/useAuth";
-import { Home } from "@/pages/Home";
-import { Profile } from "@/pages/Profile";
-import { Auth } from "@/pages/Auth";
-import { EventDetails } from "@/pages/EventDetails";
-import { Rewards } from "@/pages/Rewards";
-import { MyVouchers } from "@/pages/MyVouchers";
-import { Tickets } from "@/pages/Tickets";
-import { AdminDashboard } from "@/pages/admin/AdminDashboard";
-import { AdminEvents } from "@/pages/admin/AdminEvents";
-import { AdminUsers } from "@/pages/admin/AdminUsers";
-import { AdminFinancial } from "@/pages/admin/AdminFinancial";
-import { AdminVouchers } from "@/pages/admin/AdminVouchers";
-import { AdminAnalytics } from "@/pages/admin/AdminAnalytics";
-import { AdminParticipants } from "@/pages/admin/AdminParticipants";
-import { AdminBatches } from "@/pages/admin/AdminBatches";
+// Import default exports correctly
+import Index from "@/pages/Index";
+import Auth from "@/pages/Auth";
+import Profile from "@/pages/Profile";
+import EventDetails from "@/pages/EventDetails";
+import Rewards from "@/pages/Rewards";
+import MyVouchers from "@/pages/MyVouchers";
+// Admin imports
+import Admin from "@/pages/Admin";
+import AdminEventos from "@/pages/AdminEventos";
+import AdminUsers from "@/pages/AdminUsers";
+import AdminFinanceiro from "@/pages/AdminFinanceiro";
+import AdminVouchers from "@/pages/AdminVouchers";
+import AdminAnalytics from "@/pages/AdminAnalytics";
+import AdminParticipants from "@/pages/AdminParticipants";
+import AdminBatches from "@/pages/AdminBatches";
+import AdminParticipantsList from "@/pages/AdminParticipantsList";
+import AdminParticipantsSales from "@/pages/AdminParticipantsSales";
 
 export const routes = [
   {
     path: '/',
-    component: Home,
+    component: Index,
     private: false,
   },
   {
@@ -38,11 +42,6 @@ export const routes = [
     private: true,
   },
   {
-    path: '/ingressos',
-    component: Tickets,
-    private: true,
-  },
-  {
     path: '/meus-vouchers',
     component: MyVouchers,
     private: true,
@@ -54,13 +53,13 @@ export const routes = [
   },
   {
     path: '/admin',
-    component: AdminDashboard,
+    component: Admin,
     private: true,
     adminOnly: true
   },
   {
     path: '/admin/eventos',
-    component: AdminEvents,
+    component: AdminEventos,
     private: true,
     adminOnly: true
   },
@@ -72,7 +71,7 @@ export const routes = [
   },
   {
     path: '/admin/financeiro',
-    component: AdminFinancial,
+    component: AdminFinanceiro,
     private: true,
     adminOnly: true
   },
@@ -95,6 +94,18 @@ export const routes = [
     adminOnly: true
   },
   {
+    path: '/admin/participantes/lista',
+    component: AdminParticipantsList,
+    private: true,
+    adminOnly: true
+  },
+  {
+    path: '/admin/participantes/vendas',
+    component: AdminParticipantsSales,
+    private: true,
+    adminOnly: true
+  },
+  {
     path: '/admin/lotes',
     component: AdminBatches,
     private: true,
@@ -108,17 +119,18 @@ export const protectedRoute = (route: any) => {
 };
 
 export const adminOnlyRoute = (route: any) => {
-  const { isAdmin } = useAuth();
+  const { session } = useAuth();
+  // Check if user has admin role
+  const isAdmin = session?.user?.user_metadata?.role === 'admin';
   return route.adminOnly && !isAdmin ? '/' : null;
 };
 
-// Exportando constante ROUTES para corrigir erros de importação
+// Export constant ROUTES for consistent navigation
 export const ROUTES = {
   HOME: '/',
   AUTH: '/auth',
   PROFILE: '/profile',
   REWARDS: '/recompensas',
-  TICKETS: '/ingressos',
   VOUCHERS: '/meus-vouchers',
   ADMIN: {
     DASHBOARD: '/admin',
@@ -128,6 +140,8 @@ export const ROUTES = {
     VOUCHERS: '/admin/vouchers',
     ANALYTICS: '/admin/analytics',
     PARTICIPANTS: '/admin/participantes',
+    PARTICIPANTS_LIST: '/admin/participantes/lista',
+    PARTICIPANTS_SALES: '/admin/participantes/vendas',
     BATCHES: '/admin/lotes'
   }
 };

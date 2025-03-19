@@ -10,7 +10,8 @@ export function useAuth() {
     error, 
     checkAuth, 
     signOut, 
-    refreshAuth 
+    refreshAuth,
+    isAdmin
   } = useAuthStore();
 
   useEffect(() => {
@@ -39,6 +40,7 @@ export function useAuth() {
     error,
     signOut,
     debugAuth,
-    refreshSession: refreshAuth
+    refreshSession: refreshAuth,
+    isAdmin
   };
 }

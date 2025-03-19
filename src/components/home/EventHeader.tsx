@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Event } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
 
 export function EventHeader() {
   const navigate = useNavigate();
@@ -39,12 +37,6 @@ export function EventHeader() {
     },
   });
 
-  const handleEventDetails = () => {
-    if (event) {
-      navigate(`/events/${event.id}`);
-    }
-  };
-
   return (
     <div className="relative h-[50vh] flex items-center justify-center">
       {/* Background com overlay mais escuro */}
@@ -59,28 +51,16 @@ export function EventHeader() {
         </div>
       </div>
 
-      {/* Conteúdo centralizado */}
+      {/* Conteúdo centralizado - apenas o logo */}
       <div className="relative z-20 container mx-auto px-4 text-center">
         <div className="max-w-4xl mx-auto">
-          <div className="relative mb-6">
+          <div className="relative">
             <img 
               src="/lovable-uploads/84e088a9-3b7b-41d9-9ef3-dd2894f717cf.png" 
               alt="Logo Santa Hora" 
               className="h-48 mx-auto filter drop-shadow-2xl"
             />
           </div>
-          
-          {event && (
-            <div className="space-y-6">
-              <Button 
-                size="lg" 
-                className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-lg px-8 py-6"
-                onClick={handleEventDetails}
-              >
-                Ver Detalhes <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </div>
-          )}
         </div>
       </div>
 

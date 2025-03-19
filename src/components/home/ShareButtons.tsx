@@ -5,9 +5,10 @@ import { Button } from "../ui/button";
 interface ShareButtonsProps {
   url: string;
   title: string;
+  variant?: string;
 }
 
-export function ShareButtons({ url, title }: ShareButtonsProps) {
+export function ShareButtons({ url, title, variant }: ShareButtonsProps) {
   const encodedUrl = encodeURIComponent(url);
   const encodedTitle = encodeURIComponent(title);
 

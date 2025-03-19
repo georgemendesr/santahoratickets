@@ -31,7 +31,11 @@ export function EventActions({
       </Button>
       
       <div className="flex gap-2">
-        <ShareButtons event={event} variant="full" />
+        <ShareButtons 
+          url={window.location.href} 
+          title={event.title} 
+          variant="full" 
+        />
         
         {isAdmin && (
           <Button

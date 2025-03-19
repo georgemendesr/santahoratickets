@@ -19,7 +19,8 @@ export default function Index() {
         const { data, error } = await supabase
           .from("events")
           .select("*")
-          .order("date", { ascending: true });
+          .order("date", { ascending: false })  // Changed to descending to get most recent events first
+          .limit(5);  // Limit to 5 most recent events
 
         if (error) throw error;
         return data as Event[];
@@ -30,11 +31,11 @@ export default function Index() {
     },
   });
 
-  const currentEvent = events?.[0];
+  const featuredEvent = events?.[0];
 
   const handlePurchase = () => {
-    if (currentEvent) {
-      navigate(`/events/${currentEvent.id}`);
+    if (featuredEvent) {
+      navigate(`/events/${featuredEvent.id}`);
     } else {
       toast.error("Evento não encontrado");
     }
@@ -43,6 +44,12 @@ export default function Index() {
   const getBatchInfo = (event: Event) => {
     const today = new Date();
     const eventDate = new Date(event.date);
+    
+    // If event already happened, show a special batch info
+    if (eventDate < today) {
+      return { name: "Evento Passado", class: "text-gray-600" };
+    }
+    
     const daysUntilEvent = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 3600 * 24));
 
     if (daysUntilEvent > 30) {
@@ -61,7 +68,7 @@ export default function Index() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="max-w-5xl mx-auto space-y-16">
             <div>
-              <h2 className="text-3xl font-bold mb-8 text-center">Próximos Eventos</h2>
+              <h2 className="text-3xl font-bold mb-8 text-center">Eventos</h2>
               
               {error && (
                 <div className="text-center py-8">
@@ -81,10 +88,10 @@ export default function Index() {
                 </div>
               )}
 
-              {currentEvent && (
+              {featuredEvent && (
                 <EventCard 
-                  event={currentEvent} 
-                  batchInfo={getBatchInfo(currentEvent)}
+                  event={featuredEvent} 
+                  batchInfo={getBatchInfo(featuredEvent)}
                   onPurchase={handlePurchase}
                   isPending={false}
                 />

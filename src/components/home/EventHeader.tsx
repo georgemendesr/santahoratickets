@@ -10,13 +10,14 @@ export function EventHeader() {
   const navigate = useNavigate();
 
   const { data: event } = useQuery({
-    queryKey: ["next-event"],
+    queryKey: ["featured-event"],
     queryFn: async () => {
       try {
+        // Get the most recent event, even if it already happened
         const { data, error } = await supabase
           .from("events")
           .select()
-          .order('date', { ascending: true })
+          .order('date', { ascending: false })  // Order by descending date to get the most recent
           .limit(1)
           .maybeSingle();
 
@@ -29,43 +30,43 @@ export function EventHeader() {
     },
   });
 
-  const handlePurchase = () => {
+  const handleEventDetails = () => {
     if (event) {
       navigate(`/events/${event.id}`);
     }
   };
 
   return (
-    <div className="relative h-[90vh] flex items-center justify-center overflow-hidden">
-      {/* Background com overlay */}
+    <div className="relative h-screen flex items-center justify-center">
+      {/* Background with darker overlay */}
       <div className="absolute inset-0">
         <div className="relative h-full w-full">
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-background z-10" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-background z-10" />
           <img 
-            src="/lovable-uploads/119af9cc-42be-4a86-9205-53a5ac40e5dd.png"
-            alt="Ambiente do bar"
+            src="/lovable-uploads/1435babf-b231-494c-a8fb-9dd1239cd347.png"
+            alt="Bar ambiente"
             className="w-full h-full object-cover"
           />
         </div>
       </div>
 
-      {/* Logo centralizada */}
-      <div className="relative z-20 container mx-auto px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="relative mb-8">
+      {/* Centered content */}
+      <div className="relative z-20 container mx-auto px-4 text-center">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative mb-10">
             <img 
               src="/lovable-uploads/84e088a9-3b7b-41d9-9ef3-dd2894f717cf.png" 
               alt="Logo HORA" 
-              className="h-64 mx-auto transition-transform duration-300 filter drop-shadow-xl"
+              className="h-64 mx-auto filter drop-shadow-2xl"
             />
           </div>
           
           {event && (
-            <div className="mt-12">
+            <div className="mt-16">
               <Button 
                 size="lg" 
                 className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-lg px-8 py-6"
-                onClick={handlePurchase}
+                onClick={handleEventDetails}
               >
                 Ver Próximo Evento <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -74,17 +75,17 @@ export function EventHeader() {
         </div>
       </div>
 
-      {/* Indicador de scroll */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+      {/* Scroll indicator */}
+      <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce">
         <div className="w-8 h-12 rounded-full border-2 border-white/30 flex items-start justify-center p-2">
           <div className="w-1 h-3 bg-white/70 rounded-full" />
         </div>
       </div>
 
-      {/* Elementos decorativos */}
+      {/* Atmospheric elements */}
       <div className="absolute inset-0 pointer-events-none z-10">
-        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-purple-500/30 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
       </div>
     </div>
   );

@@ -19,9 +19,14 @@ interface EventCardProps {
 }
 
 export function EventCard({ event, batchInfo, onPurchase, isPending }: EventCardProps) {
+  // Check if the image is a URL or a local path
   const imageUrl = event.image?.startsWith("/") 
     ? event.image 
     : getImageUrl(event.image).publicUrl || "/lovable-uploads/c07e81e6-595c-4636-8fef-1f61c7240f65.png";
+  
+  // Format the date in Portuguese
+  const eventDate = new Date(event.date);
+  const isPastEvent = eventDate < new Date();
   
   return (
     <Card className="overflow-hidden border border-muted/20 bg-card/50 backdrop-blur-sm shadow-lg">
@@ -64,7 +69,7 @@ export function EventCard({ event, batchInfo, onPurchase, isPending }: EventCard
           disabled={isPending}
         >
           <Ticket className="mr-2 h-4 w-4" />
-          Comprar Pulseira
+          {isPastEvent ? "Ver Detalhes" : "Comprar Pulseira"}
         </Button>
       </CardFooter>
     </Card>

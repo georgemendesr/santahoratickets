@@ -49,7 +49,7 @@ const AdminAnalytics = () => {
           </div>
           <DateRangePicker
             dateRange={dateRange}
-            onChange={(range) => setDateRange(range)}
+            onChange={(newRange: DateRange) => setDateRange(newRange)}
           />
         </div>
 

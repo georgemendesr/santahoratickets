@@ -1,5 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/types/database.types';
+
+type TableNames = keyof Database['public']['Tables'];
 
 export class QueryBuilder<T = any> {
   private table: string;
@@ -7,8 +10,8 @@ export class QueryBuilder<T = any> {
   private retryCount: number = 0;
   private maxRetries: number = 3;
   
-  constructor(table: string) {
-    this.table = table;
+  constructor(table: TableNames) {
+    this.table = table as string;
     this.query = supabase.from(table);
   }
   

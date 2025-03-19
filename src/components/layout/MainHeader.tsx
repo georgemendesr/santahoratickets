@@ -60,20 +60,6 @@ export function MainHeader() {
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Link to="/admin/vouchers">
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                      Vouchers
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Link to="/admin/participants">
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                      Participantes
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
               </>
             )}
           </NavigationMenuList>

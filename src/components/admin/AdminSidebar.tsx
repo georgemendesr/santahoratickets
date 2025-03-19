@@ -1,5 +1,5 @@
 
-import { LayoutDashboard, CalendarDays, Users, Ticket, Tag, DollarSign } from "lucide-react";
+import { LayoutDashboard, CalendarDays, Users, Ticket, Tag, DollarSign, BarChart3 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -11,6 +11,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 
 export function AdminSidebar() {
@@ -42,47 +45,47 @@ export function AdminSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   asChild
-                  isActive={isActive("/admin/eventos")}
+                  isActive={isActive("/admin/eventos") || isActive("/admin/vouchers") || isActive("/admin/participants")}
                 >
                   <Link to="/admin/eventos">
                     <CalendarDays className="h-4 w-4" />
                     <span>Eventos</span>
                   </Link>
                 </SidebarMenuButton>
+                <SidebarMenuSub>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      asChild
+                      isActive={isActive("/admin/vouchers")}
+                    >
+                      <Link to="/admin/vouchers">
+                        <Ticket className="h-4 w-4" />
+                        <span>Ingressos e Vouchers</span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      asChild
+                      isActive={isActive("/admin/participants")}
+                    >
+                      <Link to="/admin/participants">
+                        <Users className="h-4 w-4" />
+                        <span>Participantes</span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                </SidebarMenuSub>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   asChild
-                  isActive={isActive("/admin/usuarios")}
+                  isActive={isActive("/admin/users")}
                 >
                   <Link to="/admin/users">
                     <Users className="h-4 w-4" />
                     <span>Usuários</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild
-                  isActive={isActive("/admin/vouchers")}
-                >
-                  <Link to="/admin/vouchers">
-                    <Ticket className="h-4 w-4" />
-                    <span>Vouchers</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild
-                  isActive={isActive("/admin/participants")}
-                >
-                  <Link to="/admin/participants">
-                    <Tag className="h-4 w-4" />
-                    <span>Participantes</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

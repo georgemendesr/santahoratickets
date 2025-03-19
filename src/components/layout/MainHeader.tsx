@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
-import { Ticket, LayoutTemplate, Users, User } from "lucide-react";
+import { Ticket, LayoutTemplate, Users, User, PlusCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function MainHeader() {
@@ -28,6 +28,18 @@ export function MainHeader() {
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
+
+            {/* Adicionado link de criação de eventos para qualquer usuário logado */}
+            {session && (
+              <NavigationMenuItem>
+                <Link to="/events/create">
+                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    Criar Evento
+                  </NavigationMenuLink>
+                </Link>
+              </NavigationMenuItem>
+            )}
 
             {isAdmin && (
               <>

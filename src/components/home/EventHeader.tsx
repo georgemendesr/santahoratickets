@@ -7,11 +7,10 @@ import { supabase } from "@/integrations/supabase/client";
 export function EventHeader() {
   const navigate = useNavigate();
 
-  const { data: event, isError } = useQuery({
+  const { data: event } = useQuery({
     queryKey: ["next-event"],
     queryFn: async () => {
       try {
-        console.log("Fetching next event...");
         const { data, error } = await supabase
           .from("events")
           .select()
@@ -19,30 +18,20 @@ export function EventHeader() {
           .limit(1)
           .single();
 
-        if (error) {
-          console.error("Error fetching event:", error);
-          throw error;
-        }
-
-        console.log("Event data:", data);
+        if (error) throw error;
         return data as Event;
       } catch (error) {
         console.error("Failed to fetch event:", error);
-        throw error;
+        return null;
       }
     },
-    retry: 3,
   });
 
   const handlePurchase = () => {
     if (event) {
-      navigate(`/evento/${event.id}`);
+      navigate(`/events/${event.id}`);
     }
   };
-
-  if (isError) {
-    console.log("Error rendering event header");
-  }
 
   return (
     <div className="relative min-h-[55vh] flex items-center justify-center overflow-hidden">

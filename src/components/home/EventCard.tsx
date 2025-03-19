@@ -20,7 +20,7 @@ interface EventCardProps {
 export function EventCard({ event, batchInfo, onPurchase, isPending }: EventCardProps) {
   return (
     <Card className="overflow-hidden">
-      <Link to={`/evento/${event.id}`} className="block">
+      <Link to={`/events/${event.id}`} className="block">
         <div className="relative aspect-[16/9] group">
           <img
             src="/lovable-uploads/c07e81e6-595c-4636-8fef-1f61c7240f65.png"

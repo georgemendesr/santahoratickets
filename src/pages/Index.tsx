@@ -34,7 +34,7 @@ export default function Index() {
 
   const handlePurchase = () => {
     if (currentEvent) {
-      navigate(`/evento/${currentEvent.id}`);
+      navigate(`/events/${currentEvent.id}`);
     } else {
       toast.error("Evento não encontrado");
     }
@@ -73,7 +73,7 @@ export default function Index() {
         <div className="min-h-screen bg-gradient-to-b from-background to-secondary">
           <div className="container mx-auto px-4 py-16">
             <div className="text-center">
-              <p className="text-lg">Carregando evento...</p>
+              <p className="text-lg">Carregando eventos...</p>
             </div>
           </div>
         </div>

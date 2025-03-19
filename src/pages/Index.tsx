@@ -56,7 +56,7 @@ export default function Index() {
   if (error) {
     return (
       <MainLayout>
-        <div className="min-h-screen bg-gradient-to-b from-background to-secondary">
+        <div className="min-h-screen">
           <div className="container mx-auto px-4 py-16">
             <div className="text-center">
               <p className="text-lg text-red-600">Erro ao carregar eventos. Por favor, tente novamente mais tarde.</p>
@@ -70,7 +70,7 @@ export default function Index() {
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="min-h-screen bg-gradient-to-b from-background to-secondary">
+        <div className="min-h-screen">
           <div className="container mx-auto px-4 py-16">
             <div className="text-center">
               <p className="text-lg">Carregando eventos...</p>
@@ -84,7 +84,7 @@ export default function Index() {
   if (!currentEvent) {
     return (
       <MainLayout>
-        <div className="min-h-screen bg-gradient-to-b from-background to-secondary">
+        <div className="min-h-screen">
           <div className="container mx-auto px-4 py-16">
             <div className="text-center">
               <p className="text-lg text-muted-foreground">

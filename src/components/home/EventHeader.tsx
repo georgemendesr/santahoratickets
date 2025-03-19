@@ -16,7 +16,7 @@ export function EventHeader() {
           .select()
           .order('date', { ascending: true })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
         return data as Event;
@@ -34,7 +34,7 @@ export function EventHeader() {
   };
 
   return (
-    <div className="relative min-h-[55vh] flex items-center justify-center overflow-hidden">
+    <div className="relative h-[80vh] flex items-center justify-center overflow-hidden">
       {/* Background com overlay */}
       <div className="absolute inset-0">
         <div className="relative h-full w-full">

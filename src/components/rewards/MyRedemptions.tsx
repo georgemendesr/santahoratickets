@@ -2,9 +2,10 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Star, Info } from "lucide-react";
+import { RewardRedemption } from "@/types";
 
 interface MyRedemptionsProps {
-  redemptions: any[]; // Usando 'any' para manter compatibilidade com o código original
+  redemptions: RewardRedemption[];
   loading: boolean;
   onSwitchToRewards: () => void;
 }
@@ -61,7 +62,7 @@ export const MyRedemptions = ({ redemptions, loading, onSwitchToRewards }: MyRed
 
   return (
     <div className="space-y-4">
-      {redemptions.map((redemption: any) => (
+      {redemptions.map((redemption) => (
         <Card key={redemption.id} className="overflow-hidden">
           <div className="flex flex-col sm:flex-row">
             {redemption.rewards?.image && (
@@ -90,7 +91,7 @@ export const MyRedemptions = ({ redemptions, loading, onSwitchToRewards }: MyRed
                   <span className="text-sm font-medium">{redemption.points_spent} pontos</span>
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  Resgatado em: {new Date(redemption.created_at).toLocaleDateString('pt-BR')}
+                  Resgatado em: {new Date(redemption.created_at || '').toLocaleDateString('pt-BR')}
                 </div>
               </div>
             </div>

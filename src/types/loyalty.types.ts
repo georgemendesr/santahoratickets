@@ -26,4 +26,5 @@ export interface RewardRedemption {
   status: 'pending' | 'approved' | 'rejected' | 'delivered';
   created_at?: string;
   updated_at?: string;
+  rewards?: Reward;
 }

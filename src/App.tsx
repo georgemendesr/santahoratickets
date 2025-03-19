@@ -22,6 +22,7 @@ import AdminParticipantsList from "@/pages/AdminParticipantsList";
 import AdminParticipantsSales from "@/pages/AdminParticipantsSales";
 import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
+import VoucherDesignerRoute from "@/components/voucher/VoucherDesignerRoute";
 
 const router = createBrowserRouter([
   {
@@ -83,6 +84,10 @@ const router = createBrowserRouter([
   {
     path: "/admin/vouchers",
     element: <AdminVouchers />,
+  },
+  {
+    path: "/admin/vouchers/design",
+    element: <VoucherDesignerRoute />,
   },
   {
     path: "/admin/financeiro",

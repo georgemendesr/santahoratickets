@@ -17,22 +17,46 @@ const Vouchers = () => {
   const { data: tickets, isLoading } = useQuery({
     queryKey: ["tickets", session?.user?.id],
     queryFn: async () => {
-      // Buscar tickets com informações do evento
-      const { data, error } = await supabase
+      if (!session?.user?.id) return [];
+
+      // Primeiro buscar os tickets do usuário
+      const { data: ticketsData, error: ticketsError } = await supabase
         .from('tickets')
-        .select(`
-          *,
-          events:event_id (
-            title,
-            date,
-            time
-          )
-        `)
-        .eq('user_id', session?.user?.id)
+        .select('*')
+        .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (ticketsError) throw ticketsError;
+      
+      // Para cada ticket, buscar os detalhes do evento correspondente
+      const ticketsWithEventDetails = await Promise.all(
+        ticketsData.map(async (ticket) => {
+          const { data: eventData, error: eventError } = await supabase
+            .from('events')
+            .select('title, date, time')
+            .eq('id', ticket.event_id)
+            .single();
+
+          if (eventError) {
+            console.error('Erro ao buscar detalhes do evento:', eventError);
+            return {
+              ...ticket,
+              event: {
+                title: 'Evento não encontrado',
+                date: new Date().toISOString().split('T')[0],
+                time: '00:00'
+              }
+            };
+          }
+
+          return {
+            ...ticket,
+            event: eventData
+          };
+        })
+      );
+
+      return ticketsWithEventDetails;
     },
     enabled: !!session?.user?.id
   });
@@ -76,9 +100,9 @@ const Vouchers = () => {
                   <VoucherCard
                     key={ticket.id}
                     ticket={ticket}
-                    eventTitle={ticket.events.title}
-                    eventDate={format(new Date(ticket.events.date), "PPPP", { locale: ptBR })}
-                    eventTime={ticket.events.time}
+                    eventTitle={ticket.event.title}
+                    eventDate={format(new Date(ticket.event.date), "PPPP", { locale: ptBR })}
+                    eventTime={ticket.event.time}
                   />
                 ))}
               </div>

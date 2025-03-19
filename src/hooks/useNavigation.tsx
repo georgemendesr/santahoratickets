@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes';
-import { getAdminBatchesUrl } from '@/utils/navigation';
+import { getAdminBatchesUrl, getEventUrl } from '@/utils/navigation';
 
 export const useNavigation = () => {
   const navigate = useNavigate();
@@ -27,6 +27,10 @@ export const useNavigation = () => {
     navigate(getAdminBatchesUrl(eventId));
   }, [navigate]);
 
+  const goToEventDetails = useCallback((eventId: string) => {
+    navigate(getEventUrl(eventId));
+  }, [navigate]);
+
   const navigateTo = useCallback((path: string, options?: { replace?: boolean }) => {
     navigate(path, options);
   }, [navigate]);
@@ -37,6 +41,7 @@ export const useNavigation = () => {
     goToMyVouchers,
     goToAdminEvents,
     goToAdminBatches,
+    goToEventDetails,
     navigateTo
   };
 };

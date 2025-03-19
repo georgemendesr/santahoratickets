@@ -46,11 +46,9 @@ const AdminVouchers = () => {
             </CardHeader>
             <CardContent className="flex flex-col items-center">
               <Ticket className="h-16 w-16 text-primary mb-4" />
-              <Link to={ROUTES.ADMIN.BATCHES}>
-                <Button className="w-full">
-                  Gerenciar Ingressos
-                </Button>
-              </Link>
+              <Button className="w-full" onClick={() => goToAdminBatches()}>
+                Gerenciar Ingressos
+              </Button>
             </CardContent>
           </Card>
           

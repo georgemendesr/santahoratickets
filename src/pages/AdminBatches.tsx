@@ -8,9 +8,10 @@ import { BatchForm } from "@/components/batch-management/BatchForm";
 import { NoEventSelected } from "@/components/batch-management/NoEventSelected";
 import { useBatchOrderNumber } from "@/hooks/useBatchOrderNumber";
 import { Button } from "@/components/ui/button";
+import { useNavigation } from "@/hooks/useNavigation";
 
 const AdminBatches = () => {
-  const navigate = useNavigate();
+  const { goToAdminEvents } = useNavigation();
   const [searchParams] = useSearchParams();
   const eventId = searchParams.get("event_id");
   const { session } = useAuth();
@@ -20,14 +21,14 @@ const AdminBatches = () => {
   // Usando useEffect para evitar o warning de navegação durante a renderização
   useEffect(() => {
     if (!isAdmin) {
-      navigate("/");
+      goToAdminEvents();
     }
-  }, [isAdmin, navigate]);
+  }, [isAdmin, goToAdminEvents]);
 
   if (!eventId) {
     return (
       <AdminLayout>
-        <NoEventSelected onNavigateToEvents={() => navigate("/admin/eventos")} />
+        <NoEventSelected onNavigateToEvents={goToAdminEvents} />
       </AdminLayout>
     );
   }
@@ -41,7 +42,7 @@ const AdminBatches = () => {
       <div className="container max-w-4xl mx-auto py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Gerenciamento de Lotes</h1>
-          <Button variant="outline" onClick={() => navigate("/admin/eventos")}>
+          <Button variant="outline" onClick={goToAdminEvents}>
             Voltar para Eventos
           </Button>
         </div>
@@ -49,7 +50,7 @@ const AdminBatches = () => {
         <BatchForm 
           eventId={eventId} 
           orderNumber={orderNumber}
-          onCancel={() => navigate("/admin/eventos")}
+          onCancel={goToAdminEvents}
           onSuccess={handleSuccess}
         />
       </div>

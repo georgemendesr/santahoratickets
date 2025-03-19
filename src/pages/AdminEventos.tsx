@@ -1,7 +1,5 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { 
@@ -32,10 +30,11 @@ import {
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { type Event } from "@/types";
+import { useNavigation } from "@/hooks/useNavigation";
 
 const AdminEventos = () => {
-  const navigate = useNavigate();
   const [filter, setFilter] = useState("todos");
+  const { navigateTo, goToAdminBatches } = useNavigation();
   
   const { data: events, isLoading } = useQuery({
     queryKey: ["admin-events", filter],
@@ -59,19 +58,19 @@ const AdminEventos = () => {
   });
 
   const handleGerenciarLotes = (eventId: string) => {
-    navigate(`/admin/batches?event_id=${eventId}`);
+    goToAdminBatches(eventId);
   };
 
   const handleEditarEvento = (eventId: string) => {
-    navigate(`/events/${eventId}/edit`);
+    navigateTo(`/eventos/${eventId}/edit`);
   };
 
   const handleVerParticipantes = (eventId: string) => {
-    navigate(`/admin/participants/list?event_id=${eventId}`);
+    navigateTo(`/admin/participantes/lista?event_id=${eventId}`);
   };
 
   const handleVerEvento = (eventId: string) => {
-    navigate(`/events/${eventId}`);
+    navigateTo(`/eventos/${eventId}`);
   };
 
   return (
@@ -80,7 +79,7 @@ const AdminEventos = () => {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Gerenciamento de Eventos</h1>
           <Button 
-            onClick={() => navigate("/events/create")}
+            onClick={() => navigateTo("/eventos/create")}
             className="flex items-center gap-2"
           >
             <PlusCircle className="h-4 w-4" />

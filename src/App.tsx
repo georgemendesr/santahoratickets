@@ -44,7 +44,7 @@ const createRoutes = () => {
   // Add admin redirects if needed
   routerConfig.push({
     path: "/admin/types",
-    element: <Navigate to="/admin/batches" replace />,
+    element: <Navigate to="/admin/lotes" replace />,
   });
 
   return routerConfig;

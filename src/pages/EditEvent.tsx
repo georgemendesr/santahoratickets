@@ -1,11 +1,12 @@
+
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { EventForm, type EventFormData } from "@/components/EventForm";
 import { type Event } from "@/types";
+import { EventPageLayout } from "@/components/event-management/EventPageLayout";
+import { EventLoadingState } from "@/components/event-management/EventLoadingState";
 
 const EditEvent = () => {
   const { id } = useParams();
@@ -79,57 +80,32 @@ const EditEvent = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-secondary">
-        <div className="container mx-auto px-4 py-8">
-          <p>Carregando...</p>
-        </div>
-      </div>
-    );
+    return <EventLoadingState />;
   }
 
   if (!event) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-secondary">
-        <div className="container mx-auto px-4 py-8">
-          <p>Evento não encontrado</p>
-        </div>
-      </div>
-    );
+    return <EventLoadingState message="Evento não encontrado" />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="mb-4"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Button>
-          <h1 className="text-3xl font-bold">Editar Evento</h1>
-        </div>
-
-        <div className="max-w-2xl mx-auto">
-          <EventForm
-            onSubmit={onSubmit}
-            defaultValues={{
-              title: event.title,
-              description: event.description,
-              date: event.date,
-              time: event.time,
-              location: event.location,
-            }}
-            isSubmitting={updateEventMutation.isPending}
-            submitText={updateEventMutation.isPending ? "Atualizando evento..." : "Atualizar Evento"}
-            imageFieldHelperText="Deixe em branco para manter a imagem atual"
-          />
-        </div>
-      </div>
-    </div>
+    <EventPageLayout 
+      title="Editar Evento" 
+      onBack={() => navigate(-1)}
+    >
+      <EventForm
+        onSubmit={onSubmit}
+        defaultValues={{
+          title: event.title,
+          description: event.description,
+          date: event.date,
+          time: event.time,
+          location: event.location,
+        }}
+        isSubmitting={updateEventMutation.isPending}
+        submitText={updateEventMutation.isPending ? "Atualizando evento..." : "Atualizar Evento"}
+        imageFieldHelperText="Deixe em branco para manter a imagem atual"
+      />
+    </EventPageLayout>
   );
 };
 

@@ -1,11 +1,12 @@
+
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { EventForm, type EventFormData } from "@/components/EventForm";
 import { type Event } from "@/types";
+import { EventPageLayout } from "@/components/event-management/EventPageLayout";
+import { EventLoadingState } from "@/components/event-management/EventLoadingState";
 
 const DuplicateEvent = () => {
   const { id } = useParams();
@@ -85,60 +86,33 @@ const DuplicateEvent = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-secondary">
-        <div className="container mx-auto px-4 py-8">
-          <p>Carregando...</p>
-        </div>
-      </div>
-    );
+    return <EventLoadingState />;
   }
 
   if (!event) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-secondary">
-        <div className="container mx-auto px-4 py-8">
-          <p>Evento não encontrado</p>
-        </div>
-      </div>
-    );
+    return <EventLoadingState message="Evento não encontrado" />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="mb-4"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Button>
-          <h1 className="text-3xl font-bold">Duplicar Evento</h1>
-          <p className="text-muted-foreground mt-2">
-            Os dados do evento original serão copiados. Você pode modificá-los antes de criar o novo evento.
-          </p>
-        </div>
-
-        <div className="max-w-2xl mx-auto">
-          <EventForm
-            onSubmit={onSubmit}
-            defaultValues={{
-              title: `Cópia de ${event.title}`,
-              description: event.description,
-              date: event.date,
-              time: event.time,
-              location: event.location,
-            }}
-            isSubmitting={createEventMutation.isPending}
-            submitText={createEventMutation.isPending ? "Duplicando evento..." : "Duplicar Evento"}
-            imageFieldHelperText="Deixe em branco para usar a mesma imagem do evento original"
-          />
-        </div>
-      </div>
-    </div>
+    <EventPageLayout 
+      title="Duplicar Evento" 
+      description="Os dados do evento original serão copiados. Você pode modificá-los antes de criar o novo evento."
+      onBack={() => navigate(-1)}
+    >
+      <EventForm
+        onSubmit={onSubmit}
+        defaultValues={{
+          title: `Cópia de ${event.title}`,
+          description: event.description,
+          date: event.date,
+          time: event.time,
+          location: event.location,
+        }}
+        isSubmitting={createEventMutation.isPending}
+        submitText={createEventMutation.isPending ? "Duplicando evento..." : "Duplicar Evento"}
+        imageFieldHelperText="Deixe em branco para usar a mesma imagem do evento original"
+      />
+    </EventPageLayout>
   );
 };
 

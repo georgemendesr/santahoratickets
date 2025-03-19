@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { ProfileDialog } from "@/components/event-details/ProfileDialog";
 import { EventLayout } from "@/components/event-details/EventLayout";
 import { EventDetailsContent } from "@/components/event-details/EventDetailsContent";

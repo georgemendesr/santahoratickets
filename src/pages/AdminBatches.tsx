@@ -1,5 +1,5 @@
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -8,12 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const AdminBatches = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const eventId = searchParams.get("event_id");
   const { session } = useAuth();
   const { isAdmin } = useRole(session);
   const [title, setTitle] = useState("");
@@ -30,10 +32,57 @@ const AdminBatches = () => {
   const [maxPurchase, setMaxPurchase] = useState("5");
   const [batchGroup, setBatchGroup] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderNumber, setOrderNumber] = useState(1);
+
+  useEffect(() => {
+    // Buscar o próximo número de ordem se tivermos um eventId
+    if (eventId) {
+      const fetchNextOrderNumber = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('batches')
+            .select('order_number')
+            .eq('event_id', eventId)
+            .order('order_number', { ascending: false })
+            .limit(1);
+
+          if (!error && data.length > 0) {
+            setOrderNumber(data[0].order_number + 1);
+          }
+        } catch (error) {
+          console.error("Erro ao buscar próximo número de ordem:", error);
+        }
+      };
+
+      fetchNextOrderNumber();
+    }
+  }, [eventId]);
 
   if (!isAdmin) {
     navigate("/");
     return null;
+  }
+
+  if (!eventId) {
+    // Redirecionar para seleção de evento se não tiver event_id
+    return (
+      <MainLayout>
+        <div className="container max-w-4xl mx-auto py-8">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold">Selecione um Evento</h1>
+          </div>
+          <p className="text-center py-8">
+            Você precisa selecionar um evento para adicionar lotes.
+            <Button 
+              className="block mx-auto mt-4"
+              onClick={() => navigate("/")}
+            >
+              Voltar para a lista de eventos
+            </Button>
+          </p>
+        </div>
+      </MainLayout>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,6 +90,13 @@ const AdminBatches = () => {
     setIsSubmitting(true);
 
     try {
+      // Validações básicas
+      if (!title || !price || !totalTickets || !startDate || !startTime) {
+        toast.error("Preencha todos os campos obrigatórios");
+        setIsSubmitting(false);
+        return;
+      }
+
       const batchData = {
         title,
         price: parseFloat(price),
@@ -54,34 +110,36 @@ const AdminBatches = () => {
         min_purchase: parseInt(minPurchase),
         max_purchase: maxPurchase ? parseInt(maxPurchase) : null,
         batch_group: batchGroup || null,
-        event_id: "your-event-id", // Você precisará passar o event_id aqui
-        order_number: 1, // Você precisará implementar a lógica para gerar isso
+        event_id: eventId,
+        order_number: orderNumber,
+        status: 'active'
       };
 
-      const { error } = await supabase
+      console.log("Enviando dados do lote:", batchData);
+
+      const { data, error } = await supabase
         .from('batches')
-        .insert([batchData]);
+        .insert([batchData])
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao criar lote:', error);
+        throw new Error(`Erro ao criar lote: ${error.message}`);
+      }
 
+      console.log("Lote criado com sucesso:", data);
       toast.success("Lote criado com sucesso!");
+      
       // Limpar formulário
       setTitle("");
       setPrice("");
       setTotalTickets("");
-      setStartDate("");
-      setStartTime("");
-      setEndDate("");
-      setEndTime("");
-      setVisibility("public");
-      setIsVisible(true);
       setDescription("");
-      setMinPurchase("1");
-      setMaxPurchase("5");
-      setBatchGroup("");
+      setOrderNumber(prev => prev + 1);
+      
     } catch (error) {
       console.error('Erro ao criar lote:', error);
-      toast.error("Erro ao criar lote");
+      toast.error(error instanceof Error ? error.message : "Erro ao criar lote");
     } finally {
       setIsSubmitting(false);
     }

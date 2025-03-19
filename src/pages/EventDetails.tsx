@@ -61,7 +61,8 @@ const EventDetails = () => {
       return;
     }
     
-    navigate(`/checkout/finish?event=${event.id}&quantity=1`);
+    // Redirecionar para a página de checkout
+    navigate(`/checkout/${event.id}`);
   };
 
   const handleProfileSubmit = (e: React.FormEvent) => {

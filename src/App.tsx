@@ -1,5 +1,7 @@
 
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { ROUTES } from "./routes";
+import { FeedbackProvider } from "./context/FeedbackContext";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import EventDetails from "@/pages/EventDetails";
@@ -28,67 +30,67 @@ import VoucherDesignerRoute from "@/components/voucher/VoucherDesignerRoute";
 
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: ROUTES.PUBLIC.HOME,
     element: <Index />,
   },
   {
-    path: "/auth",
+    path: ROUTES.AUTH.LOGIN,
     element: <Auth />,
   },
   {
-    path: "/events/:eventId",
+    path: ROUTES.PUBLIC.EVENT_DETAILS,
     element: <EventDetails />,
   },
   {
-    path: "/events/create",
+    path: ROUTES.PUBLIC.CREATE_EVENT,
     element: <CreateEvent />,
   },
   {
-    path: "/events/:eventId/edit",
+    path: ROUTES.PUBLIC.EDIT_EVENT,
     element: <EditEvent />,
   },
   {
-    path: "/events/:eventId/duplicate",
+    path: ROUTES.PUBLIC.DUPLICATE_EVENT,
     element: <DuplicateEvent />,
   },
   {
-    path: "/checkout/:eventId",
+    path: ROUTES.PUBLIC.CHECKOUT,
     element: <Checkout />,
   },
   {
-    path: "/checkout/:eventId/finish",
+    path: ROUTES.PUBLIC.CHECKOUT_FINISH,
     element: <CheckoutFinish />,
   },
   {
-    path: "/payment/:paymentId/status",
+    path: ROUTES.PUBLIC.PAYMENT_STATUS,
     element: <PaymentStatus />,
   },
   {
-    path: "/validate-ticket",
+    path: ROUTES.PUBLIC.VALIDATE_TICKET,
     element: <ValidateTicket />,
   },
   {
-    path: "/vouchers",
+    path: ROUTES.PUBLIC.VOUCHERS,
     element: <Vouchers />,
   },
   {
-    path: "/rewards",
+    path: ROUTES.PUBLIC.REWARDS,
     element: <Rewards />,
   },
   {
-    path: "/admin",
+    path: ROUTES.ADMIN.DASHBOARD,
     element: <Admin />,
   },
   {
-    path: "/admin/eventos",
+    path: ROUTES.ADMIN.EVENTS,
     element: <AdminEventos />,
   },
   {
-    path: "/admin/users",
+    path: ROUTES.ADMIN.USERS,
     element: <AdminUsers />,
   },
   {
-    path: "/admin/vouchers",
+    path: ROUTES.ADMIN.VOUCHERS,
     element: <AdminVouchers />,
   },
   {
@@ -96,31 +98,31 @@ const router = createBrowserRouter([
     element: <VoucherDesignerRoute />,
   },
   {
-    path: "/admin/financeiro",
+    path: ROUTES.ADMIN.FINANCEIRO,
     element: <AdminFinanceiro />,
   },
   {
-    path: "/admin/analytics",
+    path: ROUTES.ADMIN.ANALYTICS,
     element: <AdminAnalytics />,
   },
   {
-    path: "/admin/batches",
+    path: ROUTES.ADMIN.BATCHES,
     element: <AdminBatches />,
   },
   {
-    path: "/admin/participants",
+    path: ROUTES.ADMIN.PARTICIPANTS,
     element: <AdminParticipants />,
   },
   {
-    path: "/admin/participants/list",
+    path: ROUTES.ADMIN.PARTICIPANTS_LIST,
     element: <AdminParticipantsList />,
   },
   {
-    path: "/admin/participants/sales",
+    path: ROUTES.ADMIN.PARTICIPANTS_SALES,
     element: <AdminParticipantsSales />,
   },
   {
-    path: "/profile",
+    path: ROUTES.PUBLIC.PROFILE,
     element: <Profile />,
   },
   {
@@ -130,7 +132,11 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <FeedbackProvider>
+      <RouterProvider router={router} />
+    </FeedbackProvider>
+  );
 }
 
 export default App;

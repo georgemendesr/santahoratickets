@@ -1,7 +1,7 @@
 
 import { LayoutDashboard, CalendarDays, Users, Ticket, Tag, DollarSign, BarChart3 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { ROUTES } from "@/routes";
 import {
   Sidebar,
   SidebarContent,
@@ -33,9 +33,9 @@ export function AdminSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   asChild
-                  isActive={isActive("/admin")}
+                  isActive={isActive(ROUTES.ADMIN.DASHBOARD)}
                 >
-                  <Link to="/admin">
+                  <Link to={ROUTES.ADMIN.DASHBOARD}>
                     <LayoutDashboard className="h-4 w-4" />
                     <span>Dashboard</span>
                   </Link>
@@ -45,9 +45,9 @@ export function AdminSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   asChild
-                  isActive={isActive("/admin/eventos") || isActive("/admin/vouchers") || isActive("/admin/participants")}
+                  isActive={isActive(ROUTES.ADMIN.EVENTS) || isActive(ROUTES.ADMIN.VOUCHERS) || isActive(ROUTES.ADMIN.PARTICIPANTS)}
                 >
-                  <Link to="/admin/eventos">
+                  <Link to={ROUTES.ADMIN.EVENTS}>
                     <CalendarDays className="h-4 w-4" />
                     <span>Eventos</span>
                   </Link>
@@ -56,9 +56,9 @@ export function AdminSidebar() {
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton
                       asChild
-                      isActive={isActive("/admin/vouchers")}
+                      isActive={isActive(ROUTES.ADMIN.VOUCHERS)}
                     >
-                      <Link to="/admin/vouchers">
+                      <Link to={ROUTES.ADMIN.VOUCHERS}>
                         <Ticket className="h-4 w-4" />
                         <span>Ingressos e Vouchers</span>
                       </Link>
@@ -67,9 +67,9 @@ export function AdminSidebar() {
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton
                       asChild
-                      isActive={isActive("/admin/participants")}
+                      isActive={isActive(ROUTES.ADMIN.PARTICIPANTS)}
                     >
-                      <Link to="/admin/participants">
+                      <Link to={ROUTES.ADMIN.PARTICIPANTS}>
                         <Users className="h-4 w-4" />
                         <span>Participantes</span>
                       </Link>
@@ -81,9 +81,9 @@ export function AdminSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   asChild
-                  isActive={isActive("/admin/users")}
+                  isActive={isActive(ROUTES.ADMIN.USERS)}
                 >
-                  <Link to="/admin/users">
+                  <Link to={ROUTES.ADMIN.USERS}>
                     <Users className="h-4 w-4" />
                     <span>Usuários</span>
                   </Link>
@@ -93,11 +93,23 @@ export function AdminSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   asChild
-                  isActive={isActive("/admin/financeiro")}
+                  isActive={isActive(ROUTES.ADMIN.FINANCEIRO)}
                 >
-                  <Link to="/admin/financeiro">
+                  <Link to={ROUTES.ADMIN.FINANCEIRO}>
                     <DollarSign className="h-4 w-4" />
                     <span>Financeiro</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild
+                  isActive={isActive(ROUTES.ADMIN.ANALYTICS)}
+                >
+                  <Link to={ROUTES.ADMIN.ANALYTICS}>
+                    <BarChart3 className="h-4 w-4" />
+                    <span>Analytics</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

@@ -1,8 +1,7 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { useRole } from "@/hooks/useRole";
+import { useAuthStore } from "@/store/authStore";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { SalesFunnelChart } from "@/components/analytics/SalesFunnelChart";
 import { ConversionMetrics } from "@/components/analytics/ConversionMetrics";
@@ -10,21 +9,16 @@ import { EventPerformance } from "@/components/analytics/EventPerformance";
 import { DateRangePicker } from "@/components/analytics/DateRangePicker";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
-import { DateRange } from "react-day-picker";
+import { DateRange, dateUtils } from "@/types/date";
 
 const AdminAnalytics = () => {
   const navigate = useNavigate();
-  const { session } = useAuth();
-  const { isAdmin } = useRole(session);
-  const [dateRange, setDateRange] = useState<DateRange>({
-    from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 dias atrás
-    to: new Date(),
-  });
+  const { isAdmin, loading } = useAuthStore();
+  const [dateRange, setDateRange] = useState<DateRange>(dateUtils.createDefaultRange(30));
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (!loading && !isAdmin) {
       toast({
         title: "Acesso restrito",
         description: "Você não tem permissão para acessar esta página",
@@ -32,15 +26,16 @@ const AdminAnalytics = () => {
       });
       navigate("/");
     }
-  }, [isAdmin, navigate, toast]);
+  }, [isAdmin, navigate, toast, loading]);
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">Carregando...</div>;
+  }
 
   if (!isAdmin) return null;
 
-  // Garantir que sempre temos um valor válido para 'to'
-  const safeRange = {
-    from: dateRange.from,
-    to: dateRange.to || new Date() // Fallback para data atual se to for undefined
-  };
+  // Garantir que sempre temos um range válido
+  const safeRange = dateUtils.ensureValidRange(dateRange);
 
   return (
     <AdminLayout>
@@ -59,7 +54,7 @@ const AdminAnalytics = () => {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
-          <ConversionMetrics dateRange={dateRange} />
+          <ConversionMetrics dateRange={safeRange} />
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 mb-8">
@@ -71,7 +66,7 @@ const AdminAnalytics = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="h-80">
-              <SalesFunnelChart dateRange={dateRange} />
+              <SalesFunnelChart dateRange={safeRange} />
             </CardContent>
           </Card>
 
@@ -83,7 +78,7 @@ const AdminAnalytics = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="h-80">
-              <EventPerformance dateRange={dateRange} />
+              <EventPerformance dateRange={safeRange} />
             </CardContent>
           </Card>
         </div>

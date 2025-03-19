@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, Ticket, AlertCircle, Gift } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useRewards } from "@/hooks/useRewards";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { RewardRedemption } from "@/types";
 import { PointsHistory } from "@/components/loyalty/PointsHistory";
@@ -13,7 +14,8 @@ import { PointsHistory } from "@/components/loyalty/PointsHistory";
 const MyVouchers = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
-  const { profile, getMyRedemptions } = useProfile(session?.user?.id);
+  const { profile } = useProfile(session?.user?.id);
+  const { getMyRedemptions } = useRewards(session?.user?.id, profile);
   
   const [vouchers, setVouchers] = useState<RewardRedemption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +29,7 @@ const MyVouchers = () => {
         const redemptionsData = await getMyRedemptions();
         // Filtrar apenas os vouchers aprovados ou entregues
         const activeVouchers = redemptionsData.filter(
-          (v: any) => v.status === 'approved' || v.status === 'delivered'
+          (v) => v.status === 'approved' || v.status === 'delivered'
         );
         setVouchers(activeVouchers);
       } catch (error) {

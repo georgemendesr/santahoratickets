@@ -7,12 +7,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useReferrals } from "@/hooks/useReferrals";
 
 export const useEventDetails = (eventId: string | undefined) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { session } = useAuth();
-  const { profile, createProfile, createReferral } = useProfile(session?.user?.id);
+  const { profile, createProfile } = useProfile(session?.user?.id);
+  const { createReferral } = useReferrals(session?.user?.id);
+  
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [cpf, setCpf] = useState("");
   const [birthDate, setBirthDate] = useState("");

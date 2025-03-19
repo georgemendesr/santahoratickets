@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +17,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
   const { isAdmin } = useRole(session);
+
   const { profile } = useProfile(session?.user?.id);
 
   const handleSignOut = async () => {

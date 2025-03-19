@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,35 +5,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { ArrowLeft, Gift, Star, Info } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useRewards } from "@/hooks/useRewards";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { QueryBuilder } from "@/utils/queryBuilder";
-import { Reward, RewardRedemption } from "@/types";
+import { Reward } from "@/types";
 
 const Rewards = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
-  const { profile, getAvailableRewards, getMyRedemptions, redeemReward } = useProfile(session?.user?.id);
+  const { profile } = useProfile(session?.user?.id);
+  const { 
+    myRedemptions, 
+    loadingRewards, 
+    loadingRedemptions, 
+    getAvailableRewards, 
+    getMyRedemptions, 
+    redeemReward 
+  } = useRewards(session?.user?.id, profile);
   
   const [rewards, setRewards] = useState<Reward[]>([]);
-  const [myRedemptions, setMyRedemptions] = useState<RewardRedemption[]>([]);
-  const [loadingRewards, setLoadingRewards] = useState(true);
-  const [loadingRedemptions, setLoadingRedemptions] = useState(true);
 
   useEffect(() => {
     const fetchRewards = async () => {
       if (!session) return;
       
       try {
-        setLoadingRewards(true);
         const rewardsData = await getAvailableRewards();
         setRewards(rewardsData);
       } catch (error) {
         console.error("Erro ao carregar recompensas:", error);
         toast.error("Erro ao carregar recompensas");
-      } finally {
-        setLoadingRewards(false);
       }
     };
 
@@ -42,14 +43,10 @@ const Rewards = () => {
       if (!session) return;
       
       try {
-        setLoadingRedemptions(true);
-        const redemptionsData = await getMyRedemptions();
-        setMyRedemptions(redemptionsData);
+        await getMyRedemptions();
       } catch (error) {
         console.error("Erro ao carregar resgates:", error);
         toast.error("Erro ao carregar seus resgates");
-      } finally {
-        setLoadingRedemptions(false);
       }
     };
 
@@ -68,8 +65,7 @@ const Rewards = () => {
       if (result) {
         toast.success("Recompensa resgatada com sucesso!");
         // Atualizar lista de resgates
-        const redemptionsData = await getMyRedemptions();
-        setMyRedemptions(redemptionsData);
+        await getMyRedemptions();
       }
     } catch (error) {
       console.error("Erro ao resgatar recompensa:", error);
@@ -231,7 +227,9 @@ const Rewards = () => {
                   </p>
                   <Button 
                     variant="outline" 
-                    onClick={() => document.querySelector('button[value="rewards"]')?.click()}
+                    onClick={() => document.querySelector('button[value="rewards"]')?.dispatchEvent(
+                      new Event('click', { bubbles: true })
+                    )}
                   >
                     Ver Recompensas Disponíveis
                   </Button>

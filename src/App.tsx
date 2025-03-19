@@ -1,6 +1,6 @@
 
 import React, { Suspense, lazy } from "react";
-import { createBrowserRouter, RouterProvider, Navigate, Outlet, useParams } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Navigate, useParams } from "react-router-dom";
 import { FeedbackProvider } from "./context/FeedbackContext";
 import { routes } from "./routes";
 
@@ -11,13 +11,13 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Create a wrapper component for event redirects
+// Componente especializado para redirecionar de /events/ para /eventos/
 const EventsRedirect = () => {
-  const { eventId } = useParams();
-  return <Navigate to={`/eventos/${eventId}`} replace />;
+  const { eventId } = useParams<{ eventId: string }>();
+  return <Navigate to={`/eventos/${eventId || ''}`} replace />;
 };
 
-// Adicione um redirecionamento de '/events/' para '/eventos/'
+// Função para criar as rotas com redirecionamentos apropriados
 const createRoutes = () => {
   // Base routes
   const routerConfig = routes.map(route => ({
@@ -29,10 +29,16 @@ const createRoutes = () => {
     ),
   }));
 
-  // Add redirects for common wrong URLs
+  // Add redirects for legacy URLs
   routerConfig.push({
     path: "/events/:eventId",
     element: <EventsRedirect />,
+  });
+  
+  // Redirect from /events to /eventos
+  routerConfig.push({
+    path: "/events",
+    element: <Navigate to="/eventos" replace />,
   });
 
   return routerConfig;

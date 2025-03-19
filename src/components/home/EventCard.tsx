@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Event } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -38,11 +39,14 @@ export function EventCard({
   const eventDate = new Date(event.date);
   const isPastEvent = eventDate < new Date();
   
+  // Usando a função padronizada getEventUrl
+  const eventUrl = getEventUrl(event.id);
+  
   const handlePurchase = () => {
     if (onPurchase) {
       onPurchase();
     } else {
-      window.location.href = getEventUrl(event.id);
+      window.location.href = eventUrl;
     }
   };
   
@@ -50,12 +54,9 @@ export function EventCard({
     ? "aspect-[16/8]" 
     : "aspect-[16/9]";
   
-  // Create the event URL for sharing
-  const eventUrl = `${window.location.origin}${getEventUrl(event.id)}`;
-  
   return (
     <Card className="overflow-hidden border border-muted/20 bg-card/50 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300">
-      <Link to={getEventUrl(event.id)} className="block">
+      <Link to={eventUrl} className="block">
         <div className={`relative ${imageHeightClass} group`}>
           <img
             src={imageUrl}
@@ -102,7 +103,7 @@ export function EventCard({
         </Button>
         
         <ShareButtons 
-          url={eventUrl}
+          url={`${window.location.origin}${eventUrl}`}
           title={event.title}
           variant="full" 
           event={event}

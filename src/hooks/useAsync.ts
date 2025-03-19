@@ -43,7 +43,7 @@ export function useAsync<T, P extends any[]>(
       execute(...initialParams);
     } else if (immediate) {
       // Using empty array cast to P to fix type error
-      execute(..!([] as unknown as P));
+      execute(...([] as unknown as P));
     }
   }, [execute, immediate, initialParams]);
 

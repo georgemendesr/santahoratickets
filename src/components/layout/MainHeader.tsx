@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
-import { Ticket, LayoutTemplate, Users, User, PlusCircle } from "lucide-react";
+import { Ticket, LayoutTemplate, Users, User, PlusCircle, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function MainHeader() {
@@ -40,6 +40,16 @@ export function MainHeader() {
                 </Link>
               </NavigationMenuItem>
             )}
+
+            {/* Link para a área de sistema que permite visualizar os recursos administrativos */}
+            <NavigationMenuItem>
+              <Link to="/admin">
+                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Sistema
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
 
             {isAdmin && (
               <>

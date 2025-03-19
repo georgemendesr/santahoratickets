@@ -1,25 +1,31 @@
 
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "lucide-react";
 
 interface NoEventSelectedProps {
   onNavigateToEvents: () => void;
 }
 
-export const NoEventSelected = ({ onNavigateToEvents }: NoEventSelectedProps) => {
+export function NoEventSelected({ onNavigateToEvents }: NoEventSelectedProps) {
   return (
-    <div className="container max-w-4xl mx-auto py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Selecione um Evento</h1>
-      </div>
-      <p className="text-center py-8">
-        Você precisa selecionar um evento para adicionar lotes.
-        <Button 
-          className="block mx-auto mt-4"
-          onClick={onNavigateToEvents}
-        >
-          Voltar para a lista de eventos
-        </Button>
-      </p>
+    <div className="container max-w-md mx-auto py-12">
+      <Card className="text-center">
+        <CardHeader>
+          <CardTitle className="text-xl">Nenhum Evento Selecionado</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center gap-4">
+          <Calendar className="h-16 w-16 text-muted-foreground" />
+          <p className="text-muted-foreground">
+            Para gerenciar lotes de ingresso, selecione um evento na lista de eventos.
+          </p>
+        </CardContent>
+        <CardFooter className="flex justify-center">
+          <Button onClick={onNavigateToEvents}>
+            Ver Lista de Eventos
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
-};
+}

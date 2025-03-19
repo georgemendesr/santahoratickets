@@ -1,8 +1,9 @@
 
+import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { BatchForm } from "@/components/batch-management/BatchForm";
 import { NoEventSelected } from "@/components/batch-management/NoEventSelected";
 import { useBatchOrderNumber } from "@/hooks/useBatchOrderNumber";
@@ -15,16 +16,18 @@ const AdminBatches = () => {
   const { isAdmin } = useRole(session);
   const { orderNumber, incrementOrderNumber } = useBatchOrderNumber(eventId);
 
-  if (!isAdmin) {
-    navigate("/");
-    return null;
-  }
+  // Usando useEffect para evitar o warning de navegação durante a renderização
+  useEffect(() => {
+    if (!isAdmin) {
+      navigate("/");
+    }
+  }, [isAdmin, navigate]);
 
   if (!eventId) {
     return (
-      <MainLayout>
-        <NoEventSelected onNavigateToEvents={() => navigate("/")} />
-      </MainLayout>
+      <AdminLayout>
+        <NoEventSelected onNavigateToEvents={() => navigate("/admin/eventos")} />
+      </AdminLayout>
     );
   }
 
@@ -33,20 +36,23 @@ const AdminBatches = () => {
   };
 
   return (
-    <MainLayout>
+    <AdminLayout>
       <div className="container max-w-4xl mx-auto py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Tipos de Ingressos (Lotes)</h1>
+          <h1 className="text-3xl font-bold">Gerenciamento de Lotes</h1>
+          <Button variant="outline" onClick={() => navigate("/admin/eventos")}>
+            Voltar para Eventos
+          </Button>
         </div>
         
         <BatchForm 
           eventId={eventId} 
           orderNumber={orderNumber}
-          onCancel={() => navigate(-1)}
+          onCancel={() => navigate("/admin/eventos")}
           onSuccess={handleSuccess}
         />
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 };
 

@@ -1,4 +1,3 @@
-
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,9 +52,9 @@ const DuplicateEvent = () => {
         description: data.description,
         date: data.date,
         time: data.time,
-        location: data.location,
-        price: parseFloat(data.price),
-        available_tickets: parseInt(data.available_tickets),
+        location: data.location || "Santa Hora",
+        price: 0, // Default value, as price will be defined in batches
+        available_tickets: 0, // Default value, as quantity will be defined in batches
         image: imagePath,
         status: "published" as const
       };
@@ -132,8 +131,6 @@ const DuplicateEvent = () => {
               date: event.date,
               time: event.time,
               location: event.location,
-              price: event.price.toString(),
-              available_tickets: event.available_tickets.toString(),
             }}
             isSubmitting={createEventMutation.isPending}
             submitText={createEventMutation.isPending ? "Duplicando evento..." : "Duplicar Evento"}

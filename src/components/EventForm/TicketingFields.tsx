@@ -8,10 +8,19 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { type UseFormReturn } from "react-hook-form";
-import { type EventFormData } from "./schema";
+import * as z from "zod";
+
+// Since we're using this component separately from the main event form,
+// we need to define its own schema
+export const ticketingSchema = z.object({
+  price: z.string().min(1, "O preço é obrigatório"),
+  available_tickets: z.string().min(1, "A quantidade de ingressos é obrigatória"),
+});
+
+export type TicketingData = z.infer<typeof ticketingSchema>;
 
 interface TicketingFieldsProps {
-  form: UseFormReturn<EventFormData>;
+  form: UseFormReturn<TicketingData>;
 }
 
 export const TicketingFields = ({ form }: TicketingFieldsProps) => {

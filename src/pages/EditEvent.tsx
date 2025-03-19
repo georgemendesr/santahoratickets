@@ -1,4 +1,3 @@
-
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,8 +30,6 @@ const EditEvent = () => {
     mutationFn: async (data: EventFormData & { image?: string }) => {
       const updateData = {
         ...data,
-        price: parseFloat(data.price),
-        available_tickets: parseInt(data.available_tickets),
       };
 
       const { error } = await supabase
@@ -58,25 +55,21 @@ const EditEvent = () => {
 
     try {
       if (imageFile) {
-        // Upload da nova imagem
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from("event-images")
           .upload(`${Date.now()}-${imageFile.name}`, imageFile);
 
         if (uploadError) throw uploadError;
 
-        // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from("event-images")
           .getPublicUrl(uploadData.path);
 
-        // Update event with new image URL
         await updateEventMutation.mutateAsync({
           ...data,
           image: publicUrl,
         });
       } else {
-        // Update event without changing image
         await updateEventMutation.mutateAsync(data);
       }
     } catch (error) {
@@ -129,8 +122,6 @@ const EditEvent = () => {
               date: event.date,
               time: event.time,
               location: event.location,
-              price: event.price.toString(),
-              available_tickets: event.available_tickets.toString(),
             }}
             isSubmitting={updateEventMutation.isPending}
             submitText={updateEventMutation.isPending ? "Atualizando evento..." : "Atualizar Evento"}

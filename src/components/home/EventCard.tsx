@@ -50,6 +50,9 @@ export function EventCard({
     ? "aspect-[16/8]" 
     : "aspect-[16/9]";
   
+  // Create the event URL for sharing
+  const eventUrl = `${window.location.origin}/eventos/${event.id}`;
+  
   return (
     <Card className="overflow-hidden border border-muted/20 bg-card/50 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300">
       <Link to={`/events/${event.id}`} className="block">
@@ -97,7 +100,12 @@ export function EventCard({
           {isPastEvent ? "Ver Detalhes" : "Comprar Pulseira"}
         </Button>
         
-        <ShareButtons event={event} variant="full" />
+        <ShareButtons 
+          url={eventUrl}
+          title={event.title}
+          variant="full" 
+          event={event}
+        />
       </CardFooter>
     </Card>
   );

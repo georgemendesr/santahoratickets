@@ -1,6 +1,6 @@
 
 import React, { Suspense, lazy } from "react";
-import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Navigate, PathMatch } from "react-router-dom";
 import { FeedbackProvider } from "./context/FeedbackContext";
 import { routes } from "./routes";
 
@@ -26,7 +26,7 @@ const createRoutes = () => {
   // Add redirects for common wrong URLs
   routerConfig.push({
     path: "/events/:eventId",
-    element: <Navigate to={match => `/eventos/${match.params.eventId}`} replace />,
+    element: <Navigate to={params => `/eventos/${params.eventId}`} replace />,
   });
 
   return routerConfig;

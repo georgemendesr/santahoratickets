@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { MapPin, Calendar, Clock, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getImageUrl } from "@/integrations/supabase/utils";
+import { ShareButtons } from "./ShareButtons";
 
 interface EventCardProps {
   event: Event;
@@ -12,11 +13,18 @@ interface EventCardProps {
     name: string;
     class: string;
   };
-  onPurchase: () => void;
-  isPending: boolean;
+  onPurchase?: () => void;
+  isPending?: boolean;
+  imageSize?: 'default' | 'large';
 }
 
-export function EventCard({ event, batchInfo, onPurchase, isPending }: EventCardProps) {
+export function EventCard({ 
+  event, 
+  batchInfo, 
+  onPurchase, 
+  isPending = false,
+  imageSize = 'default'
+}: EventCardProps) {
   // Verificar se a imagem existe e formar a URL correta
   const imageUrl = event.image 
     ? (event.image.startsWith("http") 
@@ -30,10 +38,22 @@ export function EventCard({ event, batchInfo, onPurchase, isPending }: EventCard
   const eventDate = new Date(event.date);
   const isPastEvent = eventDate < new Date();
   
+  const handlePurchase = () => {
+    if (onPurchase) {
+      onPurchase();
+    } else {
+      window.location.href = `/events/${event.id}`;
+    }
+  };
+  
+  const imageHeightClass = imageSize === 'large' 
+    ? "aspect-[16/8]" 
+    : "aspect-[16/9]";
+  
   return (
     <Card className="overflow-hidden border border-muted/20 bg-card/50 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300">
       <Link to={`/events/${event.id}`} className="block">
-        <div className="relative aspect-[16/9] group">
+        <div className={`relative ${imageHeightClass} group`}>
           <img
             src={imageUrl}
             alt={event.title}
@@ -67,15 +87,17 @@ export function EventCard({ event, batchInfo, onPurchase, isPending }: EventCard
           </div>
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex-col gap-3">
         <Button 
           className="w-full bg-[#8B5CF6] hover:bg-[#7C3AED]" 
-          onClick={onPurchase}
+          onClick={handlePurchase}
           disabled={isPending}
         >
           <Ticket className="mr-2 h-4 w-4" />
           {isPastEvent ? "Ver Detalhes" : "Comprar Pulseira"}
         </Button>
+        
+        <ShareButtons event={event} variant="full" />
       </CardFooter>
     </Card>
   );

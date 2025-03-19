@@ -1,43 +1,40 @@
 
-import { DateRange as ReactDayPickerDateRange } from 'react-day-picker';
+import { DateRange as DayPickerDateRange } from "react-day-picker";
 
-// Estendendo o tipo DateRange para uso no projeto
-export interface DateRange extends ReactDayPickerDateRange {
+// Extended DateRange with required from and to properties
+export interface DateRange extends DayPickerDateRange {
   from: Date | undefined;
   to: Date | undefined;
 }
 
-// Funções utilitárias para datas
+// Date utility functions
 export const dateUtils = {
-  // Criar um DateRange com valores default
-  createDefaultRange: (daysAgo: number = 30): DateRange => {
-    return {
-      from: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000),
-      to: new Date()
-    };
+  // Create a default date range (e.g., last 30 days)
+  createDefaultRange: (days: number = 30): DateRange => {
+    const to = new Date();
+    const from = new Date();
+    from.setDate(from.getDate() - days);
+    return { from, to };
   },
-  
-  // Garantir que um DateRange tenha valores válidos
-  ensureValidRange: (range: DateRange): DateRange => {
-    if (!range) return dateUtils.createDefaultRange();
-    
-    return {
-      from: range.from || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-      to: range.to || new Date()
-    };
+
+  // Ensure we always have a valid range, even if undefined is passed
+  ensureValidRange: (range?: DateRange): DateRange => {
+    if (!range || !range.from || !range.to) {
+      return dateUtils.createDefaultRange();
+    }
+    return range;
   },
-  
-  // Converter DateRange para formato da API
-  toAPIFormat: (range: DateRange): { start_date?: string, end_date?: string } => {
+
+  // Format for API consumption
+  toApiFormat: (range: DateRange): { start_date: string; end_date: string } => {
     const safeRange = dateUtils.ensureValidRange(range);
-    
     return {
       start_date: safeRange.from.toISOString(),
       end_date: safeRange.to.toISOString(),
     };
   },
-  
-  // Validar se é um range completo
+
+  // Check if range is complete
   isCompleteRange: (range?: DateRange): boolean => {
     return Boolean(range && range.from && range.to);
   }

@@ -11,12 +11,13 @@ import { DateRangePicker } from "@/components/analytics/DateRangePicker";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { DateRange } from "react-day-picker";
 
 const AdminAnalytics = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
   const { isAdmin } = useRole(session);
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
+  const [dateRange, setDateRange] = useState<DateRange>({
     from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 dias atrás
     to: new Date(),
   });
@@ -47,7 +48,7 @@ const AdminAnalytics = () => {
           </div>
           <DateRangePicker
             dateRange={dateRange}
-            onChange={setDateRange}
+            onChange={(range) => setDateRange(range)}
           />
         </div>
 

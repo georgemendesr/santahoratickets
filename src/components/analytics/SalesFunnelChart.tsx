@@ -4,12 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { DateRange } from "react-day-picker";
 
 interface SalesFunnelChartProps {
-  dateRange: {
-    from: Date;
-    to: Date;
-  };
+  dateRange: DateRange;
 }
 
 type FunnelData = {
@@ -28,10 +26,14 @@ export function SalesFunnelChart({ dateRange }: SalesFunnelChartProps) {
         // Em um cenário real, estes dados viriam de um endpoint específico
         // Esta é uma simulação para fins de demonstração
         
-        // Visitantes (visualizações de página)
+        if (!dateRange.from || !dateRange.to) {
+          return [] as FunnelData[];
+        }
+        
+        // Visitantes (visualizações de página) usando view_count em vez de views
         const { data: viewsData, error: viewsError } = await supabase
           .from("events")
-          .select("views")
+          .select("view_count")
           .gte("created_at", dateRange.from.toISOString())
           .lte("created_at", dateRange.to.toISOString());
           
@@ -67,7 +69,7 @@ export function SalesFunnelChart({ dateRange }: SalesFunnelChartProps) {
         if (purchasesError) throw purchasesError;
         
         // Cálculo dos números do funil
-        const visitors = viewsData ? viewsData.reduce((sum, event) => sum + (event.views || 0), 0) : 0;
+        const visitors = viewsData ? viewsData.reduce((sum, event) => sum + (event.view_count || 0), 0) : 0;
         const checkouts = checkoutsData ? checkoutsData.length : 0;
         const pending = pendingData ? pendingData.length : 0;
         const purchases = purchasesData ? purchasesData.length : 0;

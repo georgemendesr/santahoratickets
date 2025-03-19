@@ -5,12 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Users, ShoppingCart, CreditCard, TrendingUp } from "lucide-react";
+import { DateRange } from "react-day-picker";
 
 interface ConversionMetricsProps {
-  dateRange: {
-    from: Date;
-    to: Date;
-  };
+  dateRange: DateRange;
 }
 
 type MetricData = {
@@ -30,10 +28,19 @@ export function ConversionMetrics({ dateRange }: ConversionMetricsProps) {
         // Em um cenário real, esta lógica seria implementada no backend
         // Esta é uma simulação para fins de demonstração
         
-        // Simulação de visitantes (usuários únicos que visualizaram eventos)
+        if (!dateRange.from || !dateRange.to) {
+          return {
+            visitors: 0,
+            checkouts: 0,
+            purchases: 0,
+            conversionRate: 0
+          } as MetricData;
+        }
+        
+        // Simulação de visitantes (usando view_count em vez de views)
         const { data: viewsData, error: viewsError } = await supabase
           .from("events")
-          .select("id, title, views")
+          .select("id, title, view_count")
           .gte("created_at", dateRange.from.toISOString())
           .lte("created_at", dateRange.to.toISOString());
           
@@ -59,7 +66,7 @@ export function ConversionMetrics({ dateRange }: ConversionMetricsProps) {
         if (purchasesError) throw purchasesError;
         
         // Cálculo das métricas
-        const visitors = viewsData ? viewsData.reduce((sum, event) => sum + (event.views || 0), 0) : 0;
+        const visitors = viewsData ? viewsData.reduce((sum, event) => sum + (event.view_count || 0), 0) : 0;
         const checkouts = checkoutsData ? checkoutsData.length : 0;
         const purchases = purchasesData ? purchasesData.length : 0;
         const conversionRate = visitors > 0 ? (purchases / visitors) * 100 : 0;

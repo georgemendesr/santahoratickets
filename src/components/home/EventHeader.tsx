@@ -5,8 +5,6 @@ import { Event } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 export function EventHeader() {
   const navigate = useNavigate();
@@ -30,10 +28,7 @@ export function EventHeader() {
         if (error) throw error;
         
         if (data) {
-          return {
-            ...data,
-            formattedDate: format(new Date(data.date), "EEEE, dd 'de' MMMM", { locale: ptBR })
-          } as Event & { formattedDate: string };
+          return data as Event;
         }
         
         return null;
@@ -77,11 +72,6 @@ export function EventHeader() {
           
           {event && (
             <div className="space-y-6">
-              <div className="text-white space-y-2">
-                <h2 className="text-xl md:text-2xl font-semibold">{event.title}</h2>
-                <p className="text-lg opacity-90 capitalize">{event.formattedDate} • {event.time}</p>
-              </div>
-              
               <Button 
                 size="lg" 
                 className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-lg px-8 py-6"

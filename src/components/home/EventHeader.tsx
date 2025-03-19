@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Event } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
 
 export function EventHeader() {
   const navigate = useNavigate();
@@ -19,7 +21,6 @@ export function EventHeader() {
           .maybeSingle();
 
         if (error) throw error;
-        console.log("Event data fetched:", data);
         return data as Event;
       } catch (error) {
         console.error("Failed to fetch event:", error);
@@ -35,11 +36,10 @@ export function EventHeader() {
   };
 
   return (
-    <div className="relative h-[100vh] flex items-center justify-center overflow-hidden">
+    <div className="relative h-[90vh] flex items-center justify-center overflow-hidden">
       {/* Background com overlay */}
       <div className="absolute inset-0">
         <div className="relative h-full w-full">
-          {/* Overlay gradiente - ajustado para ter mais contraste */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-background z-10" />
           <img 
             src="/lovable-uploads/119af9cc-42be-4a86-9205-53a5ac40e5dd.png"
@@ -52,13 +52,25 @@ export function EventHeader() {
       {/* Logo centralizada */}
       <div className="relative z-20 container mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="relative group animate-pulse">
+          <div className="relative mb-8">
             <img 
               src="/lovable-uploads/84e088a9-3b7b-41d9-9ef3-dd2894f717cf.png" 
               alt="Logo HORA" 
-              className="h-64 mx-auto hover:scale-105 transition-transform duration-300 filter drop-shadow-xl"
+              className="h-64 mx-auto transition-transform duration-300 filter drop-shadow-xl"
             />
           </div>
+          
+          {event && (
+            <div className="mt-12">
+              <Button 
+                size="lg" 
+                className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-lg px-8 py-6"
+                onClick={handlePurchase}
+              >
+                Ver Próximo Evento <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 

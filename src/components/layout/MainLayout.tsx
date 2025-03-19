@@ -18,14 +18,6 @@ export function MainLayout({ children }: MainLayoutProps) {
   const { isAdmin } = useRole(session);
   const [currentTab, setCurrentTab] = useState("/");
 
-  console.log("MainLayout Render:", {
-    session,
-    loading,
-    isAdmin,
-    currentTab,
-    pathname: location.pathname
-  });
-
   useEffect(() => {
     // Atualiza a tab baseado na rota atual
     if (location.pathname === "/") setCurrentTab("/");

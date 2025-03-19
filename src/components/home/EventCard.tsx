@@ -6,6 +6,7 @@ import { MapPin, Calendar, Clock, Ticket } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
+import { getImageUrl } from "@/integrations/supabase/utils";
 
 interface EventCardProps {
   event: Event;
@@ -18,14 +19,16 @@ interface EventCardProps {
 }
 
 export function EventCard({ event, batchInfo, onPurchase, isPending }: EventCardProps) {
-  console.log("Rendering EventCard with event:", event);
+  const imageUrl = event.image?.startsWith("/") 
+    ? event.image 
+    : getImageUrl(event.image).publicUrl || "/lovable-uploads/c07e81e6-595c-4636-8fef-1f61c7240f65.png";
   
   return (
-    <Card className="overflow-hidden border border-muted/20 bg-card/50 backdrop-blur-sm">
+    <Card className="overflow-hidden border border-muted/20 bg-card/50 backdrop-blur-sm shadow-lg">
       <Link to={`/events/${event.id}`} className="block">
         <div className="relative aspect-[16/9] group">
           <img
-            src="/lovable-uploads/c07e81e6-595c-4636-8fef-1f61c7240f65.png"
+            src={imageUrl}
             alt={event.title}
             className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
           />

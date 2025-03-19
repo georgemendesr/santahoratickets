@@ -29,7 +29,7 @@ export function MainHeader() {
               </Link>
             </NavigationMenuItem>
 
-            {/* Adicionado link de criação de eventos para qualquer usuário logado */}
+            {/* Evento pode ser criado por qualquer usuário logado */}
             {session && (
               <NavigationMenuItem>
                 <Link to="/events/create">
@@ -41,18 +41,17 @@ export function MainHeader() {
               </NavigationMenuItem>
             )}
 
-            {/* Link para a área de sistema que permite visualizar os recursos administrativos */}
-            <NavigationMenuItem>
-              <Link to="/admin">
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Sistema
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-
+            {/* Links administrativos - visíveis apenas para administradores */}
             {isAdmin && (
               <>
+                <NavigationMenuItem>
+                  <Link to="/admin">
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Sistema
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
                 <NavigationMenuItem>
                   <Link to="/admin">
                     <NavigationMenuLink className={navigationMenuTriggerStyle()}>

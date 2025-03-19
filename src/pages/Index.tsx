@@ -6,7 +6,6 @@ import { EventCard } from "@/components/home/EventCard";
 import { EventHeader } from "@/components/home/EventHeader";
 import { BenefitsSection } from "@/components/home/BenefitsSection";
 import { useAuth } from "@/hooks/useAuth";
-import { AdminPromotionCard } from "@/components/admin/AdminPromotionCard";
 import { Event } from "@/types/event.types";
 import { useState } from "react";
 
@@ -41,13 +40,6 @@ export default function Index() {
   return (
     <MainLayout>
       <EventHeader />
-      
-      {/* Admin Promotion Card for logged in users */}
-      {session && (
-        <div className="container max-w-3xl mx-auto mt-8 mb-12">
-          <AdminPromotionCard />
-        </div>
-      )}
       
       <div className="container mx-auto py-12">
         <h2 className="text-3xl font-bold mb-8 text-center">Próximos Eventos</h2>

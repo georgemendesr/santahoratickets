@@ -6,6 +6,7 @@ const Index = lazy(() => import("@/pages/Index"));
 const Auth = lazy(() => import("@/pages/Auth"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const EventDetails = lazy(() => import("@/pages/EventDetails"));
+const EditEvent = lazy(() => import("@/pages/EditEvent"));
 const Rewards = lazy(() => import("@/pages/Rewards"));
 const MyVouchers = lazy(() => import("@/pages/MyVouchers"));
 // Admin imports
@@ -19,6 +20,7 @@ const AdminParticipants = lazy(() => import("@/pages/AdminParticipants"));
 const AdminBatches = lazy(() => import("@/pages/AdminBatches"));
 const AdminParticipantsList = lazy(() => import("@/pages/AdminParticipantsList"));
 const AdminParticipantsSales = lazy(() => import("@/pages/AdminParticipantsSales"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
 
 export const routes = [
   {
@@ -51,6 +53,12 @@ export const routes = [
     path: '/eventos/:eventId',
     component: EventDetails,
     private: false,
+  },
+  {
+    path: '/eventos/:id/edit',
+    component: EditEvent,
+    private: true,
+    adminOnly: true
   },
   {
     path: '/admin',
@@ -111,6 +119,11 @@ export const routes = [
     component: AdminBatches,
     private: true,
     adminOnly: true
+  },
+  {
+    path: '*',
+    component: NotFound,
+    private: false,
   }
 ];
 
@@ -123,6 +136,10 @@ export const ROUTES = {
   PROFILE: '/profile',
   REWARDS: '/recompensas',
   VOUCHERS: '/meus-vouchers',
+  EVENTS: {
+    DETAILS: (id: string) => `/eventos/${id}`,
+    EDIT: (id: string) => `/eventos/${id}/edit`,
+  },
   ADMIN: {
     DASHBOARD: '/admin',
     EVENTS: '/admin/eventos',

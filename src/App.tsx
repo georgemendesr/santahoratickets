@@ -17,10 +17,7 @@ const router = createBrowserRouter(
     path: route.path,
     element: (
       <Suspense fallback={<LoadingFallback />}>
-        {React.createElement(route.component, {
-          isProtected: route.private,
-          isAdminOnly: route.adminOnly
-        })}
+        {React.createElement(route.component)}
       </Suspense>
     ),
   }))

@@ -10,5 +10,9 @@ export const getEventUrl = (eventId: string) => {
   return `/eventos/${eventId}`;
 };
 
+export const getEventEditUrl = (eventId: string) => {
+  return `/eventos/${eventId}/edit`;
+};
+
 // Exportar rotas para uso consistente na aplicação
 export { ROUTES };

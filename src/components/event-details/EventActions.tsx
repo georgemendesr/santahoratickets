@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Edit, Ticket } from "lucide-react";
 import { Event } from "@/types";
 import { ShareButtons } from "@/components/home/ShareButtons";
+import { useNavigate } from "react-router-dom";
+import { getEventEditUrl } from "@/utils/navigation";
 
 interface EventActionsProps {
   event: Event;
@@ -19,6 +21,12 @@ export function EventActions({
   onShare, 
   onEdit 
 }: EventActionsProps) {
+  const navigate = useNavigate();
+  
+  const handleEdit = () => {
+    navigate(getEventEditUrl(event.id));
+  };
+  
   return (
     <div className="space-y-4">
       <Button 

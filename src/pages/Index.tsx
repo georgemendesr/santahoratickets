@@ -8,9 +8,11 @@ import { BenefitsSection } from "@/components/home/BenefitsSection";
 import { useAuth } from "@/hooks/useAuth";
 import { AdminPromotionCard } from "@/components/admin/AdminPromotionCard";
 import { Event } from "@/types/event.types";
+import { useState } from "react";
 
 export default function Index() {
   const { session } = useAuth();
+  const [pendingEventId, setPendingEventId] = useState<string | null>(null);
   
   const { data: events } = useQuery({
     queryKey: ["home-events"],
@@ -29,6 +31,13 @@ export default function Index() {
     },
   });
 
+  // Handle purchase button click
+  const handlePurchase = (eventId: string) => {
+    setPendingEventId(eventId);
+    // In a real implementation, this would navigate to the purchase page
+    window.location.href = `/event/${eventId}`;
+  };
+
   return (
     <MainLayout>
       <EventHeader />
@@ -44,7 +53,16 @@ export default function Index() {
         <h2 className="text-3xl font-bold mb-8 text-center">Próximos Eventos</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {events?.map((event) => (
-            <EventCard key={event.id} event={event} />
+            <EventCard 
+              key={event.id} 
+              event={event} 
+              batchInfo={{
+                name: "Lote Atual",
+                class: "text-violet-600"
+              }}
+              onPurchase={() => handlePurchase(event.id)}
+              isPending={pendingEventId === event.id}
+            />
           ))}
         </div>
       </div>

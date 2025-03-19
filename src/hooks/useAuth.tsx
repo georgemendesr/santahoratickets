@@ -57,10 +57,27 @@ export function useAuth() {
     }
   };
 
+  // Função para atualizar a sessão
+  const refreshSession = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error) throw error;
+      setSession(data.session);
+      return data.session;
+    } catch (error) {
+      console.error("Erro ao atualizar sessão:", error);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     session,
     loading,
     signOut,
-    debugAuth
+    debugAuth,
+    refreshSession
   };
 }

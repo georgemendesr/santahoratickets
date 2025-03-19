@@ -19,6 +19,7 @@ export function EventHeader() {
           .maybeSingle();
 
         if (error) throw error;
+        console.log("Event data fetched:", data);
         return data as Event;
       } catch (error) {
         console.error("Failed to fetch event:", error);
@@ -38,7 +39,8 @@ export function EventHeader() {
       {/* Background com overlay */}
       <div className="absolute inset-0">
         <div className="relative h-full w-full">
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-background z-10" />
+          {/* Overlay gradiente - ajustado para ter mais contraste */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-background z-10" />
           <img 
             src="/lovable-uploads/119af9cc-42be-4a86-9205-53a5ac40e5dd.png"
             alt="Ambiente do bar"
@@ -50,7 +52,7 @@ export function EventHeader() {
       {/* Logo centralizada */}
       <div className="relative z-20 container mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="relative group animate-bounce">
+          <div className="relative group animate-pulse">
             <img 
               src="/lovable-uploads/84e088a9-3b7b-41d9-9ef3-dd2894f717cf.png" 
               alt="Logo HORA" 

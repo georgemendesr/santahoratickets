@@ -16,12 +16,14 @@ export default function Index() {
     queryKey: ["events"],
     queryFn: async () => {
       try {
+        console.log("Fetching events...");
         const { data, error } = await supabase
           .from("events")
           .select("*")
           .order("date", { ascending: true });
 
         if (error) throw error;
+        console.log("Events fetched:", data);
         return data as Event[];
       } catch (error) {
         console.error("Erro ao carregar eventos:", error);
@@ -53,39 +55,27 @@ export default function Index() {
     return { name: "3º Lote", class: "text-red-600" };
   };
 
-  if (error) {
-    return (
-      <MainLayout>
-        <div className="min-h-screen bg-background">
-          <div className="container mx-auto px-4 py-16">
+  // Renderizar a página principal com a EventHeader, independente do estado dos eventos
+  return (
+    <MainLayout>
+      <div className="min-h-screen bg-background">
+        <EventHeader />
+
+        {error && (
+          <div className="container mx-auto px-4 py-8">
             <div className="text-center">
               <p className="text-lg text-red-600">Erro ao carregar eventos. Por favor, tente novamente mais tarde.</p>
             </div>
           </div>
-        </div>
-      </MainLayout>
-    );
-  }
+        )}
 
-  if (isLoading) {
-    return (
-      <MainLayout>
-        <div className="min-h-screen bg-background">
-          <div className="container mx-auto px-4 py-16">
+        {isLoading && (
+          <div className="container mx-auto px-4 py-8">
             <div className="text-center">
               <p className="text-lg">Carregando eventos...</p>
             </div>
           </div>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  // Renderizar mesmo sem eventos, para mostrar pelo menos o EventHeader
-  return (
-    <MainLayout>
-      <div className="min-h-screen">
-        <EventHeader />
+        )}
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="max-w-5xl mx-auto space-y-16">

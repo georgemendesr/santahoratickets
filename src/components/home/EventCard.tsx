@@ -18,8 +18,10 @@ interface EventCardProps {
 }
 
 export function EventCard({ event, batchInfo, onPurchase, isPending }: EventCardProps) {
+  console.log("Rendering EventCard with event:", event);
+  
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden border border-muted/20 bg-card/50 backdrop-blur-sm">
       <Link to={`/events/${event.id}`} className="block">
         <div className="relative aspect-[16/9] group">
           <img

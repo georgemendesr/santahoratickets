@@ -35,7 +35,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   }, [location]);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <MainHeader />
       
       {/* Menu de navegação - só mostra se estiver logado */}

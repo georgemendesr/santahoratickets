@@ -22,7 +22,7 @@ export const uploadEventImage = async (file: File): Promise<string> => {
 
     if (error) {
       console.error("Erro no upload da imagem:", error);
-      throw error;
+      throw new Error(`Erro no upload: ${error.message}`);
     }
 
     const { data: { publicUrl } } = supabase.storage

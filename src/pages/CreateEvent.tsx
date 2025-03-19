@@ -7,13 +7,19 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { EventForm, type EventFormData } from "@/components/EventForm";
 import { uploadEventImage } from "@/utils/eventImageUpload";
+import { useAuth } from "@/hooks/useAuth";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
+  const { session } = useAuth();
 
   const createEventMutation = useMutation({
     mutationFn: async (data: EventFormData) => {
       try {
+        if (!session?.user) {
+          throw new Error("Você precisa estar autenticado para criar um evento");
+        }
+
         // Upload da imagem
         const imageInput = document.getElementById("image") as HTMLInputElement;
         const imageFile = imageInput?.files?.[0];
@@ -22,9 +28,10 @@ const CreateEvent = () => {
         if (imageFile) {
           try {
             imageUrl = await uploadEventImage(imageFile);
+            console.log("Imagem enviada com sucesso:", imageUrl);
           } catch (error) {
             console.error("Erro no upload da imagem:", error);
-            toast.error("Erro ao fazer upload da imagem. Verifique o console para mais detalhes.");
+            toast.error("Erro ao fazer upload da imagem");
             throw error;
           }
         }
@@ -51,7 +58,7 @@ const CreateEvent = () => {
 
         if (error) {
           console.error("Erro ao inserir evento:", error);
-          throw error;
+          throw new Error(`Erro ao inserir evento: ${error.message}`);
         }
         
         console.log("Evento criado com sucesso:", newEvent);
@@ -63,11 +70,11 @@ const CreateEvent = () => {
     },
     onSuccess: (event) => {
       toast.success("Evento criado com sucesso!");
-      // Redirecionar para criação de lotes
-      navigate(`/admin/batches?event_id=${event.id}`);
+      // Redirecionar para a página inicial após o sucesso
+      navigate("/");
     },
-    onError: (error) => {
-      toast.error("Erro ao criar evento. Verifique o console para mais detalhes.");
+    onError: (error: Error) => {
+      toast.error(`Erro ao criar evento: ${error.message}`);
       console.error("Erro na mutação:", error);
     },
   });
@@ -90,7 +97,7 @@ const CreateEvent = () => {
           </Button>
           <h1 className="text-3xl font-bold">Criar Novo Evento</h1>
           <p className="text-muted-foreground mt-2">
-            Após criar o evento, você será redirecionado para definir os lotes e preços.
+            Preencha os detalhes do evento semanal do Santa Hora.
           </p>
         </div>
 

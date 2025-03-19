@@ -39,22 +39,41 @@ export const useRewards = (userId?: string, userProfile?: UserProfile | null) =>
       const { data, error } = await supabase
         .from('reward_redemptions')
         .select(`
-          *,
-          rewards (*)
+          id,
+          user_id,
+          reward_id,
+          points_spent,
+          status,
+          created_at,
+          updated_at,
+          rewards:reward_id (
+            id,
+            title,
+            description,
+            points_required,
+            active,
+            image,
+            created_at
+          )
         `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      // Converte o status para o tipo correto
-      const typedRedemptions = data?.map(item => ({
-        ...item,
-        status: item.status as "pending" | "approved" | "rejected" | "delivered"
-      })) || [];
+      // Ensure each item has the correct reward information
+      const formattedRedemptions: RewardRedemption[] = (data || []).map(item => {
+        // Handle missing or invalid rewards data
+        const reward = item.rewards as unknown as Reward;
+        return {
+          ...item,
+          rewards: reward || undefined,
+          status: item.status as "pending" | "approved" | "rejected" | "delivered"
+        };
+      });
       
-      setMyRedemptions(typedRedemptions);
-      return typedRedemptions;
+      setMyRedemptions(formattedRedemptions);
+      return formattedRedemptions;
     } catch (error) {
       console.error('Error fetching redemptions:', error);
       return [];
@@ -82,7 +101,7 @@ export const useRewards = (userId?: string, userProfile?: UserProfile | null) =>
             user_id: userId,
             reward_id: rewardId,
             points_spent: pointsRequired,
-            status: 'pending' as "pending" | "approved" | "rejected" | "delivered" // Corrigindo o tipo aqui
+            status: 'pending'
           }
         ])
         .select()

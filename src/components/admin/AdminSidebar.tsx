@@ -93,9 +93,9 @@ export function AdminSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   asChild
-                  isActive={isActive(ROUTES.ADMIN.FINANCEIRO)}
+                  isActive={isActive(ROUTES.ADMIN.FINANCIAL)}
                 >
-                  <Link to={ROUTES.ADMIN.FINANCEIRO}>
+                  <Link to={ROUTES.ADMIN.FINANCIAL}>
                     <DollarSign className="h-4 w-4" />
                     <span>Financeiro</span>
                   </Link>

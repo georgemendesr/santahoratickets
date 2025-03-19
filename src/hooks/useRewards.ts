@@ -82,7 +82,7 @@ export const useRewards = (userId?: string, userProfile?: UserProfile | null) =>
             user_id: userId,
             reward_id: rewardId,
             points_spent: pointsRequired,
-            status: 'pending'
+            status: 'pending' as "pending" | "approved" | "rejected" | "delivered" // Corrigindo o tipo aqui
           }
         ])
         .select()
@@ -91,7 +91,7 @@ export const useRewards = (userId?: string, userProfile?: UserProfile | null) =>
       if (error) throw error;
 
       toast.success('Resgate realizado com sucesso!');
-      return data;
+      return data as RewardRedemption;
     } catch (error) {
       console.error('Error redeeming reward:', error);
       toast.error('Erro ao realizar resgate');

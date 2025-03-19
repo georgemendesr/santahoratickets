@@ -119,9 +119,8 @@ export const protectedRoute = (route: any) => {
 };
 
 export const adminOnlyRoute = (route: any) => {
-  const { session } = useAuth();
+  const { session, isAdmin } = useAuth();
   // Check if user has admin role
-  const isAdmin = session?.user?.user_metadata?.role === 'admin';
   return route.adminOnly && !isAdmin ? '/' : null;
 };
 

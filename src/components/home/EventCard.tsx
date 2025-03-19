@@ -42,7 +42,7 @@ export function EventCard({
     if (onPurchase) {
       onPurchase();
     } else {
-      window.location.href = `/events/${event.id}`;
+      window.location.href = `/eventos/${event.id}`;
     }
   };
   
@@ -55,7 +55,7 @@ export function EventCard({
   
   return (
     <Card className="overflow-hidden border border-muted/20 bg-card/50 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300">
-      <Link to={`/events/${event.id}`} className="block">
+      <Link to={`/eventos/${event.id}`} className="block">
         <div className={`relative ${imageHeightClass} group`}>
           <img
             src={imageUrl}

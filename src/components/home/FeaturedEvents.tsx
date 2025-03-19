@@ -2,14 +2,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Event } from "@/types";
-import { EventCard } from "./EventCard";
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export function FeaturedEvents() {
-  const { data: featuredEvents, isLoading } = useQuery({
+  const navigate = useNavigate();
+  
+  const { data: featuredEvent, isLoading } = useQuery({
     queryKey: ["featured-events"],
     queryFn: async () => {
       try {
-        // Buscar eventos futuros publicados
+        // Buscar o próximo evento futuro publicado
         const today = new Date().toISOString().split('T')[0];
         
         const { data, error } = await supabase
@@ -18,45 +24,90 @@ export function FeaturedEvents() {
           .eq("status", "published")
           .gte("date", today)
           .order('date', { ascending: true })
-          .limit(4);
+          .limit(1)
+          .maybeSingle();
 
         if (error) throw error;
         
-        return data as Event[];
+        if (data) {
+          return {
+            ...data,
+            formattedDate: format(new Date(data.date), "EEEE, dd 'de' MMMM", { locale: ptBR })
+          } as Event & { formattedDate: string };
+        }
+        
+        return null;
       } catch (error) {
-        console.error("Falha ao carregar eventos em destaque:", error);
-        return [];
+        console.error("Falha ao carregar evento em destaque:", error);
+        return null;
       }
     },
   });
 
+  const handleEventDetails = (eventId: string) => {
+    navigate(`/events/${eventId}`);
+  };
+
   return (
-    <div className="container mx-auto py-12">
-      <h2 className="text-3xl font-bold mb-8 text-center">Em cartaz no Santinha</h2>
+    <div className="container mx-auto py-16">
+      <h2 className="text-3xl font-bold mb-12 text-center">Em cartaz no Santinha</h2>
       
       {isLoading ? (
-        <div className="flex justify-center items-center h-48">
-          <p className="text-lg">Carregando eventos...</p>
+        <div className="flex justify-center items-center h-64">
+          <p className="text-lg">Carregando evento...</p>
+        </div>
+      ) : featuredEvent ? (
+        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="relative aspect-[16/9]">
+            <img 
+              src={featuredEvent.image || "/placeholder.svg"}
+              alt={featuredEvent.title} 
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+          </div>
+          
+          <div className="p-8">
+            <div className="space-y-4">
+              <h3 className="text-3xl font-bold">{featuredEvent.title}</h3>
+              <p className="text-lg text-muted-foreground">{featuredEvent.description}</p>
+              
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                <span className="capitalize font-medium">{featuredEvent.formattedDate}</span>
+                <span className="text-muted-foreground">•</span>
+                <span>{featuredEvent.time}</span>
+                <span className="text-muted-foreground">•</span>
+                <span>{featuredEvent.location}</span>
+              </div>
+              
+              {featuredEvent.available_tickets <= 5 && featuredEvent.available_tickets > 0 ? (
+                <p className="text-destructive font-medium">
+                  Últimos ingressos! ({featuredEvent.available_tickets} restantes)
+                </p>
+              ) : featuredEvent.available_tickets === 0 ? (
+                <p className="text-destructive font-medium">Esgotado</p>
+              ) : (
+                <p className="text-primary font-medium">
+                  {featuredEvent.available_tickets} ingressos disponíveis
+                </p>
+              )}
+            </div>
+            
+            <div className="mt-8 flex justify-center">
+              <Button 
+                size="lg" 
+                className="bg-[#8B5CF6] hover:bg-[#7C3AED] px-8 py-6 text-lg"
+                onClick={() => handleEventDetails(featuredEvent.id)}
+              >
+                Ver Detalhes <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </div>
+          </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {featuredEvents && featuredEvents.length > 0 ? (
-            featuredEvents.map((event) => (
-              <EventCard 
-                key={event.id} 
-                event={event} 
-                batchInfo={{
-                  name: "Lote Atual",
-                  class: "text-violet-600"
-                }}
-              />
-            ))
-          ) : (
-            <div className="col-span-full text-center p-8 bg-muted rounded-lg">
-              <p className="text-lg">Não há eventos programados no momento.</p>
-              <p>Fique de olho! Novos eventos serão anunciados em breve.</p>
-            </div>
-          )}
+        <div className="text-center p-12 bg-muted rounded-lg max-w-3xl mx-auto">
+          <p className="text-lg">Não há eventos programados no momento.</p>
+          <p className="text-muted-foreground mt-2">Fique de olho! Novos eventos serão anunciados em breve.</p>
         </div>
       )}
     </div>

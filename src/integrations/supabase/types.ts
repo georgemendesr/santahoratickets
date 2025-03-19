@@ -67,15 +67,7 @@ export type Database = {
           total_tickets?: number
           visibility?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "batches_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       events: {
         Row: {
@@ -186,22 +178,7 @@ export type Database = {
           reason?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "loyalty_points_history_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loyalty_points_history_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       payment_preferences: {
         Row: {
@@ -264,22 +241,7 @@ export type Database = {
           total_amount?: number
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "payment_preferences_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_preferences_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       referral_uses: {
         Row: {
@@ -303,29 +265,7 @@ export type Database = {
           referral_id?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "referral_uses_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "referral_uses_referral_id_fkey"
-            columns: ["referral_id"]
-            isOneToOne: false
-            referencedRelation: "referrals"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "referral_uses_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       referrals: {
         Row: {
@@ -352,22 +292,7 @@ export type Database = {
           referrer_id?: string
           used_count?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "referrals_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "referrals_referrer_id_fkey"
-            columns: ["referrer_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       reward_redemptions: {
         Row: {
@@ -397,15 +322,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "reward_redemptions_reward_id_fkey"
-            columns: ["reward_id"]
-            isOneToOne: false
-            referencedRelation: "rewards"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       rewards: {
         Row: {
@@ -489,15 +406,7 @@ export type Database = {
           phone?: string | null
           ticket_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "ticket_participants_ticket_id_fkey"
-            columns: ["ticket_id"]
-            isOneToOne: false
-            referencedRelation: "tickets"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       tickets: {
         Row: {
@@ -539,15 +448,7 @@ export type Database = {
           used?: boolean
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "tickets_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_profiles: {
         Row: {
@@ -628,8 +529,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
-      event_status: "draft" | "published" | "ended" | "cancelled"
+      app_role: "user" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never

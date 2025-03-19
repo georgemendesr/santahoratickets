@@ -1,14 +1,1 @@
-
-project_id = "swlqrejfgvmjajhtoall"
-
-[api]
-enabled = true
-port = 54321
-schemas = ["public", "storage"]
-
-[functions.webhook-payment]
-verify_jwt = false
-
-[functions.create-payment]
-verify_jwt = true
-
+project_id = "uyyvncbfqvhoevpgtugp"

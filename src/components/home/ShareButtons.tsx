@@ -1,4 +1,3 @@
-
 import { Facebook, Instagram, Share2, Twitter } from "lucide-react";
 import { Button } from "../ui/button";
 
@@ -6,9 +5,10 @@ interface ShareButtonsProps {
   url: string;
   title: string;
   variant?: string;
+  event?: any;
 }
 
-export function ShareButtons({ url, title, variant }: ShareButtonsProps) {
+export function ShareButtons({ url, title, variant, event }: ShareButtonsProps) {
   const encodedUrl = encodeURIComponent(url);
   const encodedTitle = encodeURIComponent(title);
 

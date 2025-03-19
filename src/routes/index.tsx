@@ -1,132 +1,133 @@
+import { useAuth } from "@/hooks/useAuth";
+import { Home } from "@/pages/Home";
+import { Profile } from "@/pages/Profile";
+import { Auth } from "@/pages/Auth";
+import { EventDetails } from "@/pages/EventDetails";
+import { Rewards } from "@/pages/Rewards";
+import { MyVouchers } from "@/pages/MyVouchers";
+import { Tickets } from "@/pages/Tickets";
+import { AdminDashboard } from "@/pages/admin/AdminDashboard";
+import { AdminEvents } from "@/pages/admin/AdminEvents";
+import { AdminUsers } from "@/pages/admin/AdminUsers";
+import { AdminFinancial } from "@/pages/admin/AdminFinancial";
+import { AdminVouchers } from "@/pages/admin/AdminVouchers";
+import { AdminAnalytics } from "@/pages/admin/AdminAnalytics";
+import { AdminParticipants } from "@/pages/admin/AdminParticipants";
+import { AdminBatches } from "@/pages/admin/AdminBatches";
 
-import { createBrowserRouter } from "react-router-dom";
-import Index from "@/pages/Index";
-import Auth from "@/pages/Auth";
-import EventDetails from "@/pages/EventDetails";
-import NotFound from "@/pages/NotFound";
-import Checkout from "@/pages/Checkout";
-import PaymentStatus from "@/pages/PaymentStatus";
-import CheckoutFinish from "@/pages/CheckoutFinish";
-import CreateEvent from "@/pages/CreateEvent";
-import EditEvent from "@/pages/EditEvent";
-import Profile from "@/pages/Profile";
-import Admin from "@/pages/Admin";
-import AdminUsers from "@/pages/AdminUsers";
-import AdminEventos from "@/pages/AdminEventos";
-import AdminFinancial from "@/pages/AdminFinancial";
-import AdminFinanceiro from "@/pages/AdminFinanceiro";
-import AdminParticipants from "@/pages/AdminParticipants";
-import AdminParticipantsList from "@/pages/AdminParticipantsList";
-import AdminParticipantsSales from "@/pages/AdminParticipantsSales";
-import AdminVouchers from "@/pages/AdminVouchers";
-import AdminBatches from "@/pages/AdminBatches";
-import ValidateTicket from "@/pages/ValidateTicket";
-import Vouchers from "@/pages/Vouchers";
-import DuplicateEvent from "@/pages/DuplicateEvent";
-import AdminAnalytics from "@/pages/AdminAnalytics";
-import Rewards from "@/pages/Rewards";
-import MyVouchers from "@/pages/MyVouchers";
-
-export const router = createBrowserRouter([
+export const routes = [
   {
-    path: "/",
-    element: <Index />,
-    errorElement: <NotFound />,
+    path: '/',
+    component: Home,
+    private: false,
   },
   {
-    path: "/auth",
-    element: <Auth />
+    path: '/auth',
+    component: Auth,
+    private: false,
+    publicOnly: true
   },
   {
-    path: "/events/:eventId",
-    element: <EventDetails />
+    path: '/profile',
+    component: Profile,
+    private: true,
   },
   {
-    path: "/checkout/:eventId",
-    element: <Checkout />
+    path: '/recompensas',
+    component: Rewards,
+    private: true,
   },
   {
-    path: "/checkout/finish/:eventId",
-    element: <CheckoutFinish />
+    path: '/ingressos',
+    component: Tickets,
+    private: true,
   },
   {
-    path: "/payment/:paymentId/status",
-    element: <PaymentStatus />
+    path: '/meus-vouchers',
+    component: MyVouchers,
+    private: true,
   },
   {
-    path: "/events/create",
-    element: <CreateEvent />
+    path: '/eventos/:eventId',
+    component: EventDetails,
+    private: false,
   },
   {
-    path: "/events/:eventId/edit",
-    element: <EditEvent />
+    path: '/admin',
+    component: AdminDashboard,
+    private: true,
+    adminOnly: true
   },
   {
-    path: "/events/:eventId/duplicate",
-    element: <DuplicateEvent />
+    path: '/admin/eventos',
+    component: AdminEvents,
+    private: true,
+    adminOnly: true
   },
   {
-    path: "/perfil",
-    element: <Profile />
+    path: '/admin/usuarios',
+    component: AdminUsers,
+    private: true,
+    adminOnly: true
   },
   {
-    path: "/admin",
-    element: <Admin />
+    path: '/admin/financeiro',
+    component: AdminFinancial,
+    private: true,
+    adminOnly: true
   },
   {
-    path: "/admin/usuarios",
-    element: <AdminUsers />
+    path: '/admin/vouchers',
+    component: AdminVouchers,
+    private: true,
+    adminOnly: true
   },
   {
-    path: "/admin/eventos",
-    element: <AdminEventos />
+    path: '/admin/analytics',
+    component: AdminAnalytics,
+    private: true,
+    adminOnly: true
   },
   {
-    path: "/admin/financeiro",
-    element: <AdminFinanceiro />
+    path: '/admin/participantes',
+    component: AdminParticipants,
+    private: true,
+    adminOnly: true
   },
   {
-    path: "/admin/financial",
-    element: <AdminFinancial />
-  },
-  {
-    path: "/admin/participantes",
-    element: <AdminParticipants />
-  },
-  {
-    path: "/admin/participantes/lista",
-    element: <AdminParticipantsList />
-  },
-  {
-    path: "/admin/participantes/vendas",
-    element: <AdminParticipantsSales />
-  },
-  {
-    path: "/admin/vouchers",
-    element: <AdminVouchers />
-  },
-  {
-    path: "/admin/lotes",
-    element: <AdminBatches />
-  },
-  {
-    path: "/admin/analytics",
-    element: <AdminAnalytics />
-  },
-  {
-    path: "/validar-ingresso",
-    element: <ValidateTicket />
-  },
-  {
-    path: "/meus-vouchers",
-    element: <MyVouchers />
-  },
-  {
-    path: "/vouchers",
-    element: <Vouchers />
-  },
-  {
-    path: "/recompensas",
-    element: <Rewards />
+    path: '/admin/lotes',
+    component: AdminBatches,
+    private: true,
+    adminOnly: true
   }
-]);
+];
+
+export const protectedRoute = (route: any) => {
+  const { session } = useAuth();
+  return route.private && !session ? '/auth' : null;
+};
+
+export const adminOnlyRoute = (route: any) => {
+  const { isAdmin } = useAuth();
+  return route.adminOnly && !isAdmin ? '/' : null;
+};
+
+// Exportando constante ROUTES para corrigir erros de importação
+export const ROUTES = {
+  HOME: '/',
+  AUTH: '/auth',
+  PROFILE: '/profile',
+  REWARDS: '/recompensas',
+  TICKETS: '/ingressos',
+  VOUCHERS: '/meus-vouchers',
+  ADMIN: {
+    DASHBOARD: '/admin',
+    EVENTS: '/admin/eventos',
+    USERS: '/admin/usuarios',
+    FINANCIAL: '/admin/financeiro',
+    VOUCHERS: '/admin/vouchers',
+    ANALYTICS: '/admin/analytics',
+    PARTICIPANTS: '/admin/participantes',
+    BATCHES: '/admin/lotes'
+  }
+};

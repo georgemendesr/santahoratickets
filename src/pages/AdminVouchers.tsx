@@ -1,7 +1,4 @@
 
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { useRole } from "@/hooks/useRole";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,16 +10,11 @@ import {
 } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Ticket, PencilRuler, PlusCircle } from "lucide-react";
+import { useNavigation } from "@/hooks/useNavigation";
+import { ROUTES } from "@/routes";
 
 const AdminVouchers = () => {
-  const navigate = useNavigate();
-  const { session } = useAuth();
-  const { isAdmin } = useRole(session);
-
-  if (!isAdmin) {
-    navigate("/");
-    return null;
-  }
+  const { goToAdminEvents, goToAdminBatches } = useNavigation();
 
   return (
     <AdminLayout>
@@ -33,15 +25,16 @@ const AdminVouchers = () => {
             <p className="text-muted-foreground mt-1">Gerencie tipos de ingressos e layouts de vouchers</p>
           </div>
           <div className="flex gap-2">
-            <Link to="/admin/eventos">
-              <Button variant="outline">Voltar para Eventos</Button>
-            </Link>
-            <Link to="/admin/batches">
-              <Button>
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Novo Lote
-              </Button>
-            </Link>
+            <Button 
+              variant="outline" 
+              onClick={goToAdminEvents}
+            >
+              Voltar para Eventos
+            </Button>
+            <Button onClick={() => goToAdminBatches()}>
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Novo Lote
+            </Button>
           </div>
         </div>
 
@@ -53,7 +46,7 @@ const AdminVouchers = () => {
             </CardHeader>
             <CardContent className="flex flex-col items-center">
               <Ticket className="h-16 w-16 text-primary mb-4" />
-              <Link to="/admin/batches">
+              <Link to={ROUTES.ADMIN.BATCHES}>
                 <Button className="w-full">
                   Gerenciar Ingressos
                 </Button>

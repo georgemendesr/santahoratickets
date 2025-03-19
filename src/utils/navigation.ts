@@ -25,6 +25,10 @@ export const getCheckoutUrl = (eventId: string): string => {
   return generatePath(`/checkout/${eventId}`);
 };
 
+export const getAdminBatchesUrl = (eventId?: string): string => {
+  return eventId ? `${ROUTES.ADMIN.BATCHES}?event_id=${eventId}` : ROUTES.ADMIN.BATCHES;
+};
+
 // Função para normalizar URLs de eventos
 export const normalizeEventUrl = (url: string): string => {
   // Padroniza todas as URLs para usar o formato /eventos/

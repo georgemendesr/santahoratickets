@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { getImageUrl } from "@/integrations/supabase/utils";
 import { ShareButtons } from "./ShareButtons";
 import { getEventUrl } from "@/utils/navigation";
+import { useNavigation } from "@/hooks/useNavigation";
 
 interface EventCardProps {
   event: Event;
@@ -26,6 +27,8 @@ export function EventCard({
   isPending = false,
   imageSize = 'default'
 }: EventCardProps) {
+  const { goToEventDetails } = useNavigation();
+  
   // Verificar se a imagem existe e formar a URL correta
   const imageUrl = event.image 
     ? (event.image.startsWith("http") 
@@ -46,7 +49,7 @@ export function EventCard({
     if (onPurchase) {
       onPurchase();
     } else {
-      window.location.href = eventUrl;
+      goToEventDetails(event.id);
     }
   };
   

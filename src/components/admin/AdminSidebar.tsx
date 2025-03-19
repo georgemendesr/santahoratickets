@@ -2,6 +2,7 @@
 import { LayoutDashboard, CalendarDays, Users, Ticket, Tag, DollarSign, BarChart3 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { ROUTES } from "@/routes";
+import { useNavigation } from "@/hooks/useNavigation";
 import {
   Sidebar,
   SidebarContent,

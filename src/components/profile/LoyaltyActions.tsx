@@ -4,12 +4,12 @@ import { Gift, Ticket } from "lucide-react";
 import { useNavigation } from "@/hooks/useNavigation";
 
 export const LoyaltyActions = () => {
-  const { navigateTo } = useNavigation();
+  const { goToRewards, goToMyVouchers } = useNavigation();
 
   return (
     <div className="flex justify-center gap-4">
       <Button
-        onClick={() => navigateTo("/recompensas")}
+        onClick={goToRewards}
         className="flex items-center gap-2"
       >
         <Gift className="h-4 w-4" />
@@ -18,7 +18,7 @@ export const LoyaltyActions = () => {
       
       <Button
         variant="outline"
-        onClick={() => navigateTo("/meus-vouchers")}
+        onClick={goToMyVouchers}
         className="flex items-center gap-2"
       >
         <Ticket className="h-4 w-4" />

@@ -53,6 +53,8 @@ export default function Auth() {
       if (error.message) {
         if (error.message.includes("Invalid login")) {
           mensagem = "Email ou senha incorretos";
+        } else if (error.message.includes("Email not confirmed")) {
+          mensagem = "Por favor, confirme seu email para fazer login";
         } else {
           mensagem += ": " + error.message;
         }
@@ -76,11 +78,18 @@ export default function Auth() {
 
     try {
       console.log("Tentando criar conta com:", { email });
+      
+      // Verificar se o domínio de email é válido
+      // Removido para permitir qualquer domínio de email
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: window.location.origin,
+          data: {
+            email: email,
+          }
         }
       });
 
@@ -89,7 +98,12 @@ export default function Auth() {
         throw error;
       }
 
-      console.log("Conta criada com sucesso:", data);
+      console.log("Resposta de criação de conta:", data);
+      
+      if (data.user?.identities?.length === 0) {
+        throw new Error("Este email já está cadastrado");
+      }
+      
       setSignUpSuccess(true);
       e.currentTarget.reset();
       
@@ -100,6 +114,8 @@ export default function Auth() {
       if (error.message) {
         if (error.message.includes("User already registered")) {
           mensagem = "Este email já está cadastrado";
+        } else if (error.message.includes("Este email já está cadastrado")) {
+          mensagem = error.message;
         } else {
           mensagem += ": " + error.message;
         }

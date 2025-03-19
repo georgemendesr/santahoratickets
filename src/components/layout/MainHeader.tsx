@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
-import { Ticket, LayoutTemplate, Users } from "lucide-react";
+import { Ticket, LayoutTemplate, Users, User } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function MainHeader() {
@@ -75,14 +75,21 @@ export function MainHeader() {
 
         <div className="flex items-center gap-4">
           {session ? (
-            <>
+            <div className="flex items-center gap-2">
+              <Link to="/profile">
+                <Button variant="ghost" size="sm">
+                  <User className="h-4 w-4 mr-2" />
+                  Perfil
+                </Button>
+              </Link>
               <Button
                 variant="ghost"
+                size="sm"
                 onClick={() => signOut()}
               >
                 Sair
               </Button>
-            </>
+            </div>
           ) : (
             <Link to="/auth">
               <Button>Entrar</Button>

@@ -10,6 +10,7 @@ export function useAuth() {
   useEffect(() => {
     // Obter a sessão atual
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Sessão obtida:", !!session);
       setSession(session);
       setLoading(false);
     });
@@ -29,15 +30,37 @@ export function useAuth() {
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Erro ao fazer logout:", error);
+        throw error;
+      }
+      console.log("Logout realizado com sucesso");
     } catch (error) {
-      console.error("Error signing out:", error);
+      console.error("Erro completo ao fazer logout:", error);
+    }
+  };
+
+  // Função para depurar o problema de autenticação
+  const debugAuth = async () => {
+    try {
+      const sessionResult = await supabase.auth.getSession();
+      console.log("Sessão atual:", sessionResult);
+      
+      const userResult = await supabase.auth.getUser();
+      console.log("Usuário atual:", userResult);
+      
+      return { session: sessionResult, user: userResult };
+    } catch (error) {
+      console.error("Erro ao depurar autenticação:", error);
+      return { error };
     }
   };
 
   return {
     session,
     loading,
-    signOut
+    signOut,
+    debugAuth
   };
 }

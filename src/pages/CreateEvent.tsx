@@ -36,22 +36,26 @@ const CreateEvent = () => {
         description: data.description,
         date: data.date,
         time: data.time,
-        location: data.location,
-        price: parseFloat(data.price),
-        available_tickets: parseInt(data.available_tickets),
+        location: data.location || "Santa Hora",
+        price: 0, // Valor padrão, já que o preço será definido nos lotes
+        available_tickets: 0, // Valor padrão, já que a quantidade será definida nos lotes
         image: imagePath,
         status: "published" as const
       };
 
-      const { error } = await supabase
+      const { error, data: newEvent } = await supabase
         .from("events")
-        .insert([eventData]);
+        .insert([eventData])
+        .select();
 
       if (error) throw error;
+      
+      return newEvent[0];
     },
-    onSuccess: () => {
+    onSuccess: (event) => {
       toast.success("Evento criado com sucesso!");
-      navigate("/");
+      // Redirecionar para criação de lotes
+      navigate(`/admin/batches?event_id=${event.id}`);
     },
     onError: (error) => {
       toast.error("Erro ao criar evento");
@@ -81,6 +85,9 @@ const CreateEvent = () => {
             Voltar
           </Button>
           <h1 className="text-3xl font-bold">Criar Novo Evento</h1>
+          <p className="text-muted-foreground mt-2">
+            Após criar o evento, você será redirecionado para definir os lotes e preços.
+          </p>
         </div>
 
         <div className="max-w-2xl mx-auto">

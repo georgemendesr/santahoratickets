@@ -5,6 +5,7 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { type UseFormReturn } from "react-hook-form";
@@ -23,8 +24,11 @@ export const LocationField = ({ form }: LocationFieldProps) => {
         <FormItem>
           <FormLabel>Local</FormLabel>
           <FormControl>
-            <Input placeholder="Digite o local do evento" {...field} />
+            <Input placeholder="Santa Hora" {...field} />
           </FormControl>
+          <FormDescription>
+            O local padrão é "Santa Hora".
+          </FormDescription>
           <FormMessage />
         </FormItem>
       )}

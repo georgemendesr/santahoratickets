@@ -6,9 +6,7 @@ export const eventFormSchema = z.object({
   description: z.string().min(1, "A descrição é obrigatória"),
   date: z.string().min(1, "A data é obrigatória"),
   time: z.string().min(1, "O horário é obrigatório"),
-  location: z.string().min(1, "O local é obrigatório"),
-  price: z.string().min(1, "O preço é obrigatório"),
-  available_tickets: z.string().min(1, "A quantidade de ingressos é obrigatória"),
+  location: z.string().default("Santa Hora"),
 });
 
 export type EventFormData = z.infer<typeof eventFormSchema>;

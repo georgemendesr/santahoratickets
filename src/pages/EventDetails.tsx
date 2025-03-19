@@ -25,7 +25,7 @@ const EventDetails = () => {
     const normalizedPath = normalizeEventUrl(currentPath);
     
     if (normalizedPath !== currentPath) {
-      navigateTo(normalizedPath, { replace: true });
+      navigateTo(normalizedPath);
     }
   }, [location.pathname, navigateTo]);
   

@@ -18,12 +18,15 @@ export default function Index() {
     queryKey: ["events"],
     queryFn: async () => {
       try {
+        const today = new Date().toISOString().split('T')[0];
+        
         const { data, error } = await supabase
           .from("events")
           .select("*")
           .eq("status", "published")
-          .order("date", { ascending: true })  // Mostrar primeiro os eventos mais próximos
-          .limit(6);  // Limitar a 6 eventos na página inicial
+          .gte("date", today)  // Apenas eventos futuros
+          .order("date", { ascending: true })
+          .limit(1);  // Apenas o próximo evento
 
         if (error) throw error;
         
@@ -74,7 +77,7 @@ export default function Index() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="max-w-7xl mx-auto space-y-16">
             <div>
-              <h2 className="text-3xl font-bold mb-8 text-center">Próximos Eventos</h2>
+              <h2 className="text-3xl font-bold mb-8 text-center">Próximo Evento</h2>
               
               {error && (
                 <div className="text-center py-8">
@@ -84,7 +87,7 @@ export default function Index() {
 
               {isLoading && (
                 <div className="text-center py-8">
-                  <p className="text-lg">Carregando eventos...</p>
+                  <p className="text-lg">Carregando próximo evento...</p>
                 </div>
               )}
 
@@ -95,19 +98,17 @@ export default function Index() {
               )}
 
               {events && events.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {events.map((event) => (
-                    <EventCard 
-                      key={event.id}
-                      event={{
-                        ...event,
-                        date: event.formattedDate
-                      }}
-                      batchInfo={getBatchInfo(event)}
-                      onPurchase={() => handlePurchase(event.id)}
-                      isPending={false}
-                    />
-                  ))}
+                <div className="max-w-xl mx-auto">
+                  <EventCard 
+                    key={featuredEvent.id}
+                    event={{
+                      ...featuredEvent,
+                      date: featuredEvent.formattedDate
+                    }}
+                    batchInfo={getBatchInfo(featuredEvent)}
+                    onPurchase={() => handlePurchase(featuredEvent.id)}
+                    isPending={false}
+                  />
                 </div>
               )}
             </div>

@@ -17,10 +17,14 @@ interface EventCardProps {
 }
 
 export function EventCard({ event, batchInfo, onPurchase, isPending }: EventCardProps) {
-  // Verificar se a imagem é uma URL ou um caminho local
-  const imageUrl = event.image?.startsWith("/") 
-    ? event.image 
-    : getImageUrl(event.image).publicUrl || "/lovable-uploads/c07e81e6-595c-4636-8fef-1f61c7240f65.png";
+  // Verificar se a imagem existe e formar a URL correta
+  const imageUrl = event.image 
+    ? (event.image.startsWith("http") 
+       ? event.image 
+       : (event.image.startsWith("/") 
+         ? event.image 
+         : getImageUrl(event.image).publicUrl))
+    : "/lovable-uploads/c07e81e6-595c-4636-8fef-1f61c7240f65.png";
   
   // Verificar se o evento já aconteceu
   const eventDate = new Date(event.date);

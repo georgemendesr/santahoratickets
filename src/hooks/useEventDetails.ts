@@ -12,7 +12,7 @@ export const useEventDetails = (eventId: string | undefined) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { session } = useAuth();
-  const { profile, createProfile, createReferral } = useProfile(session?.user.id);
+  const { profile, createProfile, createReferral } = useProfile(session?.user?.id);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [cpf, setCpf] = useState("");
   const [birthDate, setBirthDate] = useState("");
@@ -25,19 +25,29 @@ export const useEventDetails = (eventId: string | undefined) => {
     queryFn: async () => {
       if (!eventId) throw new Error("ID do evento não fornecido");
       
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .eq("id", eventId)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("events")
+          .select("*")
+          .eq("id", eventId)
+          .maybeSingle();
 
-      if (error) {
+        if (error) {
+          console.error("Erro ao buscar evento:", error);
+          throw error;
+        }
+        
+        if (!data) {
+          throw new Error("Evento não encontrado");
+        }
+        
+        console.log("Evento encontrado:", data);
+        return data as Event;
+      } catch (error) {
         console.error("Erro ao buscar evento:", error);
-        throw error;
+        toast.error("Erro ao carregar detalhes do evento");
+        return null;
       }
-      
-      console.log("Evento encontrado:", data);
-      return data as Event;
     },
     enabled: !!eventId,
   });
@@ -47,19 +57,24 @@ export const useEventDetails = (eventId: string | undefined) => {
     queryFn: async () => {
       if (!eventId) throw new Error("ID do evento não fornecido");
 
-      const { data, error } = await supabase
-        .from("batches")
-        .select("*")
-        .eq("event_id", eventId)
-        .order("order_number", { ascending: true });
+      try {
+        const { data, error } = await supabase
+          .from("batches")
+          .select("*")
+          .eq("event_id", eventId)
+          .order("order_number", { ascending: true });
 
-      if (error) {
+        if (error) {
+          console.error("Erro ao buscar lotes:", error);
+          throw error;
+        }
+
+        console.log("Lotes encontrados:", data);
+        return data as Batch[];
+      } catch (error) {
         console.error("Erro ao buscar lotes:", error);
-        throw error;
+        return [];
       }
-
-      console.log("Lotes encontrados:", data);
-      return data as Batch[];
     },
     enabled: !!eventId,
   });
@@ -97,40 +112,6 @@ export const useEventDetails = (eventId: string | undefined) => {
     },
   });
 
-  const createPaymentPreference = useMutation({
-    mutationFn: async () => {
-      if (!session?.user.id || !event) return null;
-
-      const { data, error } = await supabase
-        .from("payment_preferences")
-        .insert([
-          {
-            user_id: session.user.id,
-            event_id: event.id,
-            ticket_quantity: 1,
-            total_amount: event.price,
-            init_point: "URL_DO_CHECKOUT",
-            status: "pending"
-          }
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
-      if (data) {
-        toast.success("Pedido criado com sucesso!");
-        navigate("/");
-      }
-    },
-    onError: (error) => {
-      console.error("Erro ao criar preferência de pagamento:", error);
-      toast.error("Erro ao processar pedido. Por favor, tente novamente.");
-    }
-  });
-
   return {
     event,
     batches,
@@ -147,7 +128,6 @@ export const useEventDetails = (eventId: string | undefined) => {
     setPhone,
     createProfileMutation,
     createReferralMutation,
-    createPaymentPreference,
     isLoading: isLoadingEvent || isLoadingBatches
   };
 };

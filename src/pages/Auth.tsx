@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -14,6 +15,7 @@ export default function Auth() {
   const { session } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [signUpSuccess, setSignUpSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (session) {
     navigate("/");
@@ -23,23 +25,41 @@ export default function Auth() {
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log("Tentando fazer login com:", { email });
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro de login:", error);
+        throw error;
+      }
 
+      console.log("Login bem-sucedido:", data);
       toast.success("Login realizado com sucesso!");
       navigate("/");
     } catch (error: any) {
-      toast.error("Erro ao fazer login: " + error.message);
+      console.error("Erro completo:", error);
+      let mensagem = "Erro ao fazer login";
+      
+      if (error.message) {
+        if (error.message.includes("Invalid login")) {
+          mensagem = "Email ou senha incorretos";
+        } else {
+          mensagem += ": " + error.message;
+        }
+      }
+      
+      setError(mensagem);
+      toast.error(mensagem);
     } finally {
       setIsLoading(false);
     }
@@ -48,24 +68,45 @@ export default function Auth() {
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
     try {
-      const { error } = await supabase.auth.signUp({
+      console.log("Tentando criar conta com:", { email });
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: window.location.origin,
+        }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao criar conta:", error);
+        throw error;
+      }
 
+      console.log("Conta criada com sucesso:", data);
       setSignUpSuccess(true);
       e.currentTarget.reset();
       
     } catch (error: any) {
-      toast.error("Erro ao criar conta: " + error.message);
+      console.error("Erro completo ao criar conta:", error);
+      let mensagem = "Erro ao criar conta";
+      
+      if (error.message) {
+        if (error.message.includes("User already registered")) {
+          mensagem = "Este email já está cadastrado";
+        } else {
+          mensagem += ": " + error.message;
+        }
+      }
+      
+      setError(mensagem);
+      toast.error(mensagem);
     } finally {
       setIsLoading(false);
     }
@@ -75,9 +116,9 @@ export default function Auth() {
     <div className="container flex items-center justify-center min-h-screen">
       <Card className="w-full max-w-lg">
         <CardHeader>
-          <CardTitle>Bem-vindo!</CardTitle>
+          <CardTitle>Bem-vindo ao Santa Hora!</CardTitle>
           <CardDescription>
-            Faça login ou crie uma conta para continuar
+            Faça login ou crie uma conta para comprar suas pulseiras
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -87,8 +128,14 @@ export default function Auth() {
               <TabsTrigger value="signup">Criar Conta</TabsTrigger>
             </TabsList>
 
+            {error && (
+              <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-md border border-red-200">
+                {error}
+              </div>
+            )}
+
             <TabsContent value="login">
-              <form onSubmit={handleSignIn} className="space-y-4">
+              <form onSubmit={handleSignIn} className="space-y-4 mt-4">
                 <div>
                   <Input
                     type="email"
@@ -137,7 +184,7 @@ export default function Auth() {
                   </Button>
                 </div>
               ) : (
-                <form onSubmit={handleSignUp} className="space-y-4">
+                <form onSubmit={handleSignUp} className="space-y-4 mt-4">
                   <div>
                     <Input
                       type="email"
@@ -150,8 +197,9 @@ export default function Auth() {
                     <Input
                       type="password"
                       name="password"
-                      placeholder="Digite sua senha"
+                      placeholder="Digite sua senha (mínimo 6 caracteres)"
                       required
+                      minLength={6}
                     />
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>

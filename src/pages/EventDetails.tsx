@@ -9,7 +9,7 @@ import { EventDetailsContent } from "@/components/event-details/EventDetailsCont
 import { useEventDetails } from "@/hooks/useEventDetails";
 
 const EventDetails = () => {
-  const { id } = useParams<{ id: string }>();
+  const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
   const { session } = useAuth();
   const { isAdmin } = useRole(session);
@@ -31,7 +31,7 @@ const EventDetails = () => {
     createProfileMutation,
     createReferralMutation,
     isLoading
-  } = useEventDetails(id);
+  } = useEventDetails(eventId);
 
   const handleShare = async () => {
     if (!session) {
@@ -70,13 +70,15 @@ const EventDetails = () => {
 
   const handleEdit = () => {
     if (!event?.id) return;
-    navigate(`/edit/${event.id}`);
+    navigate(`/events/${event.id}/edit`);
   };
 
   if (isLoading) {
     return (
       <EventLayout onBack={() => navigate(-1)}>
-        <p>Carregando...</p>
+        <div className="flex justify-center items-center h-64">
+          <p className="text-lg">Carregando informações do evento...</p>
+        </div>
       </EventLayout>
     );
   }
@@ -84,7 +86,16 @@ const EventDetails = () => {
   if (!event) {
     return (
       <EventLayout onBack={() => navigate(-1)}>
-        <p>Evento não encontrado</p>
+        <div className="flex flex-col justify-center items-center h-64">
+          <p className="text-lg text-red-500">Evento não encontrado</p>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={() => navigate('/')}
+          >
+            Voltar para a página inicial
+          </Button>
+        </div>
       </EventLayout>
     );
   }
@@ -117,6 +128,6 @@ const EventDetails = () => {
       />
     </EventLayout>
   );
-};
+}
 
 export default EventDetails;

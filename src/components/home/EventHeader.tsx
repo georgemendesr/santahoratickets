@@ -58,7 +58,7 @@ export function EventHeader() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-transparent z-10" />
           <img 
             src="/lovable-uploads/41a95ecf-db21-429e-949c-f125b594e382.png"
-            alt="HORA - Ambiente"
+            alt="Santa Hora - Ambiente"
             className="w-full h-full object-cover"
           />
         </div>
@@ -70,7 +70,7 @@ export function EventHeader() {
           <div className="relative mb-6">
             <img 
               src="/lovable-uploads/84e088a9-3b7b-41d9-9ef3-dd2894f717cf.png" 
-              alt="Logo HORA" 
+              alt="Logo Santa Hora" 
               className="h-48 mx-auto filter drop-shadow-2xl"
             />
           </div>

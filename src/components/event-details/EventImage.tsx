@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Image as ImageIcon } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { getImageUrl } from "@/integrations/supabase/utils";
 
 interface EventImageProps {
   src: string;
@@ -10,7 +11,15 @@ interface EventImageProps {
 
 export function EventImage({ src, alt }: EventImageProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const imageUrl = "/lovable-uploads/c07e81e6-595c-4636-8fef-1f61c7240f65.png";
+  
+  // Verificar se a imagem existe e formar a URL correta
+  const imageUrl = src 
+    ? (src.startsWith("http") 
+       ? src 
+       : (src.startsWith("/") 
+         ? src 
+         : getImageUrl(src).publicUrl))
+    : "/lovable-uploads/c07e81e6-595c-4636-8fef-1f61c7240f65.png";
 
   return (
     <>

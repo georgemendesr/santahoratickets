@@ -7,6 +7,7 @@ import { EventHeader } from "@/components/home/EventHeader";
 import { BenefitsSection } from "@/components/home/BenefitsSection";
 import { useAuth } from "@/hooks/useAuth";
 import { AdminPromotionCard } from "@/components/admin/AdminPromotionCard";
+import { Event } from "@/types/event.types";
 
 export default function Index() {
   const { session } = useAuth();
@@ -19,7 +20,12 @@ export default function Index() {
         .select("*")
         .eq("status", "published")
         .order("date", { ascending: true });
-      return data;
+      
+      // Transform the data to ensure it conforms to the Event type
+      return data?.map(event => ({
+        ...event,
+        status: (event.status as "published" | "draft" | "ended") || "published"
+      })) as Event[];
     },
   });
 

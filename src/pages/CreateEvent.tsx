@@ -6,51 +6,60 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { EventForm, type EventFormData } from "@/components/EventForm";
+import { uploadEventImage } from "@/utils/eventImageUpload";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
 
   const createEventMutation = useMutation({
     mutationFn: async (data: EventFormData) => {
-      const imageInput = document.getElementById("image") as HTMLInputElement;
-      const imageFile = imageInput?.files?.[0];
-      let imagePath = "default-event.jpg"; // Imagem padrão se nenhuma for enviada
+      try {
+        // Upload da imagem
+        const imageInput = document.getElementById("image") as HTMLInputElement;
+        const imageFile = imageInput?.files?.[0];
+        let imageUrl = null;
 
-      if (imageFile) {
-        const fileName = `${crypto.randomUUID()}.${imageFile.name.split('.').pop()}`;
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("event-images")
-          .upload(fileName, imageFile);
-
-        if (uploadError) {
-          console.error("Erro no upload:", uploadError);
-          throw new Error("Erro ao fazer upload da imagem");
+        if (imageFile) {
+          try {
+            imageUrl = await uploadEventImage(imageFile);
+          } catch (error) {
+            console.error("Erro no upload da imagem:", error);
+            toast.error("Erro ao fazer upload da imagem. Verifique o console para mais detalhes.");
+            throw error;
+          }
         }
 
-        imagePath = fileName;
+        // Dados do evento
+        const eventData = {
+          title: data.title,
+          description: data.description,
+          date: data.date,
+          time: data.time,
+          location: data.location || "Santa Hora",
+          price: 0, // Valor padrão, já que o preço será definido nos lotes
+          available_tickets: 0, // Valor padrão, já que a quantidade será definida nos lotes
+          image: imageUrl || "/lovable-uploads/c07e81e6-595c-4636-8fef-1f61c7240f65.png", // Imagem padrão se nenhuma for enviada
+          status: "published" as const
+        };
+
+        console.log("Criando evento:", eventData);
+
+        const { error, data: newEvent } = await supabase
+          .from("events")
+          .insert([eventData])
+          .select();
+
+        if (error) {
+          console.error("Erro ao inserir evento:", error);
+          throw error;
+        }
+        
+        console.log("Evento criado com sucesso:", newEvent);
+        return newEvent[0];
+      } catch (error) {
+        console.error("Erro na criação do evento:", error);
+        throw error;
       }
-
-      const eventData = {
-        title: data.title,
-        description: data.description,
-        date: data.date,
-        time: data.time,
-        location: data.location || "Santa Hora",
-        price: 0, // Valor padrão, já que o preço será definido nos lotes
-        available_tickets: 0, // Valor padrão, já que a quantidade será definida nos lotes
-        image: imagePath,
-        status: "published" as const
-      };
-
-      const { error, data: newEvent } = await supabase
-        .from("events")
-        .insert([eventData])
-        .select();
-
-      if (error) throw error;
-      
-      return newEvent[0];
     },
     onSuccess: (event) => {
       toast.success("Evento criado com sucesso!");
@@ -58,18 +67,13 @@ const CreateEvent = () => {
       navigate(`/admin/batches?event_id=${event.id}`);
     },
     onError: (error) => {
-      toast.error("Erro ao criar evento");
-      console.error("Erro:", error);
+      toast.error("Erro ao criar evento. Verifique o console para mais detalhes.");
+      console.error("Erro na mutação:", error);
     },
   });
 
   const onSubmit = async (data: EventFormData) => {
-    try {
-      await createEventMutation.mutateAsync(data);
-    } catch (error) {
-      console.error('Erro completo:', error);
-      toast.error("Erro ao criar evento");
-    }
+    createEventMutation.mutate(data);
   };
 
   return (

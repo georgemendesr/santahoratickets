@@ -3,7 +3,6 @@ import React, { Suspense, lazy } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { FeedbackProvider } from "./context/FeedbackContext";
 import { routes } from "./routes";
-import { protectedRoute, adminOnlyRoute } from "./routes";
 
 // Loading fallback
 const LoadingFallback = () => (
@@ -12,6 +11,12 @@ const LoadingFallback = () => (
   </div>
 );
 
+// Definir as props para os componentes de rota
+type RouteComponentProps = {
+  isProtected?: boolean;
+  isAdminOnly?: boolean;
+};
+
 // Construct the router with the routes from routes/index.tsx
 const router = createBrowserRouter(
   routes.map(route => ({
@@ -19,9 +24,9 @@ const router = createBrowserRouter(
     element: (
       <Suspense fallback={<LoadingFallback />}>
         {React.createElement(route.component, {
-          protected: protectedRoute(route),
-          adminOnly: adminOnlyRoute(route)
-        })}
+          isProtected: route.private,
+          isAdminOnly: route.adminOnly
+        } as RouteComponentProps)}
       </Suspense>
     ),
   }))

@@ -1,5 +1,4 @@
 
-import { useAuth } from "@/hooks/useAuth";
 import { lazy } from "react";
 
 // Use lazy loading para evitar circular dependencies
@@ -115,16 +114,7 @@ export const routes = [
   }
 ];
 
-export const protectedRoute = (route: any) => {
-  const { session } = useAuth();
-  return route.private && !session ? '/auth' : null;
-};
-
-export const adminOnlyRoute = (route: any) => {
-  const { session, isAdmin } = useAuth();
-  // Check if user has admin role
-  return route.adminOnly && !isAdmin ? '/' : null;
-};
+// Componentes de proteção de rota serão tratados nos componentes individuais usando useAuth
 
 // Export constant ROUTES for consistent navigation
 export const ROUTES = {

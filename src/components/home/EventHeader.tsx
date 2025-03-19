@@ -37,13 +37,13 @@ export function EventHeader() {
   };
 
   return (
-    <div className="relative h-screen flex items-center justify-center">
+    <div className="relative h-[50vh] flex items-center justify-center">
       {/* Background with darker overlay */}
       <div className="absolute inset-0">
         <div className="relative h-full w-full">
-          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-background z-10" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-transparent z-10" />
           <img 
-            src="/lovable-uploads/1435babf-b231-494c-a8fb-9dd1239cd347.png"
+            src="/lovable-uploads/41a95ecf-db21-429e-949c-f125b594e382.png"
             alt="Bar ambiente"
             className="w-full h-full object-cover"
           />
@@ -53,16 +53,16 @@ export function EventHeader() {
       {/* Centered content */}
       <div className="relative z-20 container mx-auto px-4 text-center">
         <div className="max-w-4xl mx-auto">
-          <div className="relative mb-10">
+          <div className="relative mb-6">
             <img 
               src="/lovable-uploads/84e088a9-3b7b-41d9-9ef3-dd2894f717cf.png" 
               alt="Logo HORA" 
-              className="h-64 mx-auto filter drop-shadow-2xl"
+              className="h-48 mx-auto filter drop-shadow-2xl"
             />
           </div>
           
           {event && (
-            <div className="mt-16">
+            <div className="mt-8">
               <Button 
                 size="lg" 
                 className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-lg px-8 py-6"
@@ -75,17 +75,10 @@ export function EventHeader() {
         </div>
       </div>
 
-      {/* Scroll indicator */}
-      <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce">
-        <div className="w-8 h-12 rounded-full border-2 border-white/30 flex items-start justify-center p-2">
-          <div className="w-1 h-3 bg-white/70 rounded-full" />
-        </div>
-      </div>
-
       {/* Atmospheric elements */}
       <div className="absolute inset-0 pointer-events-none z-10">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />
       </div>
     </div>
   );

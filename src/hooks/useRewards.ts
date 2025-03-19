@@ -36,6 +36,8 @@ export const useRewards = (userId?: string, userProfile?: UserProfile | null) =>
 
     try {
       setLoadingRedemptions(true);
+      
+      // Corrigido para usar a relação correta entre as tabelas
       const { data, error } = await supabase
         .from('reward_redemptions')
         .select(`
@@ -46,28 +48,18 @@ export const useRewards = (userId?: string, userProfile?: UserProfile | null) =>
           status,
           created_at,
           updated_at,
-          rewards:reward_id (
-            id,
-            title,
-            description,
-            points_required,
-            active,
-            image,
-            created_at
-          )
+          rewards:rewards(*)
         `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      // Ensure each item has the correct reward information
+      // Formatar os dados retornados
       const formattedRedemptions: RewardRedemption[] = (data || []).map(item => {
-        // Handle missing or invalid rewards data
-        const reward = item.rewards as unknown as Reward;
         return {
           ...item,
-          rewards: reward || undefined,
+          rewards: item.rewards as unknown as Reward,
           status: item.status as "pending" | "approved" | "rejected" | "delivered"
         };
       });

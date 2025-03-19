@@ -21,8 +21,8 @@ export function MainLayout({ children }: MainLayoutProps) {
   useEffect(() => {
     // Atualiza a tab baseado na rota atual
     if (location.pathname === "/") setCurrentTab("/");
-    else if (location.pathname === "/vouchers") setCurrentTab("/vouchers");
-    else if (location.pathname === "/rewards") setCurrentTab("/rewards");
+    else if (location.pathname === "/meus-vouchers") setCurrentTab("/vouchers");
+    else if (location.pathname === "/recompensas") setCurrentTab("/rewards");
     else if (location.pathname.startsWith("/admin")) setCurrentTab("/admin");
   }, [location]);
 
@@ -45,14 +45,14 @@ export function MainLayout({ children }: MainLayoutProps) {
                 </TabsTrigger>
                 <TabsTrigger 
                   value="/vouchers" 
-                  onClick={() => navigate("/vouchers")}
+                  onClick={() => navigate("/meus-vouchers")}
                   className="data-[state=active]:bg-primary/10"
                 >
                   Meus Vouchers
                 </TabsTrigger>
                 <TabsTrigger 
                   value="/rewards" 
-                  onClick={() => navigate("/rewards")}
+                  onClick={() => navigate("/recompensas")}
                   className="data-[state=active]:bg-primary/10"
                 >
                   Recompensas
@@ -63,6 +63,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         </div>
       )}
 
+      {/* Menu de navegação para admin */}
       {!loading && session && isAdmin && (
         <div className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-sm border-b">
           <div className="container mx-auto px-4">

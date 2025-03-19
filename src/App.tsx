@@ -11,12 +11,6 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Definir as props para os componentes de rota
-type RouteComponentProps = {
-  isProtected?: boolean;
-  isAdminOnly?: boolean;
-};
-
 // Construct the router with the routes from routes/index.tsx
 const router = createBrowserRouter(
   routes.map(route => ({
@@ -26,7 +20,7 @@ const router = createBrowserRouter(
         {React.createElement(route.component, {
           isProtected: route.private,
           isAdminOnly: route.adminOnly
-        } as RouteComponentProps)}
+        })}
       </Suspense>
     ),
   }))

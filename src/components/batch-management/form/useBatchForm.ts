@@ -78,6 +78,14 @@ export const useBatchForm = ({ eventId, orderNumber, onSuccess }: UseBatchFormPr
         throw new Error("Preencha todos os campos obrigatórios");
       }
 
+      if (isNaN(parseFloat(formData.price)) || parseFloat(formData.price) < 0) {
+        throw new Error("O preço deve ser um valor numérico válido");
+      }
+
+      if (isNaN(parseInt(formData.totalTickets)) || parseInt(formData.totalTickets) <= 0) {
+        throw new Error("A quantidade de ingressos deve ser um número positivo");
+      }
+
       const batchData = {
         title: formData.title,
         price: parseFloat(formData.price),

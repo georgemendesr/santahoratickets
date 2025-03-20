@@ -21,8 +21,8 @@ export const BatchForm = ({ eventId, orderNumber, onCancel, onSuccess }: BatchFo
   });
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6 p-6 bg-white rounded-lg shadow-sm border">
+      <div className="space-y-5">
         <BatchFormHeader 
           title={formData.title}
           setTitle={(value) => updateFormField('title', value)}
@@ -65,6 +65,8 @@ export const BatchForm = ({ eventId, orderNumber, onCancel, onSuccess }: BatchFo
       <FormActions 
         onCancel={onCancel}
         isSubmitting={isSubmitting}
+        submitLabel="Salvar Lote"
+        cancelLabel="Cancelar"
       />
     </form>
   );

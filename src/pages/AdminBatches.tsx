@@ -26,6 +26,14 @@ const AdminBatches = () => {
     }
   }, [isAdmin, goToAdminEvents]);
 
+  useEffect(() => {
+    if (!eventId) {
+      console.log("Nenhum evento selecionado");
+    } else {
+      console.log(`Gerenciando lotes para o evento: ${eventId}, próximo número de ordem: ${orderNumber}`);
+    }
+  }, [eventId, orderNumber]);
+
   if (!eventId) {
     return (
       <AdminLayout>

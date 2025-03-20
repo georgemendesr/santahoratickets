@@ -17,7 +17,7 @@ const AdminBatches = () => {
   const eventId = searchParams.get("event_id");
   const { session } = useAuth();
   const { isAdmin } = useRole(session);
-  const { orderNumber, incrementOrderNumber } = useBatchOrderNumber(eventId);
+  const { orderNumber, incrementOrderNumber, error } = useBatchOrderNumber(eventId);
 
   // Usando useEffect para evitar o warning de navegação durante a renderização
   useEffect(() => {
@@ -33,6 +33,14 @@ const AdminBatches = () => {
       console.log(`Gerenciando lotes para o evento: ${eventId}, próximo número de ordem: ${orderNumber}`);
     }
   }, [eventId, orderNumber]);
+
+  // Mostrar erros do hook de número de ordem
+  useEffect(() => {
+    if (error) {
+      console.error("Erro na obtenção do número de ordem:", error);
+      toast.error("Erro ao carregar o próximo número de lote. Por favor, recarregue a página.");
+    }
+  }, [error]);
 
   if (!eventId) {
     return (

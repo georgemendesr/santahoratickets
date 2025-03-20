@@ -27,6 +27,7 @@ export type Database = {
           status: string | null
           title: string
           total_tickets: number
+          updated_at: string | null
           visibility: string | null
         }
         Insert: {
@@ -46,6 +47,7 @@ export type Database = {
           status?: string | null
           title: string
           total_tickets: number
+          updated_at?: string | null
           visibility?: string | null
         }
         Update: {
@@ -65,6 +67,7 @@ export type Database = {
           status?: string | null
           title?: string
           total_tickets?: number
+          updated_at?: string | null
           visibility?: string | null
         }
         Relationships: []

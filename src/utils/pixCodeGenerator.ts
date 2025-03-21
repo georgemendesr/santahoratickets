@@ -1,4 +1,3 @@
-
 /**
  * Gera um código PIX válido no padrão BR Code a partir de informações básicas
  * @param {Object} data - Dados para gerar o código PIX
@@ -105,7 +104,24 @@ function calculateCRC16(payload: string): string {
 
 // Extrai o nome do beneficiário do código PIX
 export function extractNameFromCode(code: string | null): string {
-  if (!code) return 'Não disponível';
-  const nameMatch = code.match(/0214([^5]+)/);
-  return nameMatch ? nameMatch[1] : 'Não disponível';
+  if (!code) return '';
+  
+  try {
+    // Procurar pelo nome após o código 59 (merchant name)
+    const nameMatch = code.match(/59(\d{2})([^6]+)/);
+    if (nameMatch && nameMatch.length > 2) {
+      return nameMatch[2];
+    }
+    
+    // Alternativa: procurar pelo nome após 5913 (merchant name em outro formato)
+    const altNameMatch = code.match(/5913([^6]+)/);
+    if (altNameMatch && altNameMatch.length > 1) {
+      return altNameMatch[1];
+    }
+    
+    return '';
+  } catch (error) {
+    console.error("Erro ao extrair nome do código PIX:", error);
+    return '';
+  }
 }

@@ -14,25 +14,16 @@ export const usePixQRCodeLogic = ({ qrCode, qrCodeBase64, onRefresh }: UsePixQRC
   const [validPixCode, setValidPixCode] = useState<string>("");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showImageError, setShowImageError] = useState(false);
-  const [beneficiaryName, setBeneficiaryName] = useState("SANTA HORA PAGAMENTOS");
+  const [beneficiaryName, setBeneficiaryName] = useState("");
   
-  // Validação do código PIX - Auditoria
+  // Processamento do código PIX
   useEffect(() => {
     if (qrCode) {
-      console.log("AUDITORIA PIX: Processando e validando código PIX");
+      console.log("Processando código PIX");
       
-      // Extrair e validar o nome do beneficiário
+      // Extrair o nome do beneficiário do código
       const extractedName = extractNameFromCode(qrCode);
-      
-      // AUDITORIA: Verificar se o nome extraído parece válido
-      if (extractedName.includes("Gustavo") || 
-          extractedName.includes("Araújo") || 
-          extractedName === "Não disponível") {
-        console.error("ERRO PIX - Nome do beneficiário inválido:", extractedName);
-        setBeneficiaryName("SANTA HORA PAGAMENTOS");
-      } else {
-        setBeneficiaryName(extractedName);
-      }
+      setBeneficiaryName(extractedName);
       
       // Formatação para melhor legibilidade
       const chunks = [];
@@ -45,8 +36,6 @@ export const usePixQRCodeLogic = ({ qrCode, qrCodeBase64, onRefresh }: UsePixQRC
       
       // Armazenar o código PIX validado
       setValidPixCode(qrCode);
-      
-      console.log("AUDITORIA PIX: Código PIX processado e validado");
     } else {
       setFormattedCode("");
       setValidPixCode("");
@@ -56,17 +45,13 @@ export const usePixQRCodeLogic = ({ qrCode, qrCodeBase64, onRefresh }: UsePixQRC
   // Processamento do QR Code Base64
   useEffect(() => {
     if (qrCodeBase64) {
-      console.log("AUDITORIA PIX: Processando QR Code Base64");
-      
       try {
         // Converter base64 para URL
         const url = `data:image/png;base64,${qrCodeBase64}`;
         setQrCodeUrl(url);
         setShowImageError(false);
-        
-        console.log("AUDITORIA PIX: QR Code Base64 processado com sucesso");
       } catch (error) {
-        console.error("ERRO PIX - Falha ao processar QR Code Base64:", error);
+        console.error("Falha ao processar QR Code Base64:", error);
         setShowImageError(true);
         setQrCodeUrl(null);
       }
@@ -77,14 +62,13 @@ export const usePixQRCodeLogic = ({ qrCode, qrCodeBase64, onRefresh }: UsePixQRC
   
   // Handler para erro de imagem
   const handleImageError = useCallback(() => {
-    console.error("ERRO PIX: Falha ao carregar imagem do QR Code");
+    console.error("Falha ao carregar imagem do QR Code");
     setShowImageError(true);
   }, []);
   
   // Handler para atualização
   const handleRefresh = useCallback(() => {
     if (onRefresh) {
-      console.log("AUDITORIA PIX: Solicitando atualização do código PIX");
       setIsRefreshing(true);
       
       // Limpar estado atual para garantir dados frescos

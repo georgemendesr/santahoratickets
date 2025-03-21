@@ -22,31 +22,23 @@ export const usePaymentPolling = ({
   const [qrCodeLoaded, setQrCodeLoaded] = useState<boolean>(false);
   const [fallbackQrUsed, setFallbackQrUsed] = useState<boolean>(false);
   
-  // AUDITORIA: Verificar dados de cache no início
+  // Verificação de cache com validação
   useEffect(() => {
     try {
-      console.log("AUDITORIA PIX: Verificando cache local de pagamento");
+      console.log("Verificando cache local de pagamento");
       const cachedPixData = localStorage.getItem('pixPaymentData');
       
       if (cachedPixData) {
         const parsedData = JSON.parse(cachedPixData);
         
-        // VALIDAÇÃO: Verificar se os dados em cache contêm informações suspeitas
-        if (parsedData.qrCode && 
-            (parsedData.qrCode.includes("Gustavo") || 
-             parsedData.qrCode.includes("Araújo") || 
-             parsedData.qrCode.includes("BORA PAGODEAR"))) {
-          
-          console.error("ERRO PIX: Dados suspeitos encontrados no cache. Limpando cache.");
-          localStorage.removeItem('pixPaymentData');
-        } else if (preferenceId && parsedData.preferenceId === preferenceId) {
+        if (preferenceId && parsedData.preferenceId === preferenceId) {
           const dataAge = Date.now() - parsedData.timestamp;
           
           if (dataAge > 1000 * 60 * 30) {  // 30 minutos
-            console.log("AUDITORIA PIX: Dados de cache expirados", { idade: dataAge / 1000 / 60 + " minutos" });
+            console.log("Dados de cache expirados", { idade: dataAge / 1000 / 60 + " minutos" });
             localStorage.removeItem('pixPaymentData');
           } else {
-            console.log("AUDITORIA PIX: Usando dados PIX do cache", { idade: dataAge / 1000 / 60 + " minutos" });
+            console.log("Usando dados PIX do cache", { idade: dataAge / 1000 / 60 + " minutos" });
             if (parsedData.usingFallback) {
               setFallbackQrUsed(true);
             }
@@ -54,7 +46,7 @@ export const usePaymentPolling = ({
         }
       }
     } catch (error) {
-      console.error("ERRO PIX: Falha ao processar cache:", error);
+      console.error("Falha ao processar cache:", error);
       localStorage.removeItem('pixPaymentData');
     }
   }, [preferenceId]);
@@ -70,42 +62,32 @@ export const usePaymentPolling = ({
     refreshPixData
   } = usePixData({ preferenceId });
 
-  // AUDITORIA: Validar e salvar dados no cache
+  // Salvar dados válidos no cache
   useEffect(() => {
     if (qrCode && preferenceId) {
       try {
-        console.log("AUDITORIA PIX: Validando código PIX antes de salvar no cache");
+        console.log("Salvando código PIX no cache");
+        localStorage.setItem('pixPaymentData', JSON.stringify({
+          preferenceId,
+          qrCode,
+          qrCodeBase64,
+          usingFallback: !qrCodeBase64 && qrCode,
+          timestamp: Date.now()
+        }));
         
-        // VALIDAÇÃO: Verificar se o código PIX contém dados suspeitos
-        if (qrCode.includes("Gustavo") || 
-            qrCode.includes("Araújo") || 
-            qrCode.includes("BORA PAGODEAR")) {
-          
-          console.error("ERRO PIX: Código PIX com dados suspeitos. Não será salvo no cache.");
-        } else {
-          console.log("AUDITORIA PIX: Salvando código PIX válido no cache");
-          localStorage.setItem('pixPaymentData', JSON.stringify({
-            preferenceId,
-            qrCode,
-            qrCodeBase64,
-            usingFallback: !qrCodeBase64 && qrCode,
-            timestamp: Date.now()
-          }));
-          
-          // Se temos o código PIX mas não o QR Code base64, estamos usando fallback
-          if (!qrCodeBase64 && qrCode && !fallbackQrUsed) {
-            setFallbackQrUsed(true);
-          }
+        // Se temos o código PIX mas não o QR Code base64, estamos usando fallback
+        if (!qrCodeBase64 && qrCode && !fallbackQrUsed) {
+          setFallbackQrUsed(true);
         }
       } catch (error) {
-        console.error("ERRO PIX: Falha ao salvar cache:", error);
+        console.error("Falha ao salvar cache:", error);
       }
     }
   }, [qrCode, qrCodeBase64, preferenceId, fallbackQrUsed]);
 
   // Callback otimizado para atualizar o QR code
   const handleRefreshPixData = useCallback(() => {
-    console.log("AUDITORIA PIX: Solicitando atualização completa dos dados PIX");
+    console.log("Solicitando atualização completa dos dados PIX");
     setQrCodeLoaded(false);
     setFallbackQrUsed(false);
     refreshPixData();
@@ -114,20 +96,20 @@ export const usePaymentPolling = ({
   // Notificar quando o QR code for carregado com sucesso
   useEffect(() => {
     if (qrCode && !qrCodeLoaded) {
-      console.log("AUDITORIA PIX: QR code carregado com sucesso");
+      console.log("QR code carregado com sucesso");
       setQrCodeLoaded(true);
     }
   }, [qrCode, qrCodeLoaded]);
 
-  // AUDITORIA: Limpeza de dados em caso de problemas
+  // Limpeza de dados em caso de problemas
   useEffect(() => {
     return () => {
       if (error) {
-        console.log("AUDITORIA PIX: Limpando cache devido a erros");
+        console.log("Limpando cache devido a erros");
         try {
           localStorage.removeItem('pixPaymentData');
         } catch (e) {
-          console.error("ERRO PIX: Falha ao limpar cache:", e);
+          console.error("Falha ao limpar cache:", e);
         }
       }
     };
@@ -146,14 +128,14 @@ export const usePaymentPolling = ({
   // Redirecionar para home se não houver status ou preferenceId
   useEffect(() => {
     if ((!initialStatus && !preferenceId) || (!initialStatus && !payment_id)) {
-      console.log("AUDITORIA PIX: Dados insuficientes, redirecionando para home");
+      console.log("Dados insuficientes, redirecionando para home");
       navigate("/");
     }
   }, [initialStatus, preferenceId, payment_id, navigate]);
 
-  // AUDITORIA: Log detalhado do estado atual
+  // Log do estado atual
   useEffect(() => {
-    console.log("AUDITORIA PIX: Estado atual do sistema de pagamento:", {
+    console.log("Estado atual do sistema de pagamento:", {
       qrCode: qrCode ? "Presente" : "Ausente",
       qrCodeBase64: qrCodeBase64 ? "Presente" : "Ausente",
       isLoading,

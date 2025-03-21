@@ -1,10 +1,9 @@
-
 import { BatchFormHeader } from "./form/BatchFormHeader";
 import { DateTimeFields } from "./form/DateTimeFields";
 import { VisibilityOptions } from "./form/VisibilityOptions";
 import { AdditionalFields } from "./form/AdditionalFields";
 import { FormActions } from "./form/FormActions";
-import { useBatchForm } from "./form/useBatchForm";
+import { useBatchForm } from "@/hooks/batch/useBatchForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";

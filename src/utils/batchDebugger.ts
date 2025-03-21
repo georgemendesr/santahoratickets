@@ -146,15 +146,6 @@ window.fixAllBatchesForEvent = async (eventId: string) => {
   }
 };
 
-// Adicionar as funções ao objeto window para uso no console
-declare global {
-  interface Window {
-    diagnoseBatches: (eventId: string) => Promise<void>;
-    fixBatchStatus: (batchId: string) => Promise<void>;
-    fixAllBatchesForEvent: (eventId: string) => Promise<void>;
-  }
-}
-
 // Mensagem para instruir o desenvolvedor
 console.log(`
 🔧 Ferramentas de diagnóstico de lotes disponíveis no console:

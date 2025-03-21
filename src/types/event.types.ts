@@ -9,7 +9,7 @@ export interface Event {
   price: number;
   image: string;
   available_tickets: number;
-  status?: 'published' | 'draft' | 'ended';
+  status?: 'published' | 'draft' | 'ended' | string;
   created_at?: string;
   gross_revenue?: number;
   net_revenue?: number;

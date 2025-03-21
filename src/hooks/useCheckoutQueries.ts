@@ -19,6 +19,8 @@ export function useCheckoutQueries(eventId: string | null) {
       return data as Event;
     },
     enabled: !!eventId,
+    staleTime: 10000, // 10 segundos
+    refetchInterval: 30000, // 30 segundos
   });
 
   const batchQuery = useQuery({
@@ -39,6 +41,8 @@ export function useCheckoutQueries(eventId: string | null) {
       return data as Batch;
     },
     enabled: !!eventId,
+    staleTime: 10000, // 10 segundos
+    refetchInterval: 30000, // 30 segundos
   });
 
   return {

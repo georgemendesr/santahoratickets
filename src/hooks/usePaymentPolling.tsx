@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface UsePaymentPollingProps {
-  preferenceId: string | undefined;
+  preferenceId: string | undefined | null;
   payment_id: string | null;
   reference: string | null;
   status: string | null;

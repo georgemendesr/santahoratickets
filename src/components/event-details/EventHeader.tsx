@@ -2,7 +2,7 @@
 import { Event } from "@/types";
 
 interface EventHeaderProps {
-  event: Event;
+  event?: Event;
 }
 
 export function EventHeader({ event }: EventHeaderProps) {

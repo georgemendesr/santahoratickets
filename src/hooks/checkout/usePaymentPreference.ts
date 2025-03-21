@@ -32,6 +32,7 @@ export async function createPaymentPreference(
     .eq("event_id", eventId)
     .eq("user_id", session.user.id)
     .eq("status", "pending")
+    .eq("payment_type", paymentType)
     .order("created_at", { ascending: false })
     .limit(1);
     

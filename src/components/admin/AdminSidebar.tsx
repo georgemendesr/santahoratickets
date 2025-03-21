@@ -1,125 +1,115 @@
 
-import { Link, useLocation } from "react-router-dom";
-import { 
-  CalendarDays, 
-  TicketIcon, 
-  Users, 
-  DollarSign, 
-  BarChart3, 
-  Gift, 
-  ArrowUpRight, 
-  Settings,
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  LayoutDashboard,
+  CalendarDays,
   Ticket,
-  Share2
+  Users,
+  User,
+  Gift,
+  BarChart3,
+  Settings,
+  LogOut
 } from "lucide-react";
-import { ROUTES } from "@/routes";
+import { NavLink, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
+
+const links = [
+  {
+    href: "/admin",
+    icon: LayoutDashboard,
+    label: "Dashboard"
+  },
+  {
+    href: "/admin/eventos",
+    icon: CalendarDays,
+    label: "Eventos"
+  },
+  {
+    href: "/admin/vouchers",
+    icon: Ticket,
+    label: "Vouchers"
+  },
+  {
+    href: "/admin/participantes",
+    icon: Users,
+    label: "Participantes"
+  },
+  {
+    href: "/admin/usuarios",
+    icon: User,
+    label: "Usuários"
+  },
+  {
+    href: "/admin/indicacoes",
+    icon: Gift,
+    label: "Indicações"
+  },
+  {
+    href: "/admin/analytics",
+    icon: BarChart3,
+    label: "Analytics"
+  },
+  {
+    href: "/admin/configuracao",
+    icon: Settings,
+    label: "Configuração"
+  }
+];
 
 export function AdminSidebar() {
+  const { signOut } = useAuth();
   const location = useLocation();
-  
-  const isActive = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
-  };
 
   return (
-    <div className="w-64 min-h-screen bg-white border-r border-gray-200">
-      <div className="h-16 flex items-center px-4 border-b border-gray-200">
-        <Link to="/" className="flex items-center">
-          <img src="/lovable-uploads/8eb8e413-1ab9-489d-a7a2-e8bfa9f4b28c.png" alt="Santa Hora" className="h-8" />
-        </Link>
+    <aside className="w-64 border-r border-border min-h-screen flex flex-col bg-gradient-to-b from-background/95 to-blue-50/30 backdrop-blur-md">
+      <div className="p-6">
+        <img 
+          src="/lovable-uploads/0791f14f-3770-44d6-8ff3-1e714a1d1243.png"
+          alt="Bora Pagodear" 
+          className="h-10 mx-auto"
+        />
       </div>
       
-      <nav className="py-4">
-        <div className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase">Principal</div>
-        <ul className="mb-6 space-y-1">          
-          <MenuItem 
-            icon={<CalendarDays className="h-5 w-5" />} 
-            label="Eventos" 
-            to={ROUTES.ADMIN.EVENTS} 
-            isActive={isActive(ROUTES.ADMIN.EVENTS)} 
-          />
-          
-          <MenuItem 
-            icon={<Ticket className="h-5 w-5" />} 
-            label="Ingressos" 
-            to="/admin/vouchers" 
-            isActive={isActive("/admin/vouchers")} 
-          />
-        </ul>
-        
-        <div className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase">Marketing</div>
-        <ul className="mb-6 space-y-1">
-          <MenuItem 
-            icon={<Gift className="h-5 w-5" />} 
-            label="Fidelidade" 
-            to={ROUTES.ADMIN.LOYALTY} 
-            isActive={isActive(ROUTES.ADMIN.LOYALTY)} 
-          />
-          
-          <MenuItem 
-            icon={<Share2 className="h-5 w-5" />} 
-            label="Indicações" 
-            to={ROUTES.ADMIN.REFERRALS} 
-            isActive={isActive(ROUTES.ADMIN.REFERRALS)} 
-          />
-          
-          <MenuItem 
-            icon={<BarChart3 className="h-5 w-5" />} 
-            label="Analytics" 
-            to="/admin/analytics" 
-            isActive={isActive("/admin/analytics")} 
-          />
-        </ul>
-        
-        <div className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase">Gerenciamento</div>
-        <ul className="mb-6 space-y-1">
-          <MenuItem 
-            icon={<Users className="h-5 w-5" />} 
-            label="Usuários" 
-            to={ROUTES.ADMIN.USERS} 
-            isActive={isActive(ROUTES.ADMIN.USERS)} 
-          />
-          
-          <MenuItem 
-            icon={<DollarSign className="h-5 w-5" />} 
-            label="Financeiro" 
-            to="/admin/financeiro" 
-            isActive={isActive("/admin/financeiro")} 
-          />
-          
-          <MenuItem 
-            icon={<Settings className="h-5 w-5" />} 
-            label="Configurações" 
-            to="/admin/configuracoes" 
-            isActive={isActive("/admin/configuracoes")} 
-          />
-        </ul>
-      </nav>
-    </div>
-  );
-}
-
-interface MenuItemProps {
-  icon: React.ReactNode;
-  label: string;
-  to: string;
-  isActive: boolean;
-}
-
-function MenuItem({ icon, label, to, isActive }: MenuItemProps) {
-  return (
-    <li>
-      <Link
-        to={to}
-        className={`flex items-center px-4 py-3 text-sm font-medium rounded-md ${
-          isActive
-            ? "bg-amber-50 text-amber-500"
-            : "text-gray-700 hover:bg-gray-100"
-        }`}
-      >
-        <span className="mr-3">{icon}</span>
-        {label}
-      </Link>
-    </li>
+      <ScrollArea className="flex-1 px-3">
+        <nav className="flex flex-col gap-2">
+          {links.map((link) => {
+            const isActive = location.pathname === link.href || 
+                           (link.href !== "/admin" && location.pathname.startsWith(link.href));
+            
+            return (
+              <NavLink
+                key={link.href}
+                to={link.href}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-foreground",
+                    isActive
+                      ? "bg-blue-100/50 dark:bg-blue-800/30 text-foreground font-medium"
+                      : "hover:bg-muted"
+                  )
+                }
+              >
+                <link.icon className="h-4 w-4" />
+                <span>{link.label}</span>
+              </NavLink>
+            );
+          })}
+        </nav>
+      </ScrollArea>
+      
+      <div className="p-4 border-t border-border mt-auto">
+        <Button 
+          variant="outline" 
+          className="w-full flex items-center justify-start" 
+          onClick={signOut}
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Sair
+        </Button>
+      </div>
+    </aside>
   );
 }

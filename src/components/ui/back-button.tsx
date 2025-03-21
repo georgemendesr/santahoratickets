@@ -10,7 +10,7 @@ interface BackButtonProps {
 
 export const BackButton = ({ destination = '/admin/eventos', className }: BackButtonProps) => {
   const handleGoBack = () => {
-    // Solução simplificada: voltar para uma página específica e garantida
+    // Solução direta: usar window.location.href para navegação
     window.location.href = destination;
   };
   

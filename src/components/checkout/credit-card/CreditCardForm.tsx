@@ -35,8 +35,13 @@ export function CreditCardForm({ amount, onSubmit, isSubmitting }: CreditCardFor
   const [identificationType] = useState("CPF");
   const [identificationNumber, setIdentificationNumber] = useState("");
   const [installments, setInstallments] = useState("1");
+  const [cardImagesError, setCardImagesError] = useState(false);
+  const [mpLogoError, setMpLogoError] = useState(false);
 
   const { isLoading, availableInstallments, paymentMethodId } = useMercadoPago(amount, cardNumber);
+
+  // URLs de fallback para imagens
+  const mpLogoFallback = "https://www.mercadopago.com/org-img/MP3/API/logos/powered_by_mercadopago.gif";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,10 +85,35 @@ export function CreditCardForm({ amount, onSubmit, isSubmitting }: CreditCardFor
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap justify-center gap-4 py-4">
-        <img src="https://imgmp.mlstatic.com/org-img/MLB/MP3/API/logos/visa.gif" alt="Visa" className="h-8" />
-        <img src="https://imgmp.mlstatic.com/org-img/MLB/MP3/API/logos/mastercard.gif" alt="Mastercard" className="h-8" />
-        <img src="https://imgmp.mlstatic.com/org-img/MLB/MP3/API/logos/amex.gif" alt="American Express" className="h-8" />
-        <img src="https://imgmp.mlstatic.com/org-img/MLB/MP3/API/logos/elo.gif" alt="Elo" className="h-8" />
+        {!cardImagesError ? (
+          <>
+            <img 
+              src="https://imgmp.mlstatic.com/org-img/MLB/MP3/API/logos/visa.gif" 
+              alt="Visa" 
+              className="h-8" 
+              onError={() => setCardImagesError(true)}
+            />
+            <img 
+              src="https://imgmp.mlstatic.com/org-img/MLB/MP3/API/logos/mastercard.gif" 
+              alt="Mastercard" 
+              className="h-8" 
+            />
+            <img 
+              src="https://imgmp.mlstatic.com/org-img/MLB/MP3/API/logos/amex.gif" 
+              alt="American Express" 
+              className="h-8" 
+            />
+            <img 
+              src="https://imgmp.mlstatic.com/org-img/MLB/MP3/API/logos/elo.gif" 
+              alt="Elo" 
+              className="h-8" 
+            />
+          </>
+        ) : (
+          <p className="text-center text-sm text-muted-foreground">
+            Aceitamos Visa, Mastercard, American Express e Elo
+          </p>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -130,9 +160,10 @@ export function CreditCardForm({ amount, onSubmit, isSubmitting }: CreditCardFor
 
         <div className="flex justify-center mt-4">
           <img 
-            src="https://imgmp.mlstatic.com/org-img/MLB/MP3/API/logos/mp-logo-horizontal.gif" 
+            src={mpLogoError ? mpLogoFallback : "https://imgmp.mlstatic.com/org-img/MLB/MP3/API/logos/mp-logo-horizontal.gif"}
             alt="Powered by MercadoPago" 
             className="h-8"
+            onError={() => setMpLogoError(true)}
           />
         </div>
       </form>

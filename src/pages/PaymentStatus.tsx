@@ -14,7 +14,7 @@ const PaymentStatus = () => {
   const navigate = useNavigate();
   const status = searchParams.get("status");
   const payment_id = searchParams.get("payment_id");
-  const [reference] = useState(searchParams.get("external_reference"));
+  const reference = searchParams.get("external_reference");
   const eventId = reference?.split("|")[0];
   const preferenceId = reference?.split("|")[1];
 
@@ -26,13 +26,6 @@ const PaymentStatus = () => {
     navigate
   });
 
-  // Redirecionar para home se não houver status ou preferenceId
-  useEffect(() => {
-    if ((!status && !preferenceId) || (!status && !payment_id)) {
-      navigate("/");
-    }
-  }, [status, preferenceId, payment_id, navigate]);
-
   // Determinar o status apropriado para exibição
   const displayStatus = status || (error ? "error" : "pending");
   const statusInfo = getStatusInfo({ 
@@ -40,6 +33,16 @@ const PaymentStatus = () => {
     eventId, 
     navigate,
     errorMessage: error
+  });
+
+  console.log("Payment Status Page:", {
+    preferenceId,
+    payment_id,
+    status,
+    qrCode: qrCode ? "Has QR" : "No QR",
+    qrCodeBase64: qrCodeBase64 ? "Has QR Base64" : "No QR Base64",
+    isLoading,
+    error
   });
 
   return (

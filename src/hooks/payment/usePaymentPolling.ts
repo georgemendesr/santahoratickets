@@ -38,7 +38,12 @@ export const usePaymentPolling = ({
     setCurrentStatus
   });
 
-  // Redirecionar para home se não houver status ou preferenceId (efeito movido para o componente)
+  // Redirecionar para home se não houver status ou preferenceId
+  useEffect(() => {
+    if ((!initialStatus && !preferenceId) || (!initialStatus && !payment_id)) {
+      navigate("/");
+    }
+  }, [initialStatus, preferenceId, payment_id, navigate]);
 
   // Para debugging
   useEffect(() => {

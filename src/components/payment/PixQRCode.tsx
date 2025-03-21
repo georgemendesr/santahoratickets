@@ -15,15 +15,21 @@ export const PixQRCode = ({ qrCode, qrCodeBase64 }: PixQRCodeProps) => {
 
   useEffect(() => {
     if (qrCodeBase64) {
-      setQrCodeUrl(`data:image/png;base64,${qrCodeBase64}`);
-      setShowImageError(false);
+      try {
+        setQrCodeUrl(`data:image/png;base64,${qrCodeBase64}`);
+        setShowImageError(false);
+      } catch (error) {
+        console.error("Erro ao processar base64:", error);
+        setShowImageError(true);
+      }
+    } else {
+      setShowImageError(true);
     }
   }, [qrCodeBase64]);
 
   const handleImageError = () => {
     console.error("Erro ao carregar QR code");
     setShowImageError(true);
-    setQrCodeUrl(null);
   };
 
   return (
@@ -41,7 +47,7 @@ export const PixQRCode = ({ qrCode, qrCodeBase64 }: PixQRCodeProps) => {
         </div>
       ) : (
         <div className="w-48 h-48 flex items-center justify-center bg-gray-100 rounded-lg">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 text-center p-4">
             {qrCode ? "QR Code não disponível, mas você pode usar o código PIX abaixo" : "QR Code não disponível"}
           </p>
         </div>

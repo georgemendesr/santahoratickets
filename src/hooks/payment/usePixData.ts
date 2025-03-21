@@ -61,13 +61,7 @@ export const usePixData = ({ preferenceId }: UsePixDataProps) => {
             setCurrentStatus(preference.status);
           }
           
-          // Se tiver o código PIX mas não tiver o QR Code, vamos considerar
-          // que pelo menos parte do processamento foi bem sucedido
-          if (preference.qr_code) {
-            setIsLoading(false);
-          }
-          
-          // Se não tiver QR code e status ainda for pending, tentar novamente a geração
+          // Se não tiver QR code e status ainda for pending, tentar regenerar
           if ((!preference.qr_code || !preference.qr_code_base64) && preference.status === "pending") {
             console.log("QR Code incompleto, tentando regenerar...");
             await regeneratePixPayment(preferenceId);
@@ -87,7 +81,15 @@ export const usePixData = ({ preferenceId }: UsePixDataProps) => {
     const regeneratePixPayment = async (prefId: string) => {
       setAttempts(prev => prev + 1);
       
+      if (attempts >= 3) {
+        console.log("Máximo de tentativas atingido");
+        setIsLoading(false);
+        return;
+      }
+      
       try {
+        console.log("Regenerando pagamento PIX:", prefId);
+        
         // Chamar o edge function para regenerar o pagamento PIX
         const { data, error } = await supabase.functions.invoke("create-payment", {
           body: {
@@ -103,7 +105,7 @@ export const usePixData = ({ preferenceId }: UsePixDataProps) => {
           return;
         }
 
-        console.log("Pagamento PIX regenerado:", data);
+        console.log("Resposta da regeneração:", data);
         
         if (data && data.data) {
           if (data.data.qr_code) {
@@ -112,16 +114,15 @@ export const usePixData = ({ preferenceId }: UsePixDataProps) => {
           if (data.data.qr_code_base64) {
             setQrCodeBase64(data.data.qr_code_base64);
           }
-          
-          // Se pelo menos o código PIX estiver disponível, consideramos um sucesso parcial
-          if (data.data.qr_code) {
-            setIsLoading(false);
-            setError(null);
+          setIsLoading(false);
+          setError(null);
+        } else {
+          setIsLoading(false);
+          // Mostrar erro apenas se não conseguiu obter dados
+          if (!qrCode) {
+            setError("Não foi possível gerar o QR Code PIX");
           }
         }
-        
-        // Buscar dados novamente após regeneração
-        await fetchPixData();
       } catch (error) {
         console.error("Erro ao tentar regenerar pagamento PIX:", error);
         setError("Erro ao gerar código PIX");
@@ -131,30 +132,8 @@ export const usePixData = ({ preferenceId }: UsePixDataProps) => {
 
     fetchPixData();
 
-    // Configurar polling manual como backup para casos onde não temos dados completos
-    const pollingInterval = setInterval(() => {
-      if (attempts < 5 && (!qrCodeBase64 || !qrCode)) {
-        console.log("Executando polling manual para dados do PIX...");
-        fetchPixData();
-      } else if (attempts >= 5) {
-        // Se após 5 tentativas ainda não tiver o QR code completo, mas tiver o código PIX
-        // continuamos exibindo o formulário PIX mesmo sem QR code
-        if (!qrCodeBase64 && qrCode) {
-          console.log("Não foi possível gerar o QR Code após várias tentativas, mas o código PIX está disponível.");
-          setIsLoading(false);
-        } 
-        // Se nem o código PIX estiver disponível, mostramos erro
-        else if (!qrCode) {
-          setError("Não foi possível gerar o código PIX após várias tentativas. Por favor, tente novamente.");
-          setIsLoading(false);
-        }
-        
-        clearInterval(pollingInterval);
-      }
-    }, 5000); // A cada 5 segundos
-
     return () => {
-      clearInterval(pollingInterval);
+      // Cleanup
     };
   }, [preferenceId, attempts, qrCode, qrCodeBase64]);
 

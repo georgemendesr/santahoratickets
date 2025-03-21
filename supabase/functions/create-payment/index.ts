@@ -65,48 +65,64 @@ serve(async (req) => {
 
     console.log("Gerando QR Code PIX para a preferência:", preferenceId)
 
-    // Gerar um UUID consistente para o código PIX
-    const qrUUID = crypto.randomUUID();
+    // Gerar um código PIX estático para teste
+    const qrCode = "00020126330014BR.GOV.BCB.PIX0111test@test.com5204000053039865406123.455802BR5913Bora Pagodear6008Sao Paulo62070503***6304E2CA"
     
-    // Simular geração de QR Code PIX (em produção, isso seria integrado com MercadoPago ou outro provedor)
-    const qrCode = `00020126580014BR.GOV.BCB.PIX0136${qrUUID}520400005303986540${preference.total_amount.toFixed(2)}5802BR5913Bora Pagodear6008Sao Paulo62070503***630452E5`
-    
-    // Gerar QR code base64
-    const qrCodeBase64 = await qrcode.toDataURL(qrCode);
-    // Remover o prefixo data:image/png;base64, do base64
-    const base64Clean = qrCodeBase64.replace(/^data:image\/png;base64,/, '');
+    try {
+      // Gerar QR code base64
+      const qrCodeBase64 = await qrcode.toDataURL(qrCode)
+      // Remover o prefixo data:image/png;base64, do base64
+      const base64Clean = qrCodeBase64.replace(/^data:image\/png;base64,/, '')
 
-    // Atualizar a preferência com os dados do PIX
-    const { error: updateError } = await supabaseClient
-      .from('payment_preferences')
-      .update({
-        qr_code: qrCode,
-        qr_code_base64: base64Clean,
-        last_attempt_at: new Date().toISOString()
-      })
-      .eq('id', preferenceId)
-
-    if (updateError) {
-      console.error("Erro ao atualizar preferência com QR code:", updateError)
-      throw new Error(`Erro ao gerar QR code: ${updateError.message}`)
-    }
-
-    // Por fim, retorne os dados ao cliente
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "QR Code PIX gerado com sucesso",
-        status: "pending",
-        payment_id: preferenceId,
-        data: {
-          preferenceId,
+      // Atualizar a preferência com os dados do PIX
+      const { error: updateError } = await supabaseClient
+        .from('payment_preferences')
+        .update({
           qr_code: qrCode,
-          qr_code_base64: base64Clean
-        }
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+          qr_code_base64: base64Clean,
+          last_attempt_at: new Date().toISOString()
+        })
+        .eq('id', preferenceId)
 
+      if (updateError) {
+        console.error("Erro ao atualizar preferência com QR code:", updateError)
+        throw new Error(`Erro ao gerar QR code: ${updateError.message}`)
+      }
+
+      // Por fim, retorne os dados ao cliente
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "QR Code PIX gerado com sucesso",
+          status: "pending",
+          payment_id: preferenceId,
+          data: {
+            preferenceId,
+            qr_code: qrCode,
+            qr_code_base64: base64Clean
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    } catch (qrError) {
+      console.error("Erro ao gerar QR code:", qrError)
+      
+      // Mesmo com erro no QR, retornar o código PIX
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "Código PIX gerado com sucesso, mas houve erro no QR Code",
+          status: "pending",
+          payment_id: preferenceId,
+          data: {
+            preferenceId,
+            qr_code: qrCode,
+            qr_code_base64: null
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
   } catch (error) {
     console.error("Erro ao processar pagamento:", error)
     

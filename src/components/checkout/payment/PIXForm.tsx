@@ -14,6 +14,10 @@ export function PIXForm({ amount, onSubmit, isSubmitting }: PIXFormProps) {
   const [pixLogoError, setPixLogoError] = useState(false);
   const [mpLogoError, setMpLogoError] = useState(false);
 
+  // URLs de fallback
+  const pixLogoFallback = "https://www.mercadopago.com/org-img/MP3/API/logos/pix.gif";
+  const mpLogoFallback = "https://www.mercadopago.com/org-img/MP3/API/logos/powered_by_mercadopago.gif";
+
   return (
     <Card className="p-6 shadow-md bg-white">
       <div className="space-y-6">
@@ -35,23 +39,12 @@ export function PIXForm({ amount, onSubmit, isSubmitting }: PIXFormProps) {
         </div>
 
         <div className="flex justify-center py-4">
-          {!pixLogoError ? (
-            <img 
-              src="/pix-logo.png" 
-              alt="PIX" 
-              className="h-12"
-              onError={(e) => {
-                setPixLogoError(true);
-                (e.target as HTMLImageElement).src = "https://www.mercadopago.com/org-img/MP3/API/logos/pix.gif";
-              }}
-            />
-          ) : (
-            <img 
-              src="https://www.mercadopago.com/org-img/MP3/API/logos/pix.gif" 
-              alt="PIX" 
-              className="h-12"
-            />
-          )}
+          <img 
+            src={pixLogoError ? pixLogoFallback : "/pix-logo.png"}
+            alt="PIX" 
+            className="h-12"
+            onError={() => setPixLogoError(true)}
+          />
         </div>
 
         <Button
@@ -68,23 +61,12 @@ export function PIXForm({ amount, onSubmit, isSubmitting }: PIXFormProps) {
         </Button>
 
         <div className="flex justify-center mt-4">
-          {!mpLogoError ? (
-            <img 
-              src="/mercadopago-logo.png" 
-              alt="Powered by MercadoPago" 
-              className="h-8"
-              onError={(e) => {
-                setMpLogoError(true);
-                (e.target as HTMLImageElement).src = "https://www.mercadopago.com/org-img/MP3/API/logos/powered_by_mercadopago.gif";
-              }}
-            />
-          ) : (
-            <img 
-              src="https://www.mercadopago.com/org-img/MP3/API/logos/powered_by_mercadopago.gif" 
-              alt="Powered by MercadoPago" 
-              className="h-8"
-            />
-          )}
+          <img 
+            src={mpLogoError ? mpLogoFallback : "/mercadopago-logo.png"}
+            alt="Powered by MercadoPago" 
+            className="h-8"
+            onError={() => setMpLogoError(true)}
+          />
         </div>
       </div>
     </Card>

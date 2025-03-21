@@ -1,6 +1,6 @@
-
 import { MainHeader } from "./MainHeader";
 import { MainFooter } from "./MainFooter";
+import { LogoHeader } from "./LogoHeader";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -19,7 +19,6 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [currentTab, setCurrentTab] = useState("/");
 
   useEffect(() => {
-    // Atualiza a tab baseado na rota atual
     if (location.pathname === "/") setCurrentTab("/");
     else if (location.pathname === "/meus-vouchers") setCurrentTab("/vouchers");
     else if (location.pathname === "/recompensas") setCurrentTab("/rewards");
@@ -28,17 +27,10 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <div className="bg-gradient-to-r from-[#8B5CF6]/90 to-[#7C3AED]/90 text-center pt-6 pb-4 shadow-md">
-        <img 
-          src="/lovable-uploads/84e088a9-3b7b-41d9-9ef3-dd2894f717cf.png"
-          alt="Santa Hora"
-          className="h-16 mx-auto"
-        />
-      </div>
+      <LogoHeader />
       
       <MainHeader />
       
-      {/* Menu de navegação - só mostra se estiver logado */}
       {!loading && session && !isAdmin && (
         <div className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-sm border-b">
           <div className="container mx-auto px-4">
@@ -71,7 +63,6 @@ export function MainLayout({ children }: MainLayoutProps) {
         </div>
       )}
 
-      {/* Menu de navegação para admin */}
       {!loading && session && isAdmin && (
         <div className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-sm border-b">
           <div className="container mx-auto px-4">

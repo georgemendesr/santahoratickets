@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { MainHeader } from '@/components/layout/MainHeader';
 import { MainFooter } from '@/components/layout/MainFooter';
+import { LogoHeader } from '@/components/layout/LogoHeader';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { useAuthStore } from '@/store/authStore';
 import { useToast } from '@/hooks/use-toast';
@@ -47,19 +48,22 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
   
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <AdminSidebar />
-        <div className="flex w-full flex-col">
-          <MainHeader />
-          <SidebarInset>
-            <div className="p-4 md:p-6">
-              <div className="flex items-center mb-4">
-                <SidebarTrigger className="mr-2" />
+      <div className="flex min-h-screen w-full flex-col">
+        <LogoHeader />
+        <div className="flex flex-1">
+          <AdminSidebar />
+          <div className="flex w-full flex-col">
+            <MainHeader />
+            <SidebarInset>
+              <div className="p-4 md:p-6">
+                <div className="flex items-center mb-4">
+                  <SidebarTrigger className="mr-2" />
+                </div>
+                {children}
               </div>
-              {children}
-            </div>
-            <MainFooter />
-          </SidebarInset>
+              <MainFooter />
+            </SidebarInset>
+          </div>
         </div>
       </div>
     </SidebarProvider>

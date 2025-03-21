@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { ReactNode } from "react";
+import { LogoHeader } from "@/components/layout/LogoHeader";
 
 interface EventPageLayoutProps {
   title: string;
@@ -18,6 +19,7 @@ export const EventPageLayout = ({
 }: EventPageLayoutProps) => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary">
+      <LogoHeader />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <Button variant="ghost" onClick={onBack} className="mb-4">

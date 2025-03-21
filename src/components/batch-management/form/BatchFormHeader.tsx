@@ -1,6 +1,8 @@
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { InfoCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface BatchFormHeaderProps {
   title: string;
@@ -47,7 +49,24 @@ export const BatchFormHeader: React.FC<BatchFormHeaderProps> = ({
           />
         </div>
         <div>
-          <Label htmlFor="totalTickets">Quantidade</Label>
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="totalTickets">Quantidade</Label>
+            {isEditing && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <InfoCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="w-60 text-sm">
+                      Você pode alterar a quantidade de ingressos mesmo depois da criação do lote. 
+                      O sistema ajustará automaticamente os ingressos disponíveis levando em conta os já vendidos.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
           <Input
             id="totalTickets"
             type="number"

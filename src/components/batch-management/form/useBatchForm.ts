@@ -171,11 +171,49 @@ export const useBatchForm = ({ eventId, orderNumber, batchId, onSuccess }: UseBa
       // Validações
       validateForm();
 
+      // Se estiver editando, precisamos primeiro obter os dados atuais do lote
+      let soldTickets = 0;
+      if (batchId) {
+        console.log("Buscando dados atuais do lote para atualização");
+        const { data: currentBatch, error: fetchError } = await supabase
+          .from('batches')
+          .select('total_tickets, available_tickets')
+          .eq('id', batchId)
+          .single();
+          
+        if (fetchError) {
+          console.error("Erro ao buscar dados atuais do lote:", fetchError);
+          throw fetchError;
+        }
+        
+        if (currentBatch) {
+          soldTickets = currentBatch.total_tickets - currentBatch.available_tickets;
+          console.log(`Lote tem ${soldTickets} ingressos vendidos de ${currentBatch.total_tickets} total`);
+        }
+      }
+
+      const newTotalTickets = parseInt(formData.totalTickets);
+      
+      // Calcular tickets disponíveis
+      // Para novos lotes: igual ao total
+      // Para edição: total menos vendidos
+      const availableTickets = batchId 
+        ? Math.max(0, newTotalTickets - soldTickets)
+        : newTotalTickets;
+
+      // Determinar status baseado nos tickets disponíveis
+      let status = formData.status || 'active';
+      if (availableTickets <= 0 && status === 'active') {
+        status = 'sold_out';
+      } else if (availableTickets > 0 && status === 'sold_out') {
+        status = 'active';
+      }
+
       const batchData = {
         title: formData.title,
         price: parseFloat(formData.price),
-        total_tickets: parseInt(formData.totalTickets),
-        available_tickets: batchId ? undefined : parseInt(formData.totalTickets), // Não atualiza available_tickets na edição inicial
+        total_tickets: newTotalTickets,
+        available_tickets: availableTickets,
         start_date: `${formData.startDate}T${formData.startTime}:00Z`,
         end_date: formData.endDate ? `${formData.endDate}T${formData.endTime || "23:59"}:00Z` : null,
         visibility: formData.visibility,
@@ -186,44 +224,10 @@ export const useBatchForm = ({ eventId, orderNumber, batchId, onSuccess }: UseBa
         batch_group: formData.batchGroup || null,
         event_id: eventId,
         order_number: batchId ? undefined : orderNumber, // Não atualiza order_number na edição
-        status: formData.status || 'active'
+        status: status
       };
 
       console.log(batchId ? "Atualizando lote:" : "Enviando dados do lote:", batchData);
-
-      // Se estiver editando, precisamos verificar se a quantidade total mudou
-      if (batchId) {
-        const { data: currentBatch, error: fetchError } = await supabase
-          .from('batches')
-          .select('total_tickets, available_tickets')
-          .eq('id', batchId)
-          .single();
-          
-        if (fetchError) throw fetchError;
-        
-        if (currentBatch) {
-          const oldTotal = currentBatch.total_tickets;
-          const newTotal = parseInt(formData.totalTickets);
-          
-          // Se a quantidade total mudou, ajustar a quantidade disponível
-          if (oldTotal !== newTotal) {
-            const sold = oldTotal - currentBatch.available_tickets;
-            const newAvailable = Math.max(0, newTotal - sold);
-            
-            // Atualizar quantidade disponível
-            batchData.available_tickets = newAvailable;
-            
-            // Se não há ingressos disponíveis, definir status como esgotado
-            if (newAvailable <= 0 && batchData.status === 'active') {
-              batchData.status = 'sold_out';
-            }
-            // Se estava esgotado mas agora tem ingressos, voltar para ativo
-            else if (newAvailable > 0 && currentBatch.available_tickets <= 0) {
-              batchData.status = 'active';
-            }
-          }
-        }
-      }
 
       let operation;
       if (batchId) {

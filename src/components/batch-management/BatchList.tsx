@@ -25,6 +25,7 @@ import { Tag, Edit, Trash2, Copy, Check, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import { BatchProgressIndicator } from "./BatchProgressIndicator";
 
 interface BatchListProps {
   eventId: string;
@@ -35,6 +36,7 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isToggling, setIsToggling] = useState<string | null>(null);
   const [isDuplicating, setIsDuplicating] = useState<string | null>(null);
+  const [isResetting, setIsResetting] = useState<string | null>(null);
 
   const { data: batches, isLoading, refetch } = useQuery({
     queryKey: ['batches', eventId],
@@ -67,8 +69,8 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
   };
 
   const getBatchStatus = (batch: Batch) => {
-    // Se o status estiver explicitamente definido, use-o
-    if (batch.status === 'sold_out') return 'Esgotado';
+    // Se o status estiver explicitamente definido como sold_out, use-o
+    if (batch.status === 'sold_out' && batch.available_tickets <= 0) return 'Esgotado';
     if (batch.status === 'ended') return 'Encerrado';
     if (!batch.is_visible) return 'Desativado';
     
@@ -145,9 +147,12 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
       return;
     }
     
+    setIsResetting(batch.id);
+    
     try {
-      // Se não houver ingressos disponíveis, garantir que pelo menos 1 esteja disponível
-      const availableTickets = batch.available_tickets <= 0 ? 1 : batch.available_tickets;
+      // Se não houver ingressos disponíveis, garantir que todos os ingressos estão disponíveis
+      // Este é um fix para o problema de lotes aparecendo como esgotados sem vendas
+      const availableTickets = batch.total_tickets;
       
       const { error } = await supabase
         .from('batches')
@@ -164,6 +169,8 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
     } catch (error) {
       console.error('Erro ao reativar lote:', error);
       toast.error('Não foi possível reativar o lote.');
+    } finally {
+      setIsResetting(null);
     }
   };
 
@@ -276,7 +283,14 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
                   </TableCell>
                   <TableCell>R$ {batch.price.toFixed(2)}</TableCell>
                   <TableCell>
-                    {batch.available_tickets} / {batch.total_tickets}
+                    <div className="space-y-1">
+                      <span className="text-sm">{batch.available_tickets} / {batch.total_tickets}</span>
+                      <BatchProgressIndicator
+                        available={batch.available_tickets}
+                        total={batch.total_tickets}
+                        showTooltip={true}
+                      />
+                    </div>
                   </TableCell>
                   <TableCell>
                     {formatDate(batch.start_date)}
@@ -306,10 +320,15 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
                           variant="ghost" 
                           size="icon"
                           onClick={() => resetBatchStatus(batch)}
+                          disabled={isResetting === batch.id}
                           title="Reativar lote"
                           className="h-5 w-5"
                         >
-                          <Check className="h-3 w-3" />
+                          {isResetting === batch.id ? (
+                            <span className="h-3 w-3 animate-spin rounded-full border-2 border-t-transparent border-blue-500"></span>
+                          ) : (
+                            <Check className="h-3 w-3" />
+                          )}
                         </Button>
                       )}
                     </div>

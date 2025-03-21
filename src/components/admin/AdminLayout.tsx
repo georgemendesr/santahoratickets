@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { MainHeader } from '@/components/layout/MainHeader';
@@ -17,42 +17,48 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
   const navigate = useNavigate();
   const { toast } = useToast();
   const [initialized, setInitialized] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   
-  // Verificar autenticação ao montar
+  // Executamos a verificação de autenticação apenas uma vez ao montar o componente
   useEffect(() => {
-    console.log("AdminLayout inicializando, verificando autenticação...");
+    console.log("AdminLayout - Montando componente");
     
-    const init = async () => {
-      try {
-        await checkAuth();
-        setInitialized(true);
-      } catch (error) {
-        console.error("Erro ao verificar autenticação:", error);
-        toast({
-          title: "Erro de autenticação",
-          description: "Não foi possível verificar suas permissões",
-          variant: "destructive",
-        });
-        setInitialized(true);
-      }
+    if (!authChecked) {
+      const initAuth = async () => {
+        try {
+          console.log("AdminLayout - Iniciando verificação de autenticação");
+          await checkAuth();
+          console.log("AdminLayout - Autenticação verificada com sucesso");
+          setInitialized(true);
+          setAuthChecked(true);
+        } catch (error) {
+          console.error("AdminLayout - Erro ao verificar autenticação:", error);
+          toast({
+            title: "Erro de autenticação",
+            description: "Não foi possível verificar suas permissões",
+            variant: "destructive",
+          });
+          setInitialized(true);
+          setAuthChecked(true);
+        }
+      };
+      
+      initAuth();
+    }
+    
+    // Essa função de cleanup é importante para prevenir memory leaks
+    return () => {
+      console.log("AdminLayout - Desmontando componente");
     };
-    
-    init();
-  }, [checkAuth, toast]);
+  }, [checkAuth, toast, authChecked]);
   
-  // Gerenciar estado de autenticação
+  // Efeito separado para lidar com redirecionamento
   useEffect(() => {
     if (!initialized) return;
     
-    console.log("Estado de autenticação:", { 
-      loading, 
-      isAdmin, 
-      hasSession: !!session,
-      initialized
-    });
-    
+    // Lógica para redirecionar se necessário, apenas após inicialização
     if (!loading && requiresAdmin && !isAdmin) {
-      console.log("Usuário não autorizado, redirecionando para home");
+      console.log("AdminLayout - Usuário não autorizado, redirecionando");
       toast({
         title: "Acesso restrito",
         description: "Você não tem permissão para acessar esta página",
@@ -60,21 +66,21 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
       });
       navigate('/');
     }
-  }, [loading, isAdmin, requiresAdmin, navigate, toast, session, initialized]);
+  }, [loading, isAdmin, requiresAdmin, navigate, toast, initialized]);
   
-  // Estado de carregamento
+  // Mostra o estado de carregamento
   if (loading || !initialized) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center">
-          <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-amber-500"></div>
+          <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-amber-500"></div>
           <span className="mt-4 text-gray-600">Verificando permissões...</span>
         </div>
       </div>
     );
   }
   
-  // Se usuário não está autorizado
+  // Se usuário não está autorizado, mostra mensagem temporária (será redirecionado)
   if (requiresAdmin && !isAdmin) {
     return (
       <div className="flex items-center justify-center h-screen">

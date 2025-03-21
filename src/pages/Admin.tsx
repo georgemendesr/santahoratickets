@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -12,11 +12,11 @@ import { useToast } from "@/hooks/use-toast";
 const Admin = () => {
   const { toast } = useToast();
   
-  // Simplificamos a consulta e adicionamos tratamento de erro mais robusto
+  // Simplificada a consulta e adicionado retentativas limitadas
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-dashboard-events"],
     queryFn: async () => {
-      console.log("Tentando buscar dados do dashboard...");
+      console.log("Admin - Buscando dados do dashboard");
       
       try {
         const { data, error } = await supabase
@@ -26,22 +26,35 @@ const Admin = () => {
           .limit(5);
           
         if (error) {
-          console.error("Erro na consulta ao Supabase:", error);
+          console.error("Admin - Erro na consulta ao Supabase:", error);
           throw new Error(error.message);
         }
         
-        console.log("Dados recuperados com sucesso:", data);
+        console.log("Admin - Dados recuperados com sucesso");
         return data || [];
       } catch (err) {
-        console.error("Erro ao carregar dados:", err);
+        console.error("Admin - Erro ao carregar dados:", err);
         throw err;
       }
     },
+    retry: 1, // Limita retentativas para evitar loops
+    staleTime: 60000, // Cache por 1 minuto
   });
+
+  // Notifica o usuário sobre erros
+  useEffect(() => {
+    if (error) {
+      console.error("Admin - Erro capturado no useEffect:", error);
+      toast({
+        title: "Erro ao carregar dados",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
 
   // Em caso de erro, exibimos uma mensagem amigável
   if (error) {
-    console.error("Erro capturado pelo React Query:", error);
     return (
       <AdminLayout>
         <div className="container mx-auto max-w-7xl">

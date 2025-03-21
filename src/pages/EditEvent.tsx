@@ -1,3 +1,4 @@
+
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +14,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { BatchList } from "@/components/batch-management/BatchList";
 import { Ticket } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { BackButton } from "@/components/ui/back-button";
 
 const EditEvent = () => {
   const { id } = useParams();
@@ -121,6 +124,9 @@ const EditEvent = () => {
     <EventPageLayout 
       title="Editar Evento" 
       onBack={goBack}
+      rightElement={
+        <BackButton destination="/admin/eventos" />
+      }
     >
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6">
@@ -152,13 +158,25 @@ const EditEvent = () => {
                 <CardTitle>Lotes de Ingressos</CardTitle>
                 <CardDescription>Gerencie os lotes disponíveis para este evento</CardDescription>
               </div>
-              <Button 
-                onClick={() => goToAdminBatches(id)}
-                className="flex items-center gap-2"
-              >
-                <Ticket className="h-4 w-4" />
-                Gerenciar Lotes
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => goToAdminBatches(id)}
+                  className="flex items-center gap-2"
+                >
+                  <Ticket className="h-4 w-4" />
+                  Gerenciar Lotes
+                </Button>
+                
+                <Button 
+                  variant="outline"
+                  asChild
+                  className="flex items-center gap-2"
+                >
+                  <Link to={`/admin/eventos/${id}/batches-view`}>
+                    Ver Detalhes
+                  </Link>
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <BatchList 

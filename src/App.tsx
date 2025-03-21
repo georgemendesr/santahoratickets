@@ -1,3 +1,4 @@
+
 import React, { Suspense, lazy } from "react";
 import { createBrowserRouter, RouterProvider, Navigate, useParams } from "react-router-dom";
 import { FeedbackProvider } from "./context/FeedbackContext";
@@ -18,6 +19,9 @@ const EventsRedirect = () => {
   const { eventId } = useParams<{ eventId: string }>();
   return <Navigate to={`/eventos/${eventId || ''}`} replace />;
 };
+
+// Carregamento preguiçoso para as novas páginas
+const EventBatchesView = lazy(() => import("@/pages/EventBatchesView"));
 
 // Função para criar as rotas com redirecionamentos apropriados
 const createRoutes = () => {
@@ -53,6 +57,16 @@ const createRoutes = () => {
   routerConfig.push({
     path: "/admin/batches",
     element: <Navigate to="/admin/lotes" replace />,
+  });
+
+  // Add new EventBatchesView route
+  routerConfig.push({
+    path: "/admin/eventos/:eventId/batches-view",
+    element: (
+      <Suspense fallback={<LoadingFallback />}>
+        <EventBatchesView />
+      </Suspense>
+    ),
   });
 
   return routerConfig;

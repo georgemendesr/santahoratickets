@@ -1,6 +1,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { getBatchDebugInfo } from "./batchStatusUtils";
+import { Batch } from "@/types/event.types";
+
+// Update the type to accept string for status
+type BatchWithStringStatus = Omit<Batch, 'status'> & { 
+  status: string 
+};
 
 // Ferramenta de diagnóstico para executar no console do navegador
 window.diagnoseBatches = async (eventId: string) => {
@@ -27,7 +33,9 @@ window.diagnoseBatches = async (eventId: string) => {
     
     // Verificar cada lote
     data.forEach(batch => {
-      const debugInfo = getBatchDebugInfo(batch);
+      // Cast batch as BatchWithStringStatus to handle the status field
+      const batchWithProperType = batch as unknown as BatchWithStringStatus;
+      const debugInfo = getBatchDebugInfo(batchWithProperType as any);
       
       console.group(`🎫 Lote: ${batch.title} (${batch.id})`);
       console.log('Status calculado:', debugInfo.computedStatus);
@@ -61,7 +69,9 @@ window.fixBatchStatus = async (batchId: string) => {
       return;
     }
     
-    const debugInfo = getBatchDebugInfo(batch);
+    // Cast batch as BatchWithStringStatus to handle the status field
+    const batchWithProperType = batch as unknown as BatchWithStringStatus;
+    const debugInfo = getBatchDebugInfo(batchWithProperType as any);
     const correctStatus = debugInfo.computedStatus;
     
     console.log(`🔧 Corrigindo lote ${batch.title}`);
@@ -108,7 +118,9 @@ window.fixAllBatchesForEvent = async (eventId: string) => {
     let correctedCount = 0;
     
     for (const batch of data) {
-      const debugInfo = getBatchDebugInfo(batch);
+      // Cast batch as BatchWithStringStatus to handle the status field
+      const batchWithProperType = batch as unknown as BatchWithStringStatus;
+      const debugInfo = getBatchDebugInfo(batchWithProperType as any);
       const correctStatus = debugInfo.computedStatus;
       
       if (batch.status !== correctStatus) {

@@ -19,10 +19,11 @@ export const usePixQRCodeLogic = ({ qrCode, qrCodeBase64, onRefresh }: UsePixQRC
   // Processamento do código PIX
   useEffect(() => {
     if (qrCode) {
-      console.log("Processando código PIX");
+      console.log("Processando código PIX:", qrCode);
       
       // Extrair o nome do beneficiário do código
       const extractedName = extractNameFromCode(qrCode);
+      console.log("Nome do beneficiário extraído:", extractedName);
       setBeneficiaryName(extractedName);
       
       // Formatação para melhor legibilidade

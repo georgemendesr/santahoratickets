@@ -26,12 +26,17 @@ export const PixPaymentInfo = ({ beneficiaryName, hasPixCode, pixCode }: PixPaym
     }
   }
   
+  // Determinar o nome a ser exibido (priorizar o nome extraído do código)
+  const displayName = merchantName || beneficiaryName;
+  
   return (
     <>
       <div className="text-sm bg-gray-50 border border-gray-200 rounded-md p-3 w-full space-y-2">
         <div className="flex flex-col">
-          <p className="font-medium">{beneficiaryName}</p>
-          {merchantName && <p className="text-xs text-gray-600">Empresa: {merchantName}</p>}
+          <p className="font-medium">Beneficiário: {displayName}</p>
+          {merchantName && beneficiaryName && merchantName !== beneficiaryName && (
+            <p className="text-xs text-gray-600">Representado por: {beneficiaryName}</p>
+          )}
           {city && <p className="text-xs text-gray-600">Localização: {city}</p>}
         </div>
         <p className="text-xs text-gray-500 pt-1 border-t border-gray-100">O código expira em 30 minutos</p>

@@ -1,10 +1,11 @@
+
 /**
  * Gera um código PIX válido no padrão BR Code a partir de informações básicas
  * @param {Object} data - Dados para gerar o código PIX
  * @returns {string} Código PIX válido no formato BR Code
  */
 export function generateValidPixCode(data: { rawCode: string, amount?: number }) {
-  // Extração de dados do código PIX inválido
+  // Extrair dados do código PIX
   try {
     const rawCode = data.rawCode || '';
     
@@ -107,16 +108,22 @@ export function extractNameFromCode(code: string | null): string {
   if (!code) return '';
   
   try {
-    // Procurar pelo nome após o código 59 (merchant name)
-    const nameMatch = code.match(/59(\d{2})([^6]+)/);
-    if (nameMatch && nameMatch.length > 2) {
-      return nameMatch[2];
+    // Tentar extrair o nome do beneficiário (campo 59 - merchant name)
+    const merchantNameMatch = code.match(/5913([^6]+)/);
+    if (merchantNameMatch && merchantNameMatch[1]) {
+      return merchantNameMatch[1].trim();
     }
     
-    // Alternativa: procurar pelo nome após 5913 (merchant name em outro formato)
-    const altNameMatch = code.match(/5913([^6]+)/);
-    if (altNameMatch && altNameMatch.length > 1) {
-      return altNameMatch[1];
+    // Alternativa: tentar o campo 60 (merchant name em outro formato)
+    const altMerchantMatch = code.match(/60(\d{2})([^6]+)/);
+    if (altMerchantMatch && altMerchantMatch[2]) {
+      return altMerchantMatch[2].trim();
+    }
+    
+    // Última alternativa: tentar o campo 02 (beneficiary name)
+    const beneficiaryMatch = code.match(/0214([^5]+)/);
+    if (beneficiaryMatch && beneficiaryMatch[1]) {
+      return beneficiaryMatch[1].trim();
     }
     
     return '';

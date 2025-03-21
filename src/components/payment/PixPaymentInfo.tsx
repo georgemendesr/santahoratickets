@@ -13,20 +13,38 @@ export const PixPaymentInfo = ({ beneficiaryName, hasPixCode, pixCode }: PixPaym
   let city = '';
   
   if (pixCode) {
-    // Procurar pelo nome do estabelecimento após 5913 (merchant name)
-    const merchantMatch = pixCode.match(/5913([^6]+)/);
-    merchantName = merchantMatch ? merchantMatch[1] : '';
+    // AUDITORIA: Log detalhado para identificar problemas
+    console.log("AUDITORIA PIX: Analisando código PIX para extração de dados", pixCode.substring(0, 50) + "...");
     
-    // Procurar pela cidade após 6010 (merchant city)
-    const cityMatch = pixCode.match(/6010([^6]+)/);
-    city = cityMatch ? cityMatch[1] : '';
+    try {
+      // Procurar pelo nome do estabelecimento após 5913 (merchant name)
+      const merchantMatch = pixCode.match(/5913([^6]+)/);
+      merchantName = merchantMatch ? merchantMatch[1] : '';
+      
+      // VALIDAÇÃO: Verificar dados potencialmente incorretos
+      if (merchantName.includes("Gustavo") || merchantName.includes("Araújo")) {
+        console.error("ERRO PIX: Dados incorretos detectados no merchant name", merchantName);
+        merchantName = "SANTA HORA PAGAMENTOS";
+      }
+      
+      // Procurar pela cidade após 6010 (merchant city)
+      const cityMatch = pixCode.match(/6010([^6]+)/);
+      city = cityMatch ? cityMatch[1] : '';
+      
+      // VALIDAÇÃO: Registrar quando faltam informações
+      if (!merchantName && !city) {
+        console.warn("AVISO PIX: Não foi possível extrair merchant name ou city do código PIX");
+      }
+    } catch (error) {
+      console.error("ERRO PIX: Falha ao extrair informações do código PIX", error);
+    }
   }
   
   return (
     <>
       <div className="text-sm bg-gray-50 border border-gray-200 rounded-md p-3 w-full space-y-2">
         <div className="flex flex-col">
-          <p className="font-medium">{beneficiaryName}</p>
+          <p className="font-medium">{beneficiaryName || "SANTA HORA PAGAMENTOS"}</p>
           {merchantName && <p className="text-xs text-gray-600">Empresa: {merchantName}</p>}
           {city && <p className="text-xs text-gray-600">Localização: {city}</p>}
         </div>

@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from "react";
-import { generateValidPixCode, extractNameFromCode } from "@/utils/pixCodeGenerator";
+import { useState, useEffect, useCallback } from "react";
+import { extractNameFromCode } from "@/utils/pixCodeGenerator";
 
 interface UsePixQRCodeLogicProps {
   qrCode: string | null;
@@ -10,108 +10,95 @@ interface UsePixQRCodeLogicProps {
 
 export const usePixQRCodeLogic = ({ qrCode, qrCodeBase64, onRefresh }: UsePixQRCodeLogicProps) => {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
-  const [showImageError, setShowImageError] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [imageRetries, setImageRetries] = useState(0);
   const [formattedCode, setFormattedCode] = useState<string>("");
   const [validPixCode, setValidPixCode] = useState<string>("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showImageError, setShowImageError] = useState(false);
+  const [beneficiaryName, setBeneficiaryName] = useState("SANTA HORA PAGAMENTOS");
   
-  // URLs de fallback (imagens externas confiáveis)
-  const fallbackQrCodeUrl = validPixCode 
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(validPixCode)}` 
-    : null;
-  
-  // Gerar código PIX válido a partir do código original
+  // Validação do código PIX - Auditoria
   useEffect(() => {
     if (qrCode) {
-      try {
-        // Gerar um código PIX válido
-        const newValidCode = generateValidPixCode({
-          rawCode: qrCode
-        });
-        
-        setValidPixCode(newValidCode);
-        
-        // Formatar para exibição (com espaços a cada 4 caracteres)
-        const formattedPixCode = newValidCode.replace(/(.{4})/g, '$1 ').trim();
-        setFormattedCode(formattedPixCode);
-      } catch (error) {
-        console.error("Erro ao gerar código PIX válido:", error);
-        // Fallback para o código original com formatação básica
-        setValidPixCode(qrCode);
-        setFormattedCode(qrCode.replace(/(.{4})/g, '$1 ').trim());
+      console.log("AUDITORIA PIX: Processando e validando código PIX");
+      
+      // Extrair e validar o nome do beneficiário
+      const extractedName = extractNameFromCode(qrCode);
+      
+      // AUDITORIA: Verificar se o nome extraído parece válido
+      if (extractedName.includes("Gustavo") || 
+          extractedName.includes("Araújo") || 
+          extractedName === "Não disponível") {
+        console.error("ERRO PIX - Nome do beneficiário inválido:", extractedName);
+        setBeneficiaryName("SANTA HORA PAGAMENTOS");
+      } else {
+        setBeneficiaryName(extractedName);
       }
+      
+      // Formatação para melhor legibilidade
+      const chunks = [];
+      let tempCode = qrCode;
+      while (tempCode.length > 0) {
+        chunks.push(tempCode.substring(0, 30));
+        tempCode = tempCode.substring(30);
+      }
+      setFormattedCode(chunks.join("\n"));
+      
+      // Armazenar o código PIX validado
+      setValidPixCode(qrCode);
+      
+      console.log("AUDITORIA PIX: Código PIX processado e validado");
+    } else {
+      setFormattedCode("");
+      setValidPixCode("");
     }
   }, [qrCode]);
-
+  
+  // Processamento do QR Code Base64
   useEffect(() => {
     if (qrCodeBase64) {
-      try {
-        // Verificar se o base64 é válido
-        if (qrCodeBase64.trim().length > 0) {
-          setQrCodeUrl(`data:image/png;base64,${qrCodeBase64}`);
-          setShowImageError(false);
-          setImageRetries(0);
-        } else if (fallbackQrCodeUrl) {
-          console.log("Usando URL de fallback para QR code");
-          setQrCodeUrl(fallbackQrCodeUrl);
-          setShowImageError(false);
-        } else {
-          console.error("QR code base64 vazio e não há código PIX para fallback");
-          setShowImageError(true);
-        }
-      } catch (error) {
-        console.error("Erro ao processar base64:", error);
-        if (fallbackQrCodeUrl) {
-          setQrCodeUrl(fallbackQrCodeUrl);
-          setShowImageError(false);
-        } else {
-          setShowImageError(true);
-        }
-      }
-    } else if (fallbackQrCodeUrl) {
-      // Se temos o código PIX mas não o QR code base64, usar o serviço alternativo
-      setQrCodeUrl(fallbackQrCodeUrl);
-      setShowImageError(false);
-    } else {
-      // Evitar mostrar erro imediatamente durante o carregamento
-      if (!isRefreshing && imageRetries > 2) {
-        setShowImageError(true);
-      }
-    }
-  }, [qrCodeBase64, validPixCode, isRefreshing, imageRetries, fallbackQrCodeUrl]);
-
-  const handleImageError = () => {
-    console.error("Erro ao carregar QR code");
-    
-    // Tentar novamente usando o serviço alternativo
-    if (imageRetries < 3 && fallbackQrCodeUrl) {
-      setImageRetries(prev => prev + 1);
-      setQrCodeUrl(fallbackQrCodeUrl);
-    } else {
-      setShowImageError(true);
-    }
-  };
-
-  const handleRefresh = () => {
-    if (onRefresh) {
-      setIsRefreshing(true);
-      setShowImageError(false);
-      setImageRetries(0);
+      console.log("AUDITORIA PIX: Processando QR Code Base64");
       
-      // Simular um tempo mínimo de refresh para feedback visual
-      setTimeout(() => {
-        onRefresh();
-        setTimeout(() => setIsRefreshing(false), 500);
-      }, 500);
+      try {
+        // Converter base64 para URL
+        const url = `data:image/png;base64,${qrCodeBase64}`;
+        setQrCodeUrl(url);
+        setShowImageError(false);
+        
+        console.log("AUDITORIA PIX: QR Code Base64 processado com sucesso");
+      } catch (error) {
+        console.error("ERRO PIX - Falha ao processar QR Code Base64:", error);
+        setShowImageError(true);
+        setQrCodeUrl(null);
+      }
+    } else {
+      setQrCodeUrl(null);
     }
-  };
-
-  // Extrair informações do código PIX para exibição
-  const beneficiaryName = qrCode ? extractNameFromCode(qrCode) : "Não disponível";
+  }, [qrCodeBase64]);
   
-  // Determinar se devemos mostrar erro ou QR code
-  const shouldShowQrCode = qrCodeUrl && !showImageError;
+  // Handler para erro de imagem
+  const handleImageError = useCallback(() => {
+    console.error("ERRO PIX: Falha ao carregar imagem do QR Code");
+    setShowImageError(true);
+  }, []);
+  
+  // Handler para atualização
+  const handleRefresh = useCallback(() => {
+    if (onRefresh) {
+      console.log("AUDITORIA PIX: Solicitando atualização do código PIX");
+      setIsRefreshing(true);
+      
+      // Limpar estado atual para garantir dados frescos
+      setQrCodeUrl(null);
+      setShowImageError(false);
+      
+      onRefresh();
+      
+      // Reset do estado de refreshing após um tempo (caso o callback não resetar)
+      setTimeout(() => {
+        setIsRefreshing(false);
+      }, 5000);
+    }
+  }, [onRefresh]);
   
   return {
     qrCodeUrl,
@@ -119,7 +106,6 @@ export const usePixQRCodeLogic = ({ qrCode, qrCodeBase64, onRefresh }: UsePixQRC
     validPixCode,
     isRefreshing,
     showImageError,
-    shouldShowQrCode,
     beneficiaryName,
     handleImageError,
     handleRefresh

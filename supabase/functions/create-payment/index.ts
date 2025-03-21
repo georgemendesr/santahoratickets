@@ -57,15 +57,42 @@ function crc16CCITT(str) {
   return crc.toString(16).padStart(4, '0').toUpperCase();
 }
 
-// Função para gerar o payload do PIX
+// Auditoria: Função de geração de PIX reconstruída para usar dados ATUAIS
 function generatePixPayload(
   merchantName,
   merchantCity,
   pixKey,
   txid,
   amount,
-  description = ''
+  description = '',
+  eventId = '' // Adicionado para auditoria
 ) {
+  // Log para auditoria completa dos dados usados na geração
+  console.log("AUDITORIA PIX - Dados utilizados:", {
+    merchantName,
+    merchantCity,
+    pixKey,
+    txid,
+    amount,
+    description,
+    eventId,
+    timestamp: new Date().toISOString()
+  });
+  
+  // Validação: garantir que todos os dados essenciais estejam presentes
+  if (!merchantName || !pixKey || !amount) {
+    console.error("ERRO PIX - Dados incompletos:", { merchantName, pixKey, amount });
+    throw new Error("Dados incompletos para geração do PIX");
+  }
+  
+  // Verificação: detectar possíveis dados de teste ou inválidos
+  if (merchantName.includes("Gustavo") || 
+      merchantName.includes("Araújo") || 
+      description.includes("BORA PAGODEAR")) {
+    console.error("ERRO PIX - Dados antigos ou de teste detectados:", { merchantName, description });
+    throw new Error("Dados de teste detectados na geração do PIX. Pagamento rejeitado.");
+  }
+  
   // Dados constantes do payload PIX
   const payload = {};
   
@@ -128,6 +155,9 @@ function generatePixPayload(
   const crcValue = crc16CCITT(pixCode);
   pixCode += crcValue;
   
+  // Log final para auditoria
+  console.log("AUDITORIA PIX - Código gerado:", pixCode);
+  
   return pixCode;
 }
 
@@ -151,12 +181,13 @@ serve(async (req) => {
 
     const { preferenceId, eventId, batchId, paymentType, regenerate } = await req.json()
 
-    console.log("Recebendo solicitação de pagamento:", { 
+    console.log("AUDITORIA: Recebendo solicitação de pagamento:", { 
       preferenceId, 
       eventId, 
       batchId, 
       paymentType,
-      regenerate 
+      regenerate,
+      timestamp: new Date().toISOString()
     })
 
     if (!preferenceId) {
@@ -171,7 +202,7 @@ serve(async (req) => {
       .single()
 
     if (prefError) {
-      console.error("Erro ao buscar preferência:", prefError)
+      console.error("ERRO: Erro ao buscar preferência:", prefError)
       throw new Error(`Preferência não encontrada: ${prefError.message}`)
     }
 
@@ -191,36 +222,80 @@ serve(async (req) => {
       )
     }
 
-    console.log("Gerando QR Code PIX para a preferência:", preferenceId)
+    console.log("AUDITORIA: Gerando QR Code PIX para a preferência:", {
+      preferenceId,
+      paymentType: preference.payment_type,
+      eventId: preference.event_id,
+      userId: preference.user_id,
+      amount: preference.total_amount
+    })
 
-    // Buscar mais informações para o PIX
+    // AUDITORIA: Buscar dados atualizados e completos do evento
     const { data: event, error: eventError } = await supabaseClient
       .from('events')
-      .select('title, location')
+      .select('title, location, id')
       .eq('id', preference.event_id)
       .single();
       
-    if (eventError) {
-      console.error("Erro ao buscar dados do evento:", eventError)
+    if (eventError || !event) {
+      console.error("ERRO CRÍTICO: Erro ao buscar dados do evento:", eventError)
+      throw new Error(`Evento não encontrado ou dados incompletos: ${eventError?.message || "Dados ausentes"}`)
     }
 
-    // Dados para o PIX (ainda são simulados, mas com formato correto)
-    const pixKey = "05373979073" // CPF/CNPJ como chave PIX (simulado)
-    const merchantName = "BORA PAGODEAR"
+    // VALIDAÇÃO: Garantir que todos os dados necessários estão presentes
+    if (!event.title || !event.location) {
+      console.error("ERRO CRÍTICO: Dados do evento incompletos:", event)
+      throw new Error("Dados do evento incompletos para geração do PIX")
+    }
+
+    // AUDITORIA: Verificar se os dados parecem ser de teste
+    if (event.title.includes("BORA PAGODEAR") || 
+        event.title.includes("Teste") || 
+        event.title.includes("Test")) {
+      console.error("ERRO: Evento de teste detectado:", event)
+      throw new Error("Eventos de teste não podem ser usados para pagamentos reais")
+    }
+
+    // Dados para o PIX - AUDITORIA: usar valores fixos confiáveis para dados sensíveis
+    const pixKey = "05373979073" // CPF/CNPJ como chave PIX 
+    const merchantName = "SANTA HORA PAGAMENTOS" // Nome fixo da empresa, não do usuário
     const merchantCity = event?.location?.split(',').pop()?.trim() || "SAO PAULO"
     const amount = preference.total_amount
     const txid = preferenceId.replace(/-/g, '').substring(0, 25)
     const description = event?.title || "Ingresso"
 
-    // Gerar PIX utilizando a função auxiliar (EMV BR Code)
-    const qrCode = generatePixPayload(
+    // Log detalhado para auditoria antes da geração
+    console.log("AUDITORIA PIX - Dados completos para geração:", {
+      pixKey,
       merchantName,
       merchantCity,
-      pixKey,
-      txid,
       amount,
-      description
-    )
+      txid,
+      description,
+      eventId: event.id,
+      eventTitle: event.title,
+      eventLocation: event.location,
+      preferenceId,
+      userId: preference.user_id
+    })
+
+    // Gerar PIX utilizando a função reconstruída
+    let qrCode = null
+    try {
+      qrCode = generatePixPayload(
+        merchantName,
+        merchantCity,
+        pixKey,
+        txid,
+        amount,
+        description,
+        event.id // Para auditoria
+      )
+      console.log("AUDITORIA: Código PIX gerado com sucesso")
+    } catch (pixError) {
+      console.error("ERRO CRÍTICO na geração do código PIX:", pixError)
+      throw new Error(`Falha na geração do código PIX: ${pixError.message}`)
+    }
     
     let qrCodeBase64 = null;
     let generateSuccess = false;
@@ -239,8 +314,9 @@ serve(async (req) => {
           }
         });
         generateSuccess = true;
+        console.log("AUDITORIA: QR Code base64 gerado com sucesso")
       } catch (qrError) {
-        console.error("Erro na primeira tentativa de gerar QR code:", qrError);
+        console.error("ERRO: Primeira tentativa de gerar QR code falhou:", qrError);
         
         // Segunda tentativa com configurações mais simples
         try {
@@ -250,8 +326,9 @@ serve(async (req) => {
             scale: 4
           });
           generateSuccess = true;
+          console.log("AUDITORIA: QR Code base64 gerado com sucesso na segunda tentativa")
         } catch (retryError) {
-          console.error("Erro também na segunda tentativa:", retryError);
+          console.error("ERRO: Segunda tentativa de gerar QR code também falhou:", retryError);
           // Continuar, mesmo sem o QR code base64
         }
       }
@@ -273,9 +350,11 @@ serve(async (req) => {
         .eq('id', preferenceId)
 
       if (updateError) {
-        console.error("Erro ao atualizar preferência com QR code:", updateError)
+        console.error("ERRO: Falha ao atualizar preferência com QR code:", updateError)
         throw new Error(`Erro ao atualizar QR code: ${updateError.message}`)
       }
+
+      console.log("AUDITORIA: Preferência atualizada com sucesso com os dados de PIX")
 
       // Retornar a resposta com o status adequado
       const successMessage = generateSuccess 
@@ -297,7 +376,7 @@ serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     } catch (qrError) {
-      console.error("Erro ao gerar QR code:", qrError)
+      console.error("ERRO ao gerar QR code:", qrError)
       
       // Mesmo com erro no QR, retornar o código PIX
       return new Response(
@@ -316,7 +395,7 @@ serve(async (req) => {
       )
     }
   } catch (error) {
-    console.error("Erro ao processar pagamento:", error)
+    console.error("ERRO CRÍTICO ao processar pagamento:", error)
     
     return new Response(
       JSON.stringify({

@@ -3,15 +3,32 @@ import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/s
 import { AdminSidebar } from "./AdminSidebar";
 import { MainHeader } from "@/components/layout/MainHeader";
 import { MainFooter } from "@/components/layout/MainFooter";
+import { useAuth } from "@/hooks/useAuth";
+import { useRole } from "@/hooks/useRole";
+import { useNavigate, useEffect } from "react-router-dom";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
+  const { session } = useAuth();
+  const { isAdmin } = useRole(session);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAdmin) {
+      navigate("/");
+    }
+  }, [isAdmin, navigate]);
+
+  if (!isAdmin) {
+    return null;
+  }
+
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full bg-background">
         <AdminSidebar />
         <div className="flex w-full flex-col">
           <MainHeader />
@@ -20,7 +37,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <div className="flex items-center mb-4">
                 <SidebarTrigger className="mr-2" />
               </div>
-              {children}
+              <main className="mx-auto w-full max-w-7xl">{children}</main>
             </div>
             <MainFooter />
           </SidebarInset>

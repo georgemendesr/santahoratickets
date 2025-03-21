@@ -1,8 +1,7 @@
 
-import { LayoutDashboard, CalendarDays, Users, Ticket, Tag, DollarSign, BarChart3 } from "lucide-react";
+import { LayoutDashboard, CalendarDays, Users, Ticket, Tag, DollarSign, BarChart3, Gift, Star, ArrowUpRight } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { ROUTES } from "@/routes";
-import { useNavigation } from "@/hooks/useNavigation";
 import {
   Sidebar,
   SidebarContent,
@@ -111,6 +110,30 @@ export function AdminSidebar() {
                   <Link to={ROUTES.ADMIN.ANALYTICS}>
                     <BarChart3 className="h-4 w-4" />
                     <span>Analytics</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild
+                  isActive={isActive("/admin/loyalty")}
+                >
+                  <Link to="/admin/loyalty">
+                    <Star className="h-4 w-4" />
+                    <span>Fidelidade</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild
+                  isActive={isActive("/admin/referrals")}
+                >
+                  <Link to="/admin/referrals">
+                    <ArrowUpRight className="h-4 w-4" />
+                    <span>Referrals</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

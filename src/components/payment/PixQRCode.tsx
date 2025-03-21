@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Copy, RefreshCw, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
+import { generateValidPixCode, extractNameFromCode } from "@/utils/pixCodeGenerator";
 
 interface PixQRCodeProps {
   qrCode: string | null;
@@ -17,29 +18,32 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [imageRetries, setImageRetries] = useState(0);
   const [formattedCode, setFormattedCode] = useState<string>("");
+  const [validPixCode, setValidPixCode] = useState<string>("");
   
   // URLs de fallback (imagens externas confiáveis)
-  const fallbackQrCodeUrl = qrCode 
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCode)}` 
+  const fallbackQrCodeUrl = validPixCode 
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(validPixCode)}` 
     : null;
   
-  // Formatar o código PIX para melhorar legibilidade e copiabilidade
+  // Gerar código PIX válido a partir do código original
   useEffect(() => {
     if (qrCode) {
       try {
-        // Verificar se é um código EMV (PIX padrão brasileiro)
-        if (qrCode.includes('br.gov.bcb.pix')) {
-          // Mantenha o código original, apenas formate para exibição
-          // Adicione espaços a cada 4 caracteres para facilitar verificação visual
-          const formattedPixCode = qrCode.replace(/(.{4})/g, '$1 ').trim();
-          setFormattedCode(formattedPixCode);
-        } else {
-          // Caso não seja um código reconhecido, use o original
-          setFormattedCode(qrCode);
-        }
+        // Gerar um código PIX válido
+        const newValidCode = generateValidPixCode({
+          rawCode: qrCode
+        });
+        
+        setValidPixCode(newValidCode);
+        
+        // Formatar para exibição (com espaços a cada 4 caracteres)
+        const formattedPixCode = newValidCode.replace(/(.{4})/g, '$1 ').trim();
+        setFormattedCode(formattedPixCode);
       } catch (error) {
-        console.error("Erro ao formatar código PIX:", error);
-        setFormattedCode(qrCode);
+        console.error("Erro ao gerar código PIX válido:", error);
+        // Fallback para o código original com formatação básica
+        setValidPixCode(qrCode);
+        setFormattedCode(qrCode.replace(/(.{4})/g, '$1 ').trim());
       }
     }
   }, [qrCode]);
@@ -79,7 +83,7 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
         setShowImageError(true);
       }
     }
-  }, [qrCodeBase64, qrCode, isRefreshing, imageRetries, fallbackQrCodeUrl]);
+  }, [qrCodeBase64, validPixCode, isRefreshing, imageRetries, fallbackQrCodeUrl]);
 
   const handleImageError = () => {
     console.error("Erro ao carregar QR code");
@@ -94,8 +98,12 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
   };
 
   const handleCopyCode = () => {
-    if (qrCode) {
-      // Sempre copiar o código PIX original (não formatado) para garantir compatibilidade
+    if (validPixCode) {
+      // Copiar o código PIX válido sem espaços para garantir compatibilidade
+      navigator.clipboard.writeText(validPixCode.replace(/\s+/g, ''));
+      toast.success("Código PIX copiado!");
+    } else if (qrCode) {
+      // Fallback para o código original
       navigator.clipboard.writeText(qrCode);
       toast.success("Código PIX copiado!");
     }
@@ -117,7 +125,10 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
 
   // Determinar se devemos mostrar erro ou QR code
   const shouldShowQrCode = qrCodeUrl && !showImageError;
-  const shouldShowErrorMessage = !shouldShowQrCode && qrCode;
+  const shouldShowErrorMessage = !shouldShowQrCode && (validPixCode || qrCode);
+  
+  // Extrair informações do código PIX para exibição
+  const beneficiaryName = qrCode ? extractNameFromCode(qrCode) : "Não disponível";
   
   return (
     <div className="flex flex-col items-center space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -196,7 +207,7 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
             size="sm"
             className="absolute right-1 top-1 h-8"
             onClick={handleCopyCode}
-            disabled={!qrCode}
+            disabled={!validPixCode && !qrCode}
           >
             <Copy className="h-4 w-4 mr-1" />
             Copiar
@@ -204,12 +215,26 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
         </div>
       </div>
       
+      {/* Informações de pagamento */}
+      {(validPixCode || qrCode) && (
+        <div className="text-sm bg-gray-50 border border-gray-200 rounded-md p-3 w-full">
+          <p className="font-medium mb-1">{beneficiaryName}</p>
+          <p className="text-xs text-gray-500">O código expira em 30 minutos</p>
+        </div>
+      )}
+      
       {/* Aviso em destaque para código PIX */}
-      {qrCode && (
+      {(validPixCode || qrCode) && (
         <div className="text-sm text-center text-emerald-700 bg-emerald-50 p-3 rounded-md border border-emerald-200 w-full font-medium">
           Use o código PIX acima para realizar o pagamento via copia e cola no seu aplicativo bancário.
         </div>
       )}
+      
+      {/* Instruções adicionais */}
+      <div className="text-sm text-center text-blue-700 bg-blue-50 p-3 rounded-md border border-blue-200 w-full">
+        <p className="font-medium">Como usar:</p>
+        <p className="text-xs mt-1">No seu aplicativo bancário, escolha a opção "PIX Copia e Cola" e cole o código acima. Não tente digitar manualmente o código.</p>
+      </div>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,11 +6,20 @@ import { EventForm, type EventFormData } from "@/components/EventForm";
 import { type Event } from "@/types";
 import { EventPageLayout } from "@/components/event-management/EventPageLayout";
 import { EventLoadingState } from "@/components/event-management/EventLoadingState";
+import { useNavigation } from "@/hooks/useNavigation";
+import { TabsList, TabsTrigger, Tabs, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { BatchList } from "@/components/batch-management/BatchList";
+import { Ticket } from "lucide-react";
+import { useState } from "react";
 
 const EditEvent = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { goToAdminBatches, goBack } = useNavigation();
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("basic");
 
   const { data: event, isLoading } = useQuery({
     queryKey: ['event', id],
@@ -97,6 +105,10 @@ const EditEvent = () => {
     }
   };
 
+  const handleEditBatch = (batchId: string) => {
+    goToAdminBatches(id);
+  };
+
   if (isLoading) {
     return <EventLoadingState />;
   }
@@ -108,22 +120,56 @@ const EditEvent = () => {
   return (
     <EventPageLayout 
       title="Editar Evento" 
-      onBack={() => navigate(-1)}
+      onBack={goBack}
     >
-      <EventForm
-        onSubmit={onSubmit}
-        defaultValues={{
-          title: event.title,
-          description: event.description,
-          date: event.date,
-          time: event.time,
-          location: event.location,
-        }}
-        isSubmitting={updateEventMutation.isPending}
-        submitText={updateEventMutation.isPending ? "Atualizando evento..." : "Atualizar Evento"}
-        showImageField={true}
-        imageFieldHelperText="Deixe em branco para manter a imagem atual"
-      />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
+          <TabsTrigger value="batches">Lotes de Ingressos</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="basic">
+          <EventForm
+            onSubmit={onSubmit}
+            defaultValues={{
+              title: event.title,
+              description: event.description,
+              date: event.date,
+              time: event.time,
+              location: event.location,
+            }}
+            isSubmitting={updateEventMutation.isPending}
+            submitText={updateEventMutation.isPending ? "Atualizando evento..." : "Atualizar Evento"}
+            showImageField={true}
+            imageFieldHelperText="Deixe em branco para manter a imagem atual"
+          />
+        </TabsContent>
+        
+        <TabsContent value="batches">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Lotes de Ingressos</CardTitle>
+                <CardDescription>Gerencie os lotes disponíveis para este evento</CardDescription>
+              </div>
+              <Button 
+                onClick={() => goToAdminBatches(id)}
+                className="flex items-center gap-2"
+              >
+                <Ticket className="h-4 w-4" />
+                Gerenciar Lotes
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <BatchList 
+                eventId={id as string} 
+                onEditBatch={handleEditBatch}
+                readOnly
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </EventPageLayout>
   );
 };

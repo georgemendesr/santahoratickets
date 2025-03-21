@@ -2,7 +2,7 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { formatDate } from "date-fns";
+import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 
 interface BatchStatusBadgeProps {
@@ -33,23 +33,19 @@ export const BatchStatusBadge = ({
     // Se não está visível, status é "hidden"
     if (!isVisible) return "hidden";
     
-    // Verificar ingressos disponíveis (prioridade máxima)
+    // Verificar datas (prioridade alta)
+    if (start > now) return "upcoming";
+    if (end && end < now) return "ended";
+    
+    // Verificar ingressos disponíveis
     if (availableTickets !== undefined && totalTickets !== undefined) {
       if (availableTickets <= 0) return "sold_out";
     } else if (status === "sold_out") {
       return "sold_out";
     }
     
-    // Verificar datas
-    if (start > now) return "upcoming";
-    if (end && end < now) return "ended";
-    
-    // Se tudo estiver ok, verificar status do banco
-    if (status === "active" || status === "upcoming" || status === "ended" || status === "sold_out") {
-      return status;
-    }
-    
-    return "active"; // Default
+    // Se tudo estiver ok, está ativo
+    return "active";
   };
   
   const currentStatus = getStatus();
@@ -94,7 +90,7 @@ export const BatchStatusBadge = ({
   
   // Format dates for tooltip
   const formatDateLocale = (date: Date) => {
-    return formatDate(date, "dd/MM/yyyy 'às' HH:mm", { locale: pt });
+    return format(date, "dd/MM/yyyy 'às' HH:mm", { locale: pt });
   };
   
   const tooltipContent = () => {

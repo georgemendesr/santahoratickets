@@ -40,13 +40,7 @@ export function BatchesTable({ batches }: BatchesTableProps) {
   };
 
   const getBatchStatus = (batch: Batch) => {
-    // Verificar disponibilidade de ingressos (prioridade máxima)
-    if (batch.available_tickets <= 0) {
-      return <Badge variant="destructive">Esgotado</Badge>;
-    }
-    
     // Verificar datas
-    const now = new Date();
     const startDate = new Date(batch.start_date);
     const endDate = batch.end_date ? new Date(batch.end_date) : null;
     
@@ -56,16 +50,19 @@ export function BatchesTable({ batches }: BatchesTableProps) {
       return <Badge variant="secondary">Encerrado</Badge>;
     }
     
+    // Verificar disponibilidade de ingressos (após verificar datas)
+    if (batch.available_tickets <= 0) {
+      return <Badge variant="destructive">Esgotado</Badge>;
+    }
+    
     // Se está ativo e tem ingressos, mostrar como disponível
     return <Badge className="bg-green-500">Disponível</Badge>;
   };
 
   const isBatchAvailable = (batch: Batch) => {
     // Um lote está disponível se:
-    // 1. Tem ingressos disponíveis
-    // 2. A data atual está dentro do período de vendas
-    
-    if (batch.available_tickets <= 0) return false;
+    // 1. A data atual está dentro do período de vendas
+    // 2. E tem ingressos disponíveis
     
     const now = new Date();
     const startDate = new Date(batch.start_date);
@@ -74,7 +71,8 @@ export function BatchesTable({ batches }: BatchesTableProps) {
     if (now < startDate) return false;
     if (endDate && now > endDate) return false;
     
-    return true;
+    // Se passou nas verificações de data, agora verifica disponibilidade
+    return batch.available_tickets > 0;
   };
 
   const getTimeRemaining = (endDate: string) => {

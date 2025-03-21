@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tag, Edit, Trash2, Copy, Check, X, AlertTriangle } from "lucide-react";
+import { Tag, Edit, Trash2, Copy, Check, X, AlertTriangle, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
@@ -37,9 +37,10 @@ import {
 interface BatchListProps {
   eventId: string;
   onEditBatch: (batchId: string) => void;
+  readOnly?: boolean;
 }
 
-export function BatchList({ eventId, onEditBatch }: BatchListProps) {
+export function BatchList({ eventId, onEditBatch, readOnly = false }: BatchListProps) {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isToggling, setIsToggling] = useState<string | null>(null);
   const [isDuplicating, setIsDuplicating] = useState<string | null>(null);
@@ -270,130 +271,131 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Lotes cadastrados</CardTitle>
-        <CardDescription>Gerenciamento de lotes para o evento</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Ordem</TableHead>
-              <TableHead>Nome</TableHead>
-              <TableHead>Preço</TableHead>
-              <TableHead>Disponíveis</TableHead>
-              <TableHead>Início</TableHead>
-              <TableHead>Fim</TableHead>
-              <TableHead>Status</TableHead>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Ordem</TableHead>
+          <TableHead>Nome</TableHead>
+          <TableHead>Preço</TableHead>
+          <TableHead>Disponíveis</TableHead>
+          <TableHead>Início</TableHead>
+          <TableHead>Fim</TableHead>
+          <TableHead>Status</TableHead>
+          {!readOnly && (
+            <>
               <TableHead>Ativo</TableHead>
               <TableHead>Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {batches.map((batch) => {
-              const needsFix = hasInconsistentTickets(batch);
-              
-              return (
-                <TableRow key={batch.id} className={needsFix ? "bg-yellow-50" : ""}>
-                  <TableCell>{batch.order_number}</TableCell>
-                  <TableCell>
-                    <button 
-                      className="font-medium hover:underline text-left"
-                      onClick={() => onEditBatch(batch.id)}
-                    >
-                      {batch.title}
-                    </button>
-                    {needsFix && (
-                      <div className="flex items-center text-yellow-600 text-xs mt-1">
-                        <AlertTriangle className="h-3 w-3 mr-1" />
-                        Inconsistência detectada
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>R$ {batch.price.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <span className="text-sm">{batch.available_tickets} / {batch.total_tickets}</span>
-                      <BatchProgressIndicator
-                        available={batch.available_tickets}
-                        total={batch.total_tickets}
-                        showTooltip={true}
-                      />
+            </>
+          )}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {batches.map((batch) => {
+          const needsFix = hasInconsistentTickets(batch);
+          
+          return (
+            <TableRow key={batch.id} className={needsFix ? "bg-yellow-50" : ""}>
+              <TableCell>{batch.order_number}</TableCell>
+              <TableCell>
+                <div>
+                  <p className="font-medium">{batch.title}</p>
+                  {batch.description && (
+                    <p className="text-sm text-muted-foreground">{batch.description}</p>
+                  )}
+                  {needsFix && !readOnly && (
+                    <div className="flex items-center text-yellow-600 text-xs mt-1">
+                      <AlertTriangle className="h-3 w-3 mr-1" />
+                      Inconsistência detectada
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    {formatDate(batch.start_date)}
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>R$ {batch.price.toFixed(2)}</TableCell>
+              <TableCell>
+                <div className="space-y-1">
+                  <span className="text-sm">{batch.available_tickets} / {batch.total_tickets}</span>
+                  <BatchProgressIndicator
+                    available={batch.available_tickets}
+                    total={batch.total_tickets}
+                    showTooltip={true}
+                  />
+                </div>
+              </TableCell>
+              <TableCell>
+                {formatDate(batch.start_date)}
+                <div className="text-xs text-muted-foreground">
+                  {formatTime(batch.start_date)}
+                </div>
+              </TableCell>
+              <TableCell>
+                {batch.end_date ? (
+                  <>
+                    {formatDate(batch.end_date)}
                     <div className="text-xs text-muted-foreground">
-                      {formatTime(batch.start_date)}
+                      {formatTime(batch.end_date)}
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    {batch.end_date ? (
-                      <>
-                        {formatDate(batch.end_date)}
-                        <div className="text-xs text-muted-foreground">
-                          {formatTime(batch.end_date)}
-                        </div>
-                      </>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      {getBatchStatus(batch)}
-                      
-                      {(batch.status === 'sold_out' || batch.status === 'ended' || needsFix) && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => resetBatchStatus(batch)}
-                                disabled={isResetting === batch.id}
-                                className="h-6 w-6 rounded-full"
-                              >
-                                {isResetting === batch.id ? (
-                                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-t-transparent border-blue-500"></span>
-                                ) : (
-                                  <Check className="h-3 w-3" />
-                                )}
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Reativar lote</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                      
-                      {needsFix && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => fixAvailableTickets(batch)}
-                                disabled={isFixingAvailability === batch.id}
-                                className="h-6 text-xs bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100"
-                              >
-                                {isFixingAvailability === batch.id ? (
-                                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-t-transparent border-yellow-500 mr-1"></span>
-                                ) : null}
-                                Corrigir
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Corrigir disponibilidade de ingressos</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                    </div>
-                  </TableCell>
+                  </>
+                ) : (
+                  <span className="text-muted-foreground text-sm">-</span>
+                )}
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center space-x-2">
+                  {getBatchStatus(batch)}
+                  
+                  {!readOnly && (batch.status === 'sold_out' || batch.status === 'ended' || needsFix) && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => resetBatchStatus(batch)}
+                            disabled={isResetting === batch.id}
+                            className="h-6 w-6 rounded-full"
+                          >
+                            {isResetting === batch.id ? (
+                              <span className="h-3 w-3 animate-spin rounded-full border-2 border-t-transparent border-blue-500"></span>
+                            ) : (
+                              <Check className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Reativar lote</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  
+                  {!readOnly && needsFix && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => fixAvailableTickets(batch)}
+                            disabled={isFixingAvailability === batch.id}
+                            className="h-6 text-xs bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100"
+                          >
+                            {isFixingAvailability === batch.id ? (
+                              <span className="h-3 w-3 animate-spin rounded-full border-2 border-t-transparent border-yellow-500 mr-1"></span>
+                            ) : null}
+                            Corrigir
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Corrigir disponibilidade de ingressos</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+              </TableCell>
+              
+              {!readOnly && (
+                <>
                   <TableCell>
                     <Switch 
                       checked={batch.is_visible} 
@@ -436,12 +438,26 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
                       </Button>
                     </div>
                   </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+                </>
+              )}
+              
+              {readOnly && (
+                <TableCell>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => onEditBatch(batch.id)}
+                    className="flex items-center gap-1"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    <span>Gerenciar</span>
+                  </Button>
+                </TableCell>
+              )}
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
   );
 };

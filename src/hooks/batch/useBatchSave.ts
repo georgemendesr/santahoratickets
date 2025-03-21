@@ -54,9 +54,17 @@ export const useBatchSave = () => {
     const endDateTime = formData.endDate 
       ? new Date(`${formData.endDate}T${formData.endTime || "23:59"}:00Z`) 
       : null;
-        
-    const status = calculateBatchStatus(availableTickets, startDateTime, endDateTime);
-    console.log("Status calculado para o lote:", status);
+    
+    // Verificar primeiro se há ingressos disponíveis
+    let status;
+    if (availableTickets <= 0) {
+      status = 'sold_out';
+      console.log("Status determinado: sold_out (sem ingressos disponíveis)");
+    } else {
+      // Se tiver ingressos, usar a lógica normal baseada em datas
+      status = calculateBatchStatus(availableTickets, startDateTime, endDateTime);
+      console.log("Status calculado para o lote:", status);
+    }
 
     const batchData = {
       title: formData.title,

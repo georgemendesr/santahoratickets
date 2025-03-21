@@ -88,7 +88,14 @@ export function computeBatchStatus(
     afterEnd: endDate ? now > endDate : false
   });
   
-  // Verificar datas primeiro (prioridade mais alta)
+  // Verificar disponibilidade primeiro (maior prioridade)
+  if (availableTickets <= 0) {
+    console.log("Status calculado: sold_out (available_tickets <= 0)");
+    console.groupEnd();
+    return 'sold_out';
+  }
+  
+  // Verificar datas após verificar disponibilidade
   if (now < startDate) {
     console.log("Status calculado: upcoming (data atual é anterior à data de início)");
     console.groupEnd();
@@ -99,13 +106,6 @@ export function computeBatchStatus(
     console.log("Status calculado: ended (data atual é posterior à data de término)");
     console.groupEnd();
     return 'ended';
-  }
-  
-  // Verificar disponibilidade (apenas se estiver dentro do período de vendas)
-  if (availableTickets <= 0) {
-    console.log("Status calculado: sold_out (available_tickets <= 0)");
-    console.groupEnd();
-    return 'sold_out';
   }
   
   // Se passou por todas as verificações, está ativo

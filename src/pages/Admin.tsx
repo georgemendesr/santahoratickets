@@ -1,4 +1,5 @@
 
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
@@ -13,7 +14,10 @@ import {
   DollarSign,
   CalendarDays,
   Ticket,
-  TrendingUp
+  TrendingUp,
+  BarChart3,
+  Star,
+  ArrowUpRight
 } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import {
@@ -245,6 +249,44 @@ const Admin = () => {
                 onClick={() => navigate("/admin/financeiro")}
               >
                 Ver Relatórios
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Star className="h-5 w-5" />
+                Fidelidade
+              </CardTitle>
+              <CardDescription>Gerenciar programa de fidelidade</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => navigate("/admin/loyalty")}
+              >
+                Ver Programa
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ArrowUpRight className="h-5 w-5" />
+                Referrals
+              </CardTitle>
+              <CardDescription>Sistema de indicação de clientes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => navigate("/admin/referrals")}
+              >
+                Ver Referrals
               </Button>
             </CardContent>
           </Card>

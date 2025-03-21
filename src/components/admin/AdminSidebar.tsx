@@ -117,9 +117,9 @@ export function AdminSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   asChild
-                  isActive={isActive("/admin/loyalty")}
+                  isActive={isActive(ROUTES.ADMIN.LOYALTY)}
                 >
-                  <Link to="/admin/loyalty">
+                  <Link to={ROUTES.ADMIN.LOYALTY}>
                     <Star className="h-4 w-4" />
                     <span>Fidelidade</span>
                   </Link>
@@ -129,9 +129,9 @@ export function AdminSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   asChild
-                  isActive={isActive("/admin/referrals")}
+                  isActive={isActive(ROUTES.ADMIN.REFERRALS)}
                 >
-                  <Link to="/admin/referrals">
+                  <Link to={ROUTES.ADMIN.REFERRALS}>
                     <ArrowUpRight className="h-4 w-4" />
                     <span>Referrals</span>
                   </Link>

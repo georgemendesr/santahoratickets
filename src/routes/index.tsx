@@ -20,6 +20,8 @@ const AdminParticipants = lazy(() => import("@/pages/AdminParticipants"));
 const AdminBatches = lazy(() => import("@/pages/AdminBatches"));
 const AdminParticipantsList = lazy(() => import("@/pages/AdminParticipantsList"));
 const AdminParticipantsSales = lazy(() => import("@/pages/AdminParticipantsSales"));
+const AdminLoyalty = lazy(() => import("@/pages/AdminLoyalty"));
+const AdminReferrals = lazy(() => import("@/pages/AdminReferrals"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
 export const routes = [
@@ -121,13 +123,25 @@ export const routes = [
     adminOnly: true
   },
   {
+    path: '/admin/loyalty',
+    component: AdminLoyalty,
+    private: true,
+    adminOnly: true
+  },
+  {
+    path: '/admin/referrals',
+    component: AdminReferrals,
+    private: true,
+    adminOnly: true
+  },
+  {
     path: '*',
     component: NotFound,
     private: false,
   }
 ];
 
-// Componentes de proteção de rota serão tratados nos componentes individuais usando useAuth
+// Components de proteção de rota serão tratados nos componentes individuais usando useAuth
 
 // Export constant ROUTES for consistent navigation
 export const ROUTES = {
@@ -150,6 +164,8 @@ export const ROUTES = {
     PARTICIPANTS: '/admin/participantes',
     PARTICIPANTS_LIST: '/admin/participantes/lista',
     PARTICIPANTS_SALES: '/admin/participantes/vendas',
-    BATCHES: '/admin/lotes'
+    BATCHES: '/admin/lotes',
+    LOYALTY: '/admin/loyalty',
+    REFERRALS: '/admin/referrals'
   }
 };

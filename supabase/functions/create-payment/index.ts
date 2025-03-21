@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0"
 import qrcode from "https://esm.sh/qrcode@1.5.3"
@@ -218,22 +217,11 @@ serve(async (req) => {
       throw new Error(`Evento não encontrado: ${eventError?.message || "Dados ausentes"}`)
     }
 
-    // Buscar dados do organizador (usuário que criou o evento)
-    const { data: organizerProfile, error: organizerError } = await supabaseClient
-      .from('user_profiles')
-      .select('name, cpf')
-      .eq('id', event.user_id)
-      .single();
-
-    if (organizerError) {
-      console.error("Erro ao buscar dados do organizador:", organizerError)
-    }
-
-    // Determinar o nome do beneficiário - usar nome do organizador ou do evento
-    const merchantName = organizerProfile?.name || event.organizer_name || event.title;
+    // IMPORTANTE: Aqui forçamos o nome do beneficiário para ser "Santa Hora"
+    const merchantName = "Santa Hora";
     
     // Determinar chave PIX - idealmente seria configurada nas preferências do usuário
-    const pixKey = organizerProfile?.cpf || ""; // Idealmente buscar da conta do organizador
+    const pixKey = ""; // Use a chave PIX real aqui
     
     // Determinar a cidade do evento
     const merchantCity = event.location?.split(',').pop()?.trim() || "SAO PAULO";

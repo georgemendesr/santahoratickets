@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { extractNameFromCode } from "@/utils/pixCodeGenerator";
 
@@ -14,17 +13,15 @@ export const usePixQRCodeLogic = ({ qrCode, qrCodeBase64, onRefresh }: UsePixQRC
   const [validPixCode, setValidPixCode] = useState<string>("");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showImageError, setShowImageError] = useState(false);
-  const [beneficiaryName, setBeneficiaryName] = useState("");
+  const [beneficiaryName, setBeneficiaryName] = useState("Santa Hora");
   
   // Processamento do código PIX
   useEffect(() => {
     if (qrCode) {
-      console.log("Processando código PIX:", qrCode);
+      console.log("Processando código PIX");
       
-      // Extrair o nome do beneficiário do código
-      const extractedName = extractNameFromCode(qrCode);
-      console.log("Nome do beneficiário extraído:", extractedName);
-      setBeneficiaryName(extractedName);
+      // Forçamos o nome do beneficiário como "Santa Hora"
+      setBeneficiaryName("Santa Hora");
       
       // Formatação para melhor legibilidade
       const chunks = [];

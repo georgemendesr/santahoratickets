@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -21,6 +21,7 @@ import { Batch } from '@/types/event.types';
 
 const EventBatchesView = () => {
   const { eventId } = useParams();
+  const navigate = useNavigate();
   
   const { data: event, isLoading: isLoadingEvent } = useQuery({
     queryKey: ['event', eventId],
@@ -68,6 +69,10 @@ const EventBatchesView = () => {
     }
   };
 
+  const handleBack = () => {
+    navigate(`/admin/eventos/${eventId}`);
+  };
+
   if (isLoadingEvent || isLoadingBatches) {
     return <EventLoadingState />;
   }
@@ -79,6 +84,7 @@ const EventBatchesView = () => {
   return (
     <EventPageLayout
       title={`Detalhes de Lotes: ${event.title}`}
+      onBack={handleBack}
     >
       <div className="flex justify-between items-center mb-6">
         <BackButton destination={`/admin/eventos/${eventId}`} />

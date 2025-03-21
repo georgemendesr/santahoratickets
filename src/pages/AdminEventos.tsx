@@ -72,11 +72,11 @@ const AdminEventos = () => {
     if (event.status === 'ended') return { label: 'Finalizado', variant: 'secondary' as const };
     
     if (eventDate < today) {
-      return { label: 'Passado', variant: 'ended' as const };
+      return { label: 'Passado', variant: 'secondary' as const };
     } else if (eventDate.toDateString() === today.toDateString()) {
-      return { label: 'Hoje', variant: 'warning' as const };
+      return { label: 'Hoje', variant: 'destructive' as const };
     } else {
-      return { label: 'Ativo', variant: 'active' as const };
+      return { label: 'Ativo', variant: 'default' as const };
     }
   };
 

@@ -43,17 +43,17 @@ export const BatchStatusBadge = ({
     switch (status) {
       case "active":
         return { 
-          variant: "active" as const, 
+          variant: "default" as const, 
           label: "Ativo" 
         };
       case "upcoming":
         return { 
-          variant: "upcoming" as const, 
+          variant: "outline" as const, 
           label: "Futuro" 
         };
       case "ended":
         return { 
-          variant: "ended" as const, 
+          variant: "secondary" as const, 
           label: "Encerrado" 
         };
       case "sold_out":

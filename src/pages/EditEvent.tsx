@@ -124,10 +124,11 @@ const EditEvent = () => {
     <EventPageLayout 
       title="Editar Evento" 
       onBack={goBack}
-      rightElement={
-        <BackButton destination="/admin/eventos" />
-      }
     >
+      <div className="flex justify-end mb-4">
+        <BackButton destination="/admin/eventos" />
+      </div>
+      
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6">
           <TabsTrigger value="basic">Informações Básicas</TabsTrigger>

@@ -12,7 +12,6 @@ import { DashboardCharts } from "@/components/admin/dashboard/DashboardCharts";
 import { ActionCards } from "@/components/admin/dashboard/ActionCards";
 
 const Admin = () => {
-  const navigate = useNavigate();
   const { session } = useAuth();
   const { isAdmin } = useRole(session);
 
@@ -29,11 +28,6 @@ const Admin = () => {
     },
   });
 
-  if (!isAdmin) {
-    navigate("/");
-    return null;
-  }
-
   const totalRevenue = dashboardData?.reduce((acc, event) => acc + (event?.gross_revenue || 0), 0) || 0;
   const totalTickets = dashboardData?.reduce((acc, event) => acc + (event?.approved_tickets || 0), 0) || 0;
   const eventsCount = dashboardData?.length || 0;
@@ -41,10 +35,9 @@ const Admin = () => {
 
   return (
     <AdminLayout>
-      <div className="container max-w-7xl mx-auto">
+      <div className="container mx-auto max-w-7xl">
         <DashboardHeader />
         
-        {/* Métricas Principais */}
         <MetricsCards 
           totalRevenue={totalRevenue} 
           totalTickets={totalTickets}
@@ -52,10 +45,8 @@ const Admin = () => {
           averageTicket={averageTicket}
         />
 
-        {/* Gráficos */}
         <DashboardCharts events={dashboardData || []} />
 
-        {/* Cards de Ações */}
         <ActionCards />
       </div>
     </AdminLayout>

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { 
   CalendarDays, 
   Users, 
-  LayoutTemplate, 
+  Settings, 
   DollarSign,
   Star,
   ArrowUpRight
@@ -22,10 +22,10 @@ export function ActionCards() {
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <Card>
+      <Card className="border-none shadow-md">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-gray-800">
+            <CalendarDays className="h-5 w-5 text-amber-500" />
             Eventos
           </CardTitle>
           <CardDescription>Gerenciar eventos e ingressos</CardDescription>
@@ -41,10 +41,10 @@ export function ActionCards() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-none shadow-md">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-gray-800">
+            <Users className="h-5 w-5 text-amber-500" />
             Usuários
           </CardTitle>
           <CardDescription>Gerenciar usuários e permissões</CardDescription>
@@ -60,29 +60,29 @@ export function ActionCards() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-none shadow-md">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <LayoutTemplate className="h-5 w-5" />
-            Layout de Vouchers
+          <CardTitle className="flex items-center gap-2 text-gray-800">
+            <Settings className="h-5 w-5 text-amber-500" />
+            Configurações
           </CardTitle>
-          <CardDescription>Personalizar design dos ingressos</CardDescription>
+          <CardDescription>Personalizar a plataforma</CardDescription>
         </CardHeader>
         <CardContent>
           <Button 
             variant="outline" 
             className="w-full"
-            onClick={() => navigate("/admin/vouchers")}
+            onClick={() => navigate("/admin/configuracoes")}
           >
-            Personalizar
+            Configurar
           </Button>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-none shadow-md">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-gray-800">
+            <DollarSign className="h-5 w-5 text-amber-500" />
             Financeiro
           </CardTitle>
           <CardDescription>Gestão financeira e relatórios</CardDescription>
@@ -98,10 +98,10 @@ export function ActionCards() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-none shadow-md">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Star className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-gray-800">
+            <Star className="h-5 w-5 text-amber-500" />
             Fidelidade
           </CardTitle>
           <CardDescription>Gerenciar programa de fidelidade</CardDescription>
@@ -117,11 +117,11 @@ export function ActionCards() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-none shadow-md">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ArrowUpRight className="h-5 w-5" />
-            Referrals
+          <CardTitle className="flex items-center gap-2 text-gray-800">
+            <ArrowUpRight className="h-5 w-5 text-amber-500" />
+            Indicações
           </CardTitle>
           <CardDescription>Sistema de indicação de clientes</CardDescription>
         </CardHeader>
@@ -131,7 +131,7 @@ export function ActionCards() {
             className="w-full"
             onClick={() => navigate("/admin/referrals")}
           >
-            Ver Referrals
+            Ver Indicações
           </Button>
         </CardContent>
       </Card>

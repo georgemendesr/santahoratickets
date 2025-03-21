@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Copy, RefreshCw } from "lucide-react";
+import { Copy, RefreshCw, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 
@@ -15,24 +15,51 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [showImageError, setShowImageError] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [imageRetries, setImageRetries] = useState(0);
+  
+  // Usar um fallback de QR code se necessário (exemplo: um QR code estático)
+  const fallbackQrCodeUrl = "https://aprimeobra.com.br/wp-content/uploads/2022/06/image-11.png";
 
   useEffect(() => {
     if (qrCodeBase64) {
       try {
-        setQrCodeUrl(`data:image/png;base64,${qrCodeBase64}`);
-        setShowImageError(false);
+        // Verificar se o base64 é válido
+        if (qrCodeBase64.trim().length > 0) {
+          setQrCodeUrl(`data:image/png;base64,${qrCodeBase64}`);
+          setShowImageError(false);
+          setImageRetries(0);
+        } else {
+          console.error("QR code base64 vazio");
+          setShowImageError(true);
+        }
       } catch (error) {
         console.error("Erro ao processar base64:", error);
         setShowImageError(true);
       }
     } else {
-      setShowImageError(true);
+      // Evitar mostrar erro imediatamente durante o carregamento
+      if (!isRefreshing && imageRetries > 2) {
+        setShowImageError(true);
+      }
     }
-  }, [qrCodeBase64]);
+  }, [qrCodeBase64, isRefreshing, imageRetries]);
 
   const handleImageError = () => {
     console.error("Erro ao carregar QR code");
-    setShowImageError(true);
+    
+    // Tentar novamente algumas vezes antes de mostrar o erro
+    if (imageRetries < 3) {
+      setImageRetries(prev => prev + 1);
+      
+      // Aguardar um momento e tentar um fallback
+      setTimeout(() => {
+        if (qrCodeBase64) {
+          setQrCodeUrl(`data:image/png;base64,${qrCodeBase64}`);
+        }
+      }, 1000);
+    } else {
+      setShowImageError(true);
+    }
   };
 
   const handleCopyCode = () => {
@@ -45,6 +72,9 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
   const handleRefresh = () => {
     if (onRefresh) {
       setIsRefreshing(true);
+      setShowImageError(false);
+      setImageRetries(0);
+      
       // Simular um tempo mínimo de refresh para feedback visual
       setTimeout(() => {
         onRefresh();
@@ -85,11 +115,24 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
             onError={handleImageError}
           />
         </div>
+      ) : qrCode ? (
+        // Usar um QR genérico se não conseguirmos mostrar o específico
+        <div className="bg-white p-3 rounded-lg border border-gray-200">
+          <div className="flex flex-col items-center">
+            <AlertTriangle className="text-amber-500 mb-2" size={24} />
+            <p className="text-sm text-gray-500 text-center mb-2">
+              QR Code não pôde ser exibido
+            </p>
+            <p className="text-xs text-gray-400 text-center">
+              Use o código PIX abaixo
+            </p>
+          </div>
+        </div>
       ) : (
         <div className="w-48 h-48 flex items-center justify-center bg-gray-100 rounded-lg">
           <p className="text-sm text-gray-500 text-center p-4">
-            {qrCode 
-              ? "QR Code não disponível, mas você pode usar o código PIX abaixo" 
+            {isRefreshing 
+              ? "Gerando QR Code..." 
               : "QR Code não disponível"}
           </p>
         </div>

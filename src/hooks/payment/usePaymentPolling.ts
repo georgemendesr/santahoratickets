@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { usePixData } from "./usePixData";
 import { usePaymentStatus } from "./usePaymentStatus";
 
@@ -18,7 +18,10 @@ export const usePaymentPolling = ({
   status: initialStatus,
   navigate
 }: UsePaymentPollingProps) => {
-  // Obter dados do PIX
+  // Estado para controlar se o QR code foi carregado
+  const [qrCodeLoaded, setQrCodeLoaded] = useState<boolean>(false);
+  
+  // Obter dados do PIX com revalidação automática
   const {
     qrCode,
     qrCodeBase64,
@@ -28,6 +31,20 @@ export const usePaymentPolling = ({
     setCurrentStatus,
     refreshPixData
   } = usePixData({ preferenceId });
+
+  // Callback otimizado para atualizar o QR code
+  const handleRefreshPixData = useCallback(() => {
+    setQrCodeLoaded(false);
+    refreshPixData();
+  }, [refreshPixData]);
+
+  // Notificar quando o QR code for carregado com sucesso
+  useEffect(() => {
+    if (qrCodeBase64 && !qrCodeLoaded) {
+      setQrCodeLoaded(true);
+      console.log("QR code base64 carregado com sucesso");
+    }
+  }, [qrCodeBase64, qrCodeLoaded]);
 
   // Configurar monitoramento de status de pagamento
   const { isPolling } = usePaymentStatus({
@@ -54,15 +71,17 @@ export const usePaymentPolling = ({
       isLoading,
       error: error || "No error",
       paymentId: payment_id,
-      pollingActive: isPolling
+      pollingActive: isPolling,
+      qrCodeLoaded
     });
-  }, [qrCode, qrCodeBase64, isLoading, error, payment_id, isPolling]);
+  }, [qrCode, qrCodeBase64, isLoading, error, payment_id, isPolling, qrCodeLoaded]);
 
   return {
     qrCode,
     qrCodeBase64,
     isLoading,
     error,
-    refreshPixData
+    refreshPixData: handleRefreshPixData,
+    qrCodeLoaded
   };
 };

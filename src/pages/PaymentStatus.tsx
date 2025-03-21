@@ -1,9 +1,9 @@
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 import { PixQRCode } from "@/components/payment/PixQRCode";
 import { PaymentStatusInfo, getStatusInfo } from "@/components/payment/PaymentStatusInfo";
 import { usePaymentPolling } from "@/hooks/payment/usePaymentPolling";
@@ -23,7 +23,8 @@ const PaymentStatus = () => {
     qrCodeBase64, 
     isLoading, 
     error,
-    refreshPixData 
+    refreshPixData,
+    qrCodeLoaded
   } = usePaymentPolling({
     preferenceId,
     payment_id,
@@ -41,6 +42,18 @@ const PaymentStatus = () => {
     errorMessage: error
   });
 
+  // Tentar refrescar automaticamente o QR code se houver erro
+  useEffect(() => {
+    if (error && displayStatus === "pending" && preferenceId) {
+      const timer = setTimeout(() => {
+        console.log("Tentando recarregar o QR code após erro");
+        refreshPixData();
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error, displayStatus, preferenceId, refreshPixData]);
+
   console.log("Payment Status Page:", {
     preferenceId,
     payment_id,
@@ -48,7 +61,8 @@ const PaymentStatus = () => {
     qrCode: qrCode ? "Has QR" : "No QR",
     qrCodeBase64: qrCodeBase64 ? "Has QR Base64" : "No QR Base64",
     isLoading,
-    error
+    error,
+    qrCodeLoaded
   });
 
   return (
@@ -80,6 +94,35 @@ const PaymentStatus = () => {
                     <div className="flex flex-col items-center py-8 space-y-4">
                       <Loader2 className="w-16 h-16 text-primary animate-spin" />
                       <p className="text-center text-muted-foreground">Gerando código PIX...</p>
+                    </div>
+                  ) : error ? (
+                    <div>
+                      <div className="flex flex-col items-center py-4 space-y-3 mb-4">
+                        <div className="text-amber-500 bg-amber-50 p-3 rounded-full">
+                          <RefreshCw className="w-8 h-8" />
+                        </div>
+                        <p className="text-center font-medium">Houve um problema ao gerar o QR code</p>
+                        <p className="text-center text-sm text-muted-foreground max-w-xs mx-auto">
+                          Você pode tentar novamente ou usar o código PIX para pagamento
+                        </p>
+                        <Button 
+                          variant="outline"
+                          onClick={refreshPixData}
+                          className="mt-2"
+                        >
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                          Tentar Novamente
+                        </Button>
+                      </div>
+                      {/* Mesmo com erro, ainda mostramos o código PIX se disponível */}
+                      {qrCode && (
+                        <PixQRCode
+                          qrCode={qrCode}
+                          qrCodeBase64={qrCodeBase64 || ""}
+                          onRefresh={refreshPixData}
+                          error={error}
+                        />
+                      )}
                     </div>
                   ) : (
                     qrCode && (

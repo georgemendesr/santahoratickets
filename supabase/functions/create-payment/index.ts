@@ -14,12 +14,13 @@ serve(async (req) => {
   }
 
   try {
-    const { eventId, quantity, paymentType, token, installments } = await req.json();
-    console.log('Dados recebidos:', { eventId, quantity, paymentType });
-
-    // Validar dados necessários
-    if (!eventId || !quantity || !paymentType) {
-      throw new Error('Dados incompletos');
+    const { eventId, quantity, paymentType, token, installments, preferenceId, regenerate } = await req.json();
+    
+    // Log para identificar se é uma regeneração ou uma nova criação
+    if (regenerate) {
+      console.log('Regenerando pagamento para preferência:', preferenceId);
+    } else {
+      console.log('Dados recebidos para novo pagamento:', { eventId, quantity, paymentType });
     }
 
     // Criar cliente Supabase
@@ -41,54 +42,136 @@ serve(async (req) => {
       throw new Error('Usuário não autorizado');
     }
 
-    // Buscar evento
-    const { data: event, error: eventError } = await supabaseClient
-      .from('events')
-      .select('*')
-      .eq('id', eventId)
-      .single();
+    // Para regeneração, buscar a preferência existente
+    if (regenerate && preferenceId) {
+      const { data: preference, error: preferenceError } = await supabaseClient
+        .from('payment_preferences')
+        .select('*')
+        .eq('id', preferenceId)
+        .single();
 
-    if (eventError || !event) {
-      throw new Error('Evento não encontrado');
+      if (preferenceError || !preference) {
+        throw new Error('Preferência não encontrada');
+      }
+
+      // Buscar evento e lote
+      const { data: event, error: eventError } = await supabaseClient
+        .from('events')
+        .select('*')
+        .eq('id', preference.event_id)
+        .single();
+
+      if (eventError || !event) {
+        throw new Error('Evento não encontrado');
+      }
+
+      // Buscar lote ativo
+      const { data: batch, error: batchError } = await supabaseClient
+        .from('batches')
+        .select('*')
+        .eq('event_id', preference.event_id)
+        .eq('status', 'active')
+        .order('order_number', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (batchError || !batch) {
+        throw new Error('Nenhum lote disponível');
+      }
+
+      // Utilizar dados da preferência existente
+      eventId = preference.event_id;
+      quantity = preference.ticket_quantity;
+      paymentType = preference.payment_type;
+      
+      // Criar pagamento no Mercado Pago (mesma lógica abaixo)
+      // continuação da função...
+    } else {
+      // Validar dados necessários para novo pagamento
+      if (!eventId || !quantity || !paymentType) {
+        throw new Error('Dados incompletos');
+      }
+
+      // Buscar evento
+      const { data: event, error: eventError } = await supabaseClient
+        .from('events')
+        .select('*')
+        .eq('id', eventId)
+        .single();
+
+      if (eventError || !event) {
+        throw new Error('Evento não encontrado');
+      }
+
+      // Buscar lote ativo
+      const { data: batch, error: batchError } = await supabaseClient
+        .from('batches')
+        .select('*')
+        .eq('event_id', eventId)
+        .eq('status', 'active')
+        .order('order_number', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (batchError || !batch) {
+        throw new Error('Nenhum lote disponível');
+      }
+
+      // Verificar disponibilidade
+      if (batch.available_tickets < quantity) {
+        throw new Error('Quantidade indisponível');
+      }
+
+      // Se não for regeneração, criar nova preferência
+      if (!preferenceId) {
+        const { data: newPreference, error: preferenceError } = await supabaseClient
+          .from('payment_preferences')
+          .insert({
+            event_id: eventId,
+            user_id: user.id,
+            ticket_quantity: quantity,
+            total_amount: batch.price * quantity,
+            init_point: '',
+            status: 'pending',
+            payment_type: paymentType
+          })
+          .select()
+          .single();
+
+        if (preferenceError || !newPreference) {
+          throw new Error('Erro ao criar preferência');
+        }
+
+        preferenceId = newPreference.id;
+      }
     }
 
-    // Buscar lote ativo
-    const { data: batch, error: batchError } = await supabaseClient
+    // Buscar a preferência atual (regeneração ou recém-criada)
+    const { data: currentPreference, error: currentPreferenceError } = await supabaseClient
+      .from('payment_preferences')
+      .select('*')
+      .eq('id', preferenceId)
+      .single();
+
+    if (currentPreferenceError || !currentPreference) {
+      throw new Error('Preferência não encontrada');
+    }
+
+    // Buscar dados necessários para o pagamento
+    const { data: event } = await supabaseClient
+      .from('events')
+      .select('*')
+      .eq('id', currentPreference.event_id)
+      .single();
+
+    const { data: batch } = await supabaseClient
       .from('batches')
       .select('*')
-      .eq('event_id', eventId)
+      .eq('event_id', currentPreference.event_id)
       .eq('status', 'active')
       .order('order_number', { ascending: true })
       .limit(1)
       .single();
-
-    if (batchError || !batch) {
-      throw new Error('Nenhum lote disponível');
-    }
-
-    // Verificar disponibilidade
-    if (batch.available_tickets < quantity) {
-      throw new Error('Quantidade indisponível');
-    }
-
-    // Criar preferência de pagamento no Supabase
-    const { data: preference, error: preferenceError } = await supabaseClient
-      .from('payment_preferences')
-      .insert({
-        event_id: eventId,
-        user_id: user.id,
-        ticket_quantity: quantity,
-        total_amount: batch.price * quantity,
-        init_point: '',
-        status: 'pending',
-        payment_type: paymentType
-      })
-      .select()
-      .single();
-
-    if (preferenceError || !preference) {
-      throw new Error('Erro ao criar preferência');
-    }
 
     const mercadoPagoAccessToken = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN');
     if (!mercadoPagoAccessToken) {
@@ -97,18 +180,18 @@ serve(async (req) => {
 
     // Criar pagamento no Mercado Pago
     const paymentData: any = {
-      transaction_amount: batch.price * quantity,
-      description: `${quantity}x Ingressos para ${event.title}`,
-      payment_method_id: paymentType === 'credit_card' ? 'master' : 'pix',
+      transaction_amount: currentPreference.total_amount,
+      description: `${currentPreference.ticket_quantity}x Ingressos para ${event.title}`,
+      payment_method_id: currentPreference.payment_type === 'credit_card' ? 'master' : 'pix',
       payer: {
         email: user.email
       },
-      external_reference: `${eventId}|${preference.id}`,
+      external_reference: `${currentPreference.event_id}|${preferenceId}`,
       notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/webhook-payment`
     };
 
     // Adicionar dados específicos para cartão de crédito
-    if (paymentType === 'credit_card' && token) {
+    if (currentPreference.payment_type === 'credit_card' && token) {
       paymentData.token = token;
       paymentData.installments = installments || 1;
     }
@@ -139,7 +222,7 @@ serve(async (req) => {
           status: 'rejected',
           error_message: responseData.message || 'Erro desconhecido'
         })
-        .eq('id', preference.id);
+        .eq('id', preferenceId);
 
       throw new Error(responseData.message || 'Erro ao criar pagamento');
     }
@@ -148,9 +231,10 @@ serve(async (req) => {
     let qrCode = null;
     let qrCodeBase64 = null;
 
-    if (paymentType === 'pix' && responseData.point_of_interaction?.transaction_data) {
+    if (currentPreference.payment_type === 'pix' && responseData.point_of_interaction?.transaction_data) {
       qrCode = responseData.point_of_interaction.transaction_data.qr_code;
       qrCodeBase64 = responseData.point_of_interaction.transaction_data.qr_code_base64;
+      console.log('QR Code gerado com sucesso');
     }
 
     // Atualizar preferência com dados do pagamento
@@ -165,7 +249,7 @@ serve(async (req) => {
         card_token: token,
         installments: installments
       })
-      .eq('id', preference.id);
+      .eq('id', preferenceId);
 
     if (updateError) {
       console.error('Erro ao atualizar preferência:', updateError);
@@ -176,7 +260,9 @@ serve(async (req) => {
         id: responseData.id,
         status: responseData.status,
         qr_code: qrCode,
-        qr_code_base64: qrCodeBase64
+        qr_code_base64: qrCodeBase64,
+        payment_id: responseData.id,
+        preference_id: preferenceId
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

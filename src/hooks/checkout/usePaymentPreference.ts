@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
+import { PaymentPreference } from "@/types/payment.types";
 
 export async function createPaymentPreference(
   eventId: string,
@@ -10,7 +11,7 @@ export async function createPaymentPreference(
   paymentMethodId: string,
   cardToken?: string,
   installments?: number
-) {
+): Promise<PaymentPreference> {
   const init_point = `${eventId}-${session.user.id}-${Date.now()}`;
   
   console.log("Criando preferência de pagamento:", {
@@ -24,6 +25,44 @@ export async function createPaymentPreference(
     installments
   });
   
+  // Verificar se já existe uma preferência pendente para este usuário e evento
+  const { data: existingPreferences, error: queryError } = await supabase
+    .from("payment_preferences")
+    .select("*")
+    .eq("event_id", eventId)
+    .eq("user_id", session.user.id)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false })
+    .limit(1);
+    
+  if (queryError) {
+    console.error("Erro ao verificar preferências existentes:", queryError);
+  }
+  
+  // Se existir uma preferência pendente recente (menos de 10 minutos), reutilizá-la
+  if (existingPreferences && existingPreferences.length > 0) {
+    const latestPreference = existingPreferences[0];
+    const createdAt = new Date(latestPreference.created_at as string);
+    const now = new Date();
+    const diffMinutes = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60));
+    
+    if (diffMinutes < 10 && latestPreference.payment_type === paymentType) {
+      console.log("Reutilizando preferência existente:", latestPreference);
+      
+      // Atualiza a última tentativa
+      await supabase
+        .from("payment_preferences")
+        .update({
+          attempts: (latestPreference.attempts || 0) + 1,
+          last_attempt_at: new Date().toISOString()
+        })
+        .eq("id", latestPreference.id);
+        
+      return latestPreference as PaymentPreference;
+    }
+  }
+
+  // Criar nova preferência
   const { data: preference, error } = await supabase
     .from("payment_preferences")
     .insert({
@@ -49,5 +88,5 @@ export async function createPaymentPreference(
   }
 
   console.log("Preferência criada:", preference);
-  return preference;
+  return preference as PaymentPreference;
 }

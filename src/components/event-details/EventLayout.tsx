@@ -2,17 +2,19 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { EventHeader } from "./EventHeader";
+import { Event } from "@/types";
 
 interface EventLayoutProps {
   children: React.ReactNode;
   onBack: () => void;
+  event?: Event;
 }
 
-export function EventLayout({ children, onBack }: EventLayoutProps) {
+export function EventLayout({ children, onBack, event }: EventLayoutProps) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary pt-8 pb-16">
       <div className="container px-4">
-        <EventHeader />
+        <EventHeader event={event} />
         
         <Button 
           variant="ghost" 

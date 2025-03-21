@@ -11,12 +11,12 @@ interface PIXFormProps {
 
 export function PIXForm({ amount, onSubmit, isSubmitting }: PIXFormProps) {
   return (
-    <Card className="p-6">
+    <Card className="p-6 shadow-md bg-white">
       <div className="space-y-6">
         <div className="text-center">
-          <QrCode className="w-12 h-12 mx-auto mb-4" />
+          <QrCode className="w-12 h-12 mx-auto mb-4 text-emerald-600" />
           <p className="text-lg font-medium">Total a pagar:</p>
-          <p className="text-2xl font-bold">
+          <p className="text-2xl font-bold text-emerald-600">
             {new Intl.NumberFormat("pt-BR", {
               style: "currency",
               currency: "BRL",
@@ -27,6 +27,7 @@ export function PIXForm({ amount, onSubmit, isSubmitting }: PIXFormProps) {
         <div className="space-y-2 text-center text-sm text-muted-foreground">
           <p>Ao clicar em "Gerar PIX", você receberá um QR Code para pagamento.</p>
           <p>O pagamento será confirmado automaticamente após a transferência.</p>
+          <p className="text-xs italic">O pagamento deve ser processado em até 15 minutos.</p>
         </div>
 
         <div className="flex justify-center py-4">
@@ -40,7 +41,7 @@ export function PIXForm({ amount, onSubmit, isSubmitting }: PIXFormProps) {
         <Button
           onClick={onSubmit}
           disabled={isSubmitting}
-          className="w-full"
+          className="w-full bg-emerald-600 hover:bg-emerald-700"
         >
           {isSubmitting ? "Gerando PIX..." : "Gerar PIX"}
         </Button>

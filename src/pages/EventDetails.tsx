@@ -91,7 +91,7 @@ const EventDetails = () => {
 
   if (isLoading) {
     return (
-      <EventLayout onBack={goBack}>
+      <EventLayout onBack={goBack} event={undefined}>
         <div className="flex justify-center items-center h-64">
           <p className="text-lg">Carregando informações do evento...</p>
         </div>
@@ -101,7 +101,7 @@ const EventDetails = () => {
 
   if (!event) {
     return (
-      <EventLayout onBack={goBack}>
+      <EventLayout onBack={goBack} event={undefined}>
         <div className="flex flex-col justify-center items-center h-64">
           <p className="text-lg text-red-500">Evento não encontrado</p>
           <Button 
@@ -117,7 +117,7 @@ const EventDetails = () => {
   }
 
   return (
-    <EventLayout onBack={goBack}>
+    <EventLayout onBack={goBack} event={event}>
       <EventDetailsContent
         event={event}
         batches={batches || []}

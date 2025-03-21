@@ -31,6 +31,12 @@ export function EventImage({ src, alt }: EventImageProps) {
           src={imageUrl}
           alt={alt}
           className="w-full h-[600px] object-cover bg-gradient-to-b from-red-500 to-purple-600"
+          onError={(e) => {
+            console.log("Erro ao carregar imagem:", imageUrl);
+            if (imageUrl !== "/lovable-uploads/c07e81e6-595c-4636-8fef-1f61c7240f65.png") {
+              (e.target as HTMLImageElement).src = "/lovable-uploads/c07e81e6-595c-4636-8fef-1f61c7240f65.png";
+            }
+          }}
         />
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
           <ImageIcon className="w-8 h-8 text-white animate-pulse" />
@@ -44,6 +50,11 @@ export function EventImage({ src, alt }: EventImageProps) {
             alt={alt}
             className="w-full h-full object-contain rounded-lg"
             onClick={(e) => e.stopPropagation()}
+            onError={(e) => {
+              if (imageUrl !== "/lovable-uploads/c07e81e6-595c-4636-8fef-1f61c7240f65.png") {
+                (e.target as HTMLImageElement).src = "/lovable-uploads/c07e81e6-595c-4636-8fef-1f61c7240f65.png";
+              }
+            }}
           />
         </DialogContent>
       </Dialog>

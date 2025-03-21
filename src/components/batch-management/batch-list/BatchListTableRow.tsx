@@ -17,10 +17,10 @@ interface BatchListTableRowProps {
   readOnly?: boolean;
   needsFix?: boolean;
   
-  // Funções opcionais para estados de ações
+  // Funções opcionais para estados de ações - corrigindo para receber string (ID) em vez de Batch
   onReset?: (batchId: string) => void;
   onFixAvailability?: (batchId: string) => void;
-  onToggleVisibility?: (batch: Batch) => void;
+  onToggleVisibility?: (batchId: string) => void; // Alterado para receber batchId string
   onDuplicate?: (batchId: string) => void;
   onDelete?: (batchId: string) => void;
   
@@ -141,7 +141,7 @@ export const BatchListTableRow = ({
           <Switch 
             checked={batch.is_visible} 
             disabled={isToggling === batch.id}
-            onCheckedChange={() => onToggleVisibility(batch)}
+            onCheckedChange={() => onToggleVisibility(batch.id)}
           />
         </TableCell>
       )}

@@ -16,10 +16,10 @@ interface BatchListTableProps {
   onEditBatch: (batchId: string) => void;
   readOnly?: boolean;
   
-  // Funções de ação opcionais
+  // Funções de ação opcionais - corrigindo os tipos para receber string (ID) em vez de Batch
   onReset?: (batchId: string) => void;
   onFixAvailability?: (batchId: string) => void;
-  onToggleVisibility?: (batch: Batch) => void;
+  onToggleVisibility?: (batchId: string) => void; // Alterado para receber batchId string
   onDuplicate?: (batchId: string) => void;
   onDelete?: (batchId: string) => void;
   

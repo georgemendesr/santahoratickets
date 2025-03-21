@@ -15,18 +15,18 @@ export const useBatchListActions = (refetch: () => void) => {
     return batch.available_tickets <= 0 && batch.status !== 'sold_out';
   };
 
-  const handleDeleteBatch = async (batchId: string) => {
+  const handleDeleteBatch = async (batch: Batch) => {
     if (!confirm("Tem certeza que deseja excluir este lote? Esta ação não pode ser desfeita.")) {
       return;
     }
 
-    setIsDeleting(batchId);
+    setIsDeleting(batch.id);
     
     try {
       const { error } = await supabase
         .from('batches')
         .delete()
-        .eq('id', batchId);
+        .eq('id', batch.id);
         
       if (error) throw error;
       

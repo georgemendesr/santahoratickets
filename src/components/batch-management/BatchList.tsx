@@ -61,7 +61,7 @@ export function BatchList({ eventId, onEditBatch, readOnly = false }: BatchListP
     );
   }
 
-  // Wrapper functions to adapt the function signatures
+  // Corrigindo as funções wrapper para adaptar as assinaturas
   const handleResetBatch = (batchId: string) => {
     const batch = batches.find(b => b.id === batchId);
     if (batch) {
@@ -115,4 +115,4 @@ export function BatchList({ eventId, onEditBatch, readOnly = false }: BatchListP
       hasInconsistentTickets={hasInconsistentTickets}
     />
   );
-};
+}

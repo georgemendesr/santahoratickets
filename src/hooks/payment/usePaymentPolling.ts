@@ -23,6 +23,7 @@ export const usePaymentPolling = ({
   const [qrCodeLoaded, setQrCodeLoaded] = useState<boolean>(false);
   const [fallbackQrUsed, setFallbackQrUsed] = useState<boolean>(false);
   const [retryCount, setRetryCount] = useState<number>(0);
+  const [manualRetry, setManualRetry] = useState<boolean>(false);
   
   // Verificação de cache com validação
   useEffect(() => {
@@ -62,7 +63,17 @@ export const usePaymentPolling = ({
     error,
     setCurrentStatus,
     refreshPixData
-  } = usePixData({ preferenceId });
+  } = usePixData({ 
+    preferenceId,
+    forceRefresh: manualRetry 
+  });
+
+  // Reset manual retry flag after refresh
+  useEffect(() => {
+    if (manualRetry && !isLoading) {
+      setManualRetry(false);
+    }
+  }, [isLoading, manualRetry]);
 
   // Salvar dados válidos no cache
   useEffect(() => {
@@ -95,7 +106,7 @@ export const usePaymentPolling = ({
         setRetryCount(prev => prev + 1);
         refreshPixData();
         toast.info("Tentando gerar o QR code novamente...");
-      }, 2000);
+      }, 2000 * (retryCount + 1)); // Backoff exponencial
       
       return () => clearTimeout(timer);
     }
@@ -107,7 +118,11 @@ export const usePaymentPolling = ({
     setQrCodeLoaded(false);
     setFallbackQrUsed(false);
     setRetryCount(0);
+    setManualRetry(true);
     refreshPixData();
+    
+    // Feedback para o usuário
+    toast.info("Tentando gerar QR code novamente...");
   }, [refreshPixData]);
 
   // Notificar quando o QR code for carregado com sucesso
@@ -115,6 +130,7 @@ export const usePaymentPolling = ({
     if (qrCode && !qrCodeLoaded) {
       console.log("QR code carregado com sucesso");
       setQrCodeLoaded(true);
+      toast.success("Código de pagamento gerado com sucesso");
       
       if (!qrCodeBase64) {
         toast.warning("QR code disponível apenas como texto. Use a opção Copia e Cola.");
@@ -166,9 +182,10 @@ export const usePaymentPolling = ({
       pollingActive: isPolling,
       qrCodeLoaded,
       fallbackQrUsed,
-      retryCount
+      retryCount,
+      manualRetry
     });
-  }, [qrCode, qrCodeBase64, isLoading, error, payment_id, isPolling, qrCodeLoaded, fallbackQrUsed, retryCount]);
+  }, [qrCode, qrCodeBase64, isLoading, error, payment_id, isPolling, qrCodeLoaded, fallbackQrUsed, retryCount, manualRetry]);
 
   // Determinar o erro a mostrar para o usuário
   const userFacingError = fallbackQrUsed 
@@ -182,6 +199,7 @@ export const usePaymentPolling = ({
     error: userFacingError,
     refreshPixData: handleRefreshPixData,
     qrCodeLoaded,
-    fallbackQrUsed
+    fallbackQrUsed,
+    retryCount
   };
 };

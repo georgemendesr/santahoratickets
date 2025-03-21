@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import { PixQRCode } from "@/components/payment/PixQRCode";
 import { PaymentStatusInfo, getStatusInfo } from "@/components/payment/PaymentStatusInfo";
 import { usePaymentPolling } from "@/hooks/payment/usePaymentPolling";
 import { CheckoutLayout } from "@/components/checkout/CheckoutLayout";
+import { toast } from "sonner";
 
 const PaymentStatus = () => {
   const [searchParams] = useSearchParams();
@@ -24,7 +26,8 @@ const PaymentStatus = () => {
     error,
     refreshPixData,
     qrCodeLoaded,
-    fallbackQrUsed
+    fallbackQrUsed,
+    retryCount
   } = usePaymentPolling({
     preferenceId,
     payment_id,
@@ -41,8 +44,9 @@ const PaymentStatus = () => {
     errorMessage: error
   });
 
+  // Tentativa automática de recarregar quando houver erro
   useEffect(() => {
-    if (error && displayStatus === "pending" && preferenceId) {
+    if (error && displayStatus === "pending" && preferenceId && retryCount === 0) {
       const timer = setTimeout(() => {
         console.log("Tentando recarregar o QR code após erro");
         refreshPixData();
@@ -50,7 +54,24 @@ const PaymentStatus = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [error, displayStatus, preferenceId, refreshPixData]);
+  }, [error, displayStatus, preferenceId, refreshPixData, retryCount]);
+
+  // Reiniciar o processo de pagamento completamente
+  const handleRestartPayment = () => {
+    try {
+      localStorage.removeItem("pixPaymentData");
+      toast.info("Reiniciando processo de pagamento...");
+      
+      if (eventId) {
+        navigate(`/event/${eventId}`);
+      } else {
+        navigate('/');
+      }
+    } catch (e) {
+      console.error("Erro ao reiniciar pagamento:", e);
+      toast.error("Não foi possível reiniciar o pagamento");
+    }
+  };
 
   console.log("Payment Status Page:", {
     preferenceId,
@@ -61,7 +82,8 @@ const PaymentStatus = () => {
     isLoading,
     error,
     qrCodeLoaded,
-    fallbackQrUsed
+    fallbackQrUsed,
+    retryCount
   });
 
   return (
@@ -137,15 +159,12 @@ const PaymentStatus = () => {
                         </>
                       )}
                       
-                      {!qrCode && error && (
+                      {!qrCode && error && retryCount >= 2 && (
                         <div className="flex flex-col items-center mt-6">
                           <Button 
                             variant="destructive"
-                            onClick={() => {
-                              localStorage.removeItem("pixPaymentData");
-                              navigate(`/payment-status?status=pending&payment_id=${payment_id}&external_reference=${reference}`);
-                              window.location.reload();
-                            }}
+                            onClick={handleRestartPayment}
+                            className="w-full"
                           >
                             Reiniciar Processo de Pagamento
                           </Button>
@@ -168,6 +187,16 @@ const PaymentStatus = () => {
               >
                 {statusInfo.buttonText}
               </Button>
+
+              {displayStatus === "pending" && eventId && (
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-2" 
+                  onClick={() => navigate(`/event/${eventId}`)}
+                >
+                  Voltar para o Evento
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>

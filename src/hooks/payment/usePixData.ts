@@ -5,9 +5,10 @@ import { toast } from "sonner";
 
 interface UsePixDataProps {
   preferenceId: string | undefined | null;
+  forceRefresh?: boolean;
 }
 
-export const usePixData = ({ preferenceId }: UsePixDataProps) => {
+export const usePixData = ({ preferenceId, forceRefresh = false }: UsePixDataProps) => {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [qrCodeBase64, setQrCodeBase64] = useState<string | null>(null);
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
@@ -21,13 +22,13 @@ export const usePixData = ({ preferenceId }: UsePixDataProps) => {
   const regeneratePixPayment = useCallback(async (prefId: string) => {
     // Verificar se já houve muitas tentativas recentes
     const now = Date.now();
-    if (now - lastAttemptTime < 3000 && attempts > 0) {
+    if (now - lastAttemptTime < 3000 && attempts > 0 && !forceRefresh) {
       console.log("Esperando intervalo entre tentativas...");
       return;
     }
     
-    // Verificar limite de tentativas
-    if (attempts >= 3) {
+    // Verificar limite de tentativas (ignora se for forceRefresh)
+    if (attempts >= 3 && !forceRefresh) {
       console.log("Máximo de tentativas atingido");
       setError("Não foi possível gerar o QR Code após várias tentativas. Por favor, tente novamente mais tarde.");
       setIsLoading(false);
@@ -106,16 +107,19 @@ export const usePixData = ({ preferenceId }: UsePixDataProps) => {
       setError(errorMessage);
       setIsLoading(false);
       
-      // Tentar novamente automaticamente após um tempo
-      if (attempts < 3) {
+      // Tentar novamente automaticamente após um tempo (exceto se for forceRefresh)
+      if (attempts < 3 && !forceRefresh) {
+        const backoffTime = Math.min(3000 * Math.pow(1.5, attempts), 10000); // Backoff exponencial com limite de 10s
+        console.log(`Agendando nova tentativa em ${backoffTime/1000}s`);
+        
         const timeoutId = window.setTimeout(() => {
           console.log("Tentando novamente automaticamente...");
           regeneratePixPayment(prefId);
-        }, 3000);
+        }, backoffTime);
         setRetryTimeoutId(timeoutId);
       }
     }
-  }, [attempts, lastAttemptTime]);
+  }, [attempts, lastAttemptTime, forceRefresh]);
 
   // Função para buscar dados do PIX
   const fetchPixData = useCallback(async () => {
@@ -127,6 +131,13 @@ export const usePixData = ({ preferenceId }: UsePixDataProps) => {
     console.log("Buscando dados do PIX para preferenceId:", preferenceId);
     
     try {
+      // Forçar regeneração se solicitado
+      if (forceRefresh) {
+        console.log("Força de atualização detectada, regenerando PIX...");
+        await regeneratePixPayment(preferenceId);
+        return;
+      }
+      
       const { data: preference, error } = await supabase
         .from("payment_preferences")
         .select("*")
@@ -189,14 +200,16 @@ export const usePixData = ({ preferenceId }: UsePixDataProps) => {
       setError(errorMessage);
       setIsLoading(false);
       
-      // Tentar novamente automaticamente após um tempo
-      const timeoutId = window.setTimeout(() => {
-        console.log("Tentando buscar dados novamente...");
-        fetchPixData();
-      }, 3000);
-      setRetryTimeoutId(timeoutId);
+      // Tentar novamente automaticamente após um tempo (exceto se for forceRefresh)
+      if (!forceRefresh) {
+        const timeoutId = window.setTimeout(() => {
+          console.log("Tentando buscar dados novamente...");
+          fetchPixData();
+        }, 5000);
+        setRetryTimeoutId(timeoutId);
+      }
     }
-  }, [preferenceId, regeneratePixPayment]);
+  }, [preferenceId, regeneratePixPayment, forceRefresh]);
 
   // Efeito para carregar dados iniciais
   useEffect(() => {
@@ -211,12 +224,12 @@ export const usePixData = ({ preferenceId }: UsePixDataProps) => {
   }, [fetchPixData]);
 
   // Função para forçar atualização
-  const refreshPixData = () => {
+  const refreshPixData = useCallback(() => {
     setIsLoading(true);
     setError(null);
     setAttempts(0);
     fetchPixData();
-  };
+  }, [fetchPixData]);
 
   return {
     qrCode,

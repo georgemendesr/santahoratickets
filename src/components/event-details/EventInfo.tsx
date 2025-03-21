@@ -1,27 +1,71 @@
 
 import { Event } from "@/types";
+import { CalendarDays, MapPin, Clock } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface EventInfoProps {
   event: Event;
   getLowStockAlert: (availableTickets: number) => React.ReactNode;
+  soldOut?: boolean; // Nova propriedade
 }
 
-export function EventInfo({ event, getLowStockAlert }: EventInfoProps) {
+export function EventInfo({ event, getLowStockAlert, soldOut = false }: EventInfoProps) {
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    } catch (error) {
+      console.error("Erro ao formatar data:", error);
+      return dateString;
+    }
+  };
+
+  const formatTime = (timeString: string) => {
+    try {
+      // Converter string de hora (HH:MM:SS) para objeto Date
+      const [hours, minutes] = timeString.split(':');
+      const date = new Date();
+      date.setHours(parseInt(hours, 10));
+      date.setMinutes(parseInt(minutes, 10));
+      
+      return format(date, "HH:mm", { locale: ptBR });
+    } catch (error) {
+      console.error("Erro ao formatar hora:", error);
+      return timeString;
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
+      <div>
         <h1 className="text-2xl font-bold">{event.title}</h1>
-        <p className="text-muted-foreground">{event.description}</p>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>{event.date}</span>
-          <span>•</span>
-          <span>{event.time}</span>
-          <span>•</span>
-          <span>{event.location}</span>
+        <div className="flex items-center gap-1 mt-1 text-muted-foreground">
+          <CalendarDays className="h-4 w-4" />
+          <span className="text-sm">{formatDate(event.date)}</span>
+          <span className="mx-1">•</span>
+          <Clock className="h-4 w-4" />
+          <span className="text-sm">{formatTime(event.time)}</span>
         </div>
-        {getLowStockAlert(event.available_tickets)}
+        <div className="flex items-center text-muted-foreground mt-1">
+          <MapPin className="h-4 w-4 mr-1" />
+          <span className="text-sm">{event.location}</span>
+        </div>
       </div>
+      
+      <div>
+        {event.description && (
+          <p className="text-sm">{event.description}</p>
+        )}
+      </div>
+      
+      {soldOut ? (
+        <p className="text-sm text-red-600 font-medium">
+          Ingressos esgotados
+        </p>
+      ) : (
+        getLowStockAlert(event.available_tickets)
+      )}
     </div>
   );
 }
-

@@ -1,10 +1,8 @@
 
-import { Button } from "@/components/ui/button";
-import { Edit, Ticket } from "lucide-react";
 import { Event } from "@/types";
-import { ShareButtons } from "@/components/home/ShareButtons";
-import { useNavigate } from "react-router-dom";
-import { getEventEditUrl } from "@/utils/navigation";
+import { Button } from "@/components/ui/button";
+import { Edit, Share } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 interface EventActionsProps {
   event: Event;
@@ -12,6 +10,7 @@ interface EventActionsProps {
   onPurchase: () => void;
   onShare: () => void;
   onEdit: () => void;
+  soldOut?: boolean; // Nova propriedade
 }
 
 export function EventActions({ 
@@ -19,41 +18,49 @@ export function EventActions({
   isAdmin, 
   onPurchase, 
   onShare, 
-  onEdit 
+  onEdit,
+  soldOut = false
 }: EventActionsProps) {
-  const navigate = useNavigate();
-  
-  const handleEdit = () => {
-    navigate(getEventEditUrl(event.id));
-  };
-  
   return (
     <div className="space-y-4">
-      <Button 
-        className="w-full bg-[#8B5CF6] hover:bg-[#7C3AED] text-white font-semibold shadow-lg" 
-        onClick={onPurchase}
-        disabled={event.available_tickets === 0}
-      >
-        <Ticket className="mr-2 h-4 w-4" />
-        Comprar Pulseira
-      </Button>
-      
-      <div className="flex gap-2">
-        <ShareButtons 
-          url={window.location.href} 
-          title={event.title} 
-          variant="full" 
-        />
+      <div className="space-y-2">
+        <Button 
+          className="w-full" 
+          size="lg"
+          onClick={onPurchase}
+          disabled={soldOut} // Desabilitar o botão se estiver esgotado
+        >
+          {soldOut ? "Ingressos Esgotados" : "Comprar Pulseira"}
+        </Button>
         
-        {isAdmin && (
-          <Button
-            variant="outline"
-            onClick={onEdit}
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            className="flex-1"
+            onClick={onShare}
           >
-            <Edit className="mr-2 h-4 w-4" />
-            Editar
+            <Share className="h-4 w-4 mr-2" />
+            Compartilhar
           </Button>
-        )}
+          
+          {isAdmin && (
+            <Button 
+              variant="outline" 
+              onClick={onEdit}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Editar
+            </Button>
+          )}
+        </div>
+      </div>
+      
+      <Separator />
+      
+      <div className="text-sm text-muted-foreground">
+        <p>
+          Ao comprar, você está de acordo com os termos e condições do evento.
+        </p>
       </div>
     </div>
   );

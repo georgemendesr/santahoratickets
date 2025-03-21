@@ -8,6 +8,7 @@ import { BatchesTable } from "./BatchesTable";
 import { LoyaltyCard } from "./LoyaltyCard";
 import { ReferralCard } from "./ReferralCard";
 import { EventImage } from "./EventImage";
+import { computeBatchStatus } from "@/utils/batchStatusUtils";
 
 interface EventDetailsContentProps {
   event: Event;
@@ -32,6 +33,21 @@ export function EventDetailsContent({
   onPurchase,
   onEdit
 }: EventDetailsContentProps) {
+  // Função para verificar se todos os lotes estão esgotados
+  const areAllBatchesSoldOut = () => {
+    // Se não houver lotes, consideramos como esgotado
+    if (!batches || batches.length === 0) return true;
+    
+    // Filtramos apenas lotes visíveis
+    const visibleBatches = batches.filter(batch => batch.is_visible);
+    if (visibleBatches.length === 0) return true;
+    
+    // Verificamos se todos os lotes estão com status 'sold_out'
+    return visibleBatches.every(batch => 
+      computeBatchStatus(batch) === 'sold_out'
+    );
+  };
+
   const getLowStockAlert = (availableTickets: number) => {
     if (availableTickets <= 5 && availableTickets > 0) {
       return (
@@ -40,7 +56,7 @@ export function EventDetailsContent({
         </p>
       );
     }
-    if (availableTickets === 0) {
+    if (areAllBatchesSoldOut()) {
       return (
         <p className="text-sm text-red-600 font-medium">
           Ingressos esgotados
@@ -67,7 +83,11 @@ export function EventDetailsContent({
 
         <Card>
           <CardContent className="p-6 space-y-4">
-            <EventInfo event={event} getLowStockAlert={getLowStockAlert} />
+            <EventInfo 
+              event={event} 
+              getLowStockAlert={getLowStockAlert} 
+              soldOut={areAllBatchesSoldOut()}
+            />
           </CardContent>
         </Card>
 
@@ -81,6 +101,7 @@ export function EventDetailsContent({
               onPurchase={onPurchase}
               onShare={onShare}
               onEdit={onEdit}
+              soldOut={areAllBatchesSoldOut()}
             />
           </CardContent>
         </Card>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { computeBatchStatus } from "@/utils/batchStatusUtils";
 
 interface BatchesTableProps {
   batches: Batch[];
@@ -39,40 +40,30 @@ export function BatchesTable({ batches }: BatchesTableProps) {
     }));
   };
 
+  // Função que usa computeBatchStatus para garantir consistência
   const getBatchStatus = (batch: Batch) => {
-    // Verificar datas
-    const startDate = new Date(batch.start_date);
-    const endDate = batch.end_date ? new Date(batch.end_date) : null;
+    // Calcular o status real usando a função centralizada
+    const calculatedStatus = computeBatchStatus(batch);
     
-    if (now < startDate) {
-      return <Badge variant="secondary">Em breve</Badge>;
-    } else if (endDate && now > endDate) {
-      return <Badge variant="secondary">Encerrado</Badge>;
+    switch (calculatedStatus) {
+      case 'active':
+        return <Badge className="bg-green-500">Disponível</Badge>;
+      case 'upcoming':
+        return <Badge variant="secondary">Em breve</Badge>;
+      case 'ended':
+        return <Badge variant="secondary">Encerrado</Badge>;
+      case 'sold_out':
+        return <Badge variant="destructive">Esgotado</Badge>;
+      case 'hidden':
+        return <Badge variant="outline">Oculto</Badge>;
+      default:
+        return <Badge variant="outline">Desconhecido</Badge>;
     }
-    
-    // Verificar disponibilidade de ingressos (após verificar datas)
-    if (batch.available_tickets <= 0) {
-      return <Badge variant="destructive">Esgotado</Badge>;
-    }
-    
-    // Se está ativo e tem ingressos, mostrar como disponível
-    return <Badge className="bg-green-500">Disponível</Badge>;
   };
 
   const isBatchAvailable = (batch: Batch) => {
-    // Um lote está disponível se:
-    // 1. A data atual está dentro do período de vendas
-    // 2. E tem ingressos disponíveis
-    
-    const now = new Date();
-    const startDate = new Date(batch.start_date);
-    const endDate = batch.end_date ? new Date(batch.end_date) : null;
-    
-    if (now < startDate) return false;
-    if (endDate && now > endDate) return false;
-    
-    // Se passou nas verificações de data, agora verifica disponibilidade
-    return batch.available_tickets > 0;
+    // Um lote está disponível para compra apenas se estiver com status "active"
+    return computeBatchStatus(batch) === 'active';
   };
 
   const getTimeRemaining = (endDate: string) => {

@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Batch } from "@/types/event.types";
@@ -143,7 +142,6 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
     setIsDuplicating(batch.id);
     
     try {
-      // Get current max order number
       const { data: maxOrderData, error: maxOrderError } = await supabase
         .from('batches')
         .select('order_number')
@@ -157,17 +155,15 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
         ? maxOrderData[0].order_number + 1 
         : 1;
       
-      // Clone the batch with new order number
       const newBatch = {
         ...batch,
-        id: undefined, // Remove ID to let Supabase generate a new one
+        id: undefined,
         title: `${batch.title} (Cópia)`,
         order_number: nextOrderNumber,
         created_at: undefined,
         updated_at: undefined
       };
       
-      // Insert the new batch
       const { error: insertError } = await supabase
         .from('batches')
         .insert([newBatch]);

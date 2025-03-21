@@ -58,7 +58,6 @@ export const usePaymentPolling = ({
       }
 
       console.log("Buscando dados do PIX para preferenceId:", preferenceId);
-      setIsLoading(true);
       
       try {
         const { data: preference, error } = await supabase
@@ -83,16 +82,29 @@ export const usePaymentPolling = ({
             status: preference.status
           });
           
-          setQrCode(preference.qr_code || null);
-          setQrCodeBase64(preference.qr_code_base64 || null);
+          // Atualiza o código PIX se disponível
+          if (preference.qr_code) {
+            setQrCode(preference.qr_code);
+          }
+          
+          // Atualiza o QR Code Base64 se disponível
+          if (preference.qr_code_base64) {
+            setQrCodeBase64(preference.qr_code_base64);
+          }
 
           if (preference.status !== "pending" && preference.status !== currentStatus) {
             handleStatusChange(preference.status);
           }
           
+          // Se tiver o código PIX mas não tiver o QR Code, vamos considerar
+          // que pelo menos parte do processamento foi bem sucedido
+          if (preference.qr_code) {
+            setIsLoading(false);
+          }
+          
           // Se não tiver QR code e status ainda for pending, tentar novamente a geração
           if ((!preference.qr_code || !preference.qr_code_base64) && preference.status === "pending") {
-            console.log("QR Code não encontrado, tentando regenerar...");
+            console.log("QR Code incompleto, tentando regenerar...");
             await regeneratePixPayment(preferenceId);
           } else {
             setIsLoading(false);
@@ -129,9 +141,16 @@ export const usePaymentPolling = ({
         console.log("Pagamento PIX regenerado:", data);
         
         if (data && data.data) {
-          if (data.data.qr_code && data.data.qr_code_base64) {
+          if (data.data.qr_code) {
             setQrCode(data.data.qr_code);
+          }
+          if (data.data.qr_code_base64) {
             setQrCodeBase64(data.data.qr_code_base64);
+          }
+          
+          // Se pelo menos o código PIX estiver disponível, consideramos um sucesso parcial
+          if (data.data.qr_code) {
+            setIsLoading(false);
             setError(null);
           }
         }
@@ -167,8 +186,11 @@ export const usePaymentPolling = ({
             }
             
             // Atualizar QR Code se estiver disponível
-            if (payload.new.qr_code && payload.new.qr_code_base64) {
+            if (payload.new.qr_code) {
               setQrCode(payload.new.qr_code);
+            }
+            
+            if (payload.new.qr_code_base64) {
               setQrCodeBase64(payload.new.qr_code_base64);
               setIsLoading(false);
               setError(null);
@@ -190,11 +212,20 @@ export const usePaymentPolling = ({
         if (isPolling && attempts < 5) {
           console.log("Executando polling manual...");
           fetchPixData();
-        } else if (attempts >= 5 && !qrCode) {
-          // Se após 5 tentativas ainda não tiver o QR code, mostra erro
-          setError("Não foi possível gerar o código PIX após várias tentativas. Por favor, tente novamente.");
+        } else if (attempts >= 5) {
+          // Se após 5 tentativas ainda não tiver o QR code completo, mas tiver o código PIX
+          // continuamos exibindo o formulário PIX mesmo sem QR code
+          if (!qrCodeBase64 && qrCode) {
+            console.log("Não foi possível gerar o QR Code após várias tentativas, mas o código PIX está disponível.");
+            setIsLoading(false);
+          } 
+          // Se nem o código PIX estiver disponível, mostramos erro
+          else if (!qrCode) {
+            setError("Não foi possível gerar o código PIX após várias tentativas. Por favor, tente novamente.");
+            setIsLoading(false);
+          }
+          
           setIsPolling(false);
-          setIsLoading(false);
           clearInterval(pollingInterval);
         }
       }, 5000); // A cada 5 segundos
@@ -207,7 +238,7 @@ export const usePaymentPolling = ({
       }
       clearInterval(pollingInterval);
     };
-  }, [preferenceId, handleStatusChange, currentStatus, isPolling, attempts]);
+  }, [preferenceId, handleStatusChange, currentStatus, isPolling, attempts, qrCode, qrCodeBase64]);
 
   return {
     qrCode,

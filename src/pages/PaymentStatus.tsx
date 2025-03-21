@@ -33,6 +33,16 @@ const PaymentStatus = () => {
     }
   }, [status, preferenceId, payment_id, navigate]);
 
+  // Para debugging
+  useEffect(() => {
+    console.log("PaymentStatus rendering with:", {
+      qrCode: qrCode ? "QR code present" : "No QR code",
+      qrCodeBase64: qrCodeBase64 ? "QR base64 present" : "No QR base64",
+      isLoading,
+      error
+    });
+  }, [qrCode, qrCodeBase64, isLoading, error]);
+
   // Determinar o status apropriado para exibição
   const displayStatus = status || (error ? "error" : "pending");
   const statusInfo = getStatusInfo({ 
@@ -69,6 +79,14 @@ const PaymentStatus = () => {
                 <PixQRCode
                   qrCode={qrCode}
                   qrCodeBase64={qrCodeBase64}
+                />
+              )}
+              
+              {/* Fallback para quando temos código PIX mas não temos QR Code */}
+              {displayStatus === "pending" && !isLoading && qrCode && !qrCodeBase64 && (
+                <PixQRCode
+                  qrCode={qrCode}
+                  qrCodeBase64=""
                 />
               )}
 

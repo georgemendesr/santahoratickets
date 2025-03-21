@@ -1,7 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFeedback } from "@/context/FeedbackContext";
+import { Batch } from "@/types/event.types";
 
 interface BatchFormData {
   title: string;
@@ -22,10 +23,11 @@ interface BatchFormData {
 interface UseBatchFormProps {
   eventId: string;
   orderNumber: number;
+  batchId?: string | null;
   onSuccess: () => void;
 }
 
-export const useBatchForm = ({ eventId, orderNumber, onSuccess }: UseBatchFormProps) => {
+export const useBatchForm = ({ eventId, orderNumber, batchId, onSuccess }: UseBatchFormProps) => {
   const [formData, setFormData] = useState<BatchFormData>({
     title: "",
     price: "",
@@ -43,7 +45,65 @@ export const useBatchForm = ({ eventId, orderNumber, onSuccess }: UseBatchFormPr
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { showLoading, hideLoading, showSuccess, showError } = useFeedback();
+
+  // Carregar os dados do lote se estiver editando
+  useEffect(() => {
+    if (!batchId) return;
+
+    const fetchBatchData = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('batches')
+          .select('*')
+          .eq('id', batchId)
+          .single();
+
+        if (error) throw error;
+        
+        if (data) {
+          const batch = data as Batch;
+          
+          // Converter data e hora
+          const startDate = new Date(batch.start_date);
+          const endDate = batch.end_date ? new Date(batch.end_date) : null;
+
+          const formatDateToInputValue = (date: Date) => {
+            return date.toISOString().split('T')[0];
+          };
+
+          const formatTimeToInputValue = (date: Date) => {
+            return date.toISOString().split('T')[1].substring(0, 5);
+          };
+
+          setFormData({
+            title: batch.title,
+            price: batch.price.toString(),
+            totalTickets: batch.total_tickets.toString(),
+            startDate: formatDateToInputValue(startDate),
+            startTime: formatTimeToInputValue(startDate),
+            endDate: endDate ? formatDateToInputValue(endDate) : "",
+            endTime: endDate ? formatTimeToInputValue(endDate) : "",
+            visibility: batch.visibility || "public",
+            isVisible: batch.is_visible,
+            description: batch.description || "",
+            minPurchase: batch.min_purchase.toString(),
+            maxPurchase: batch.max_purchase ? batch.max_purchase.toString() : "",
+            batchGroup: batch.batch_group || ""
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao buscar dados do lote:', error);
+        showError('Não foi possível carregar os dados do lote');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBatchData();
+  }, [batchId, showError]);
 
   const updateFormField = <K extends keyof BatchFormData>(field: K, value: BatchFormData[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -103,7 +163,7 @@ export const useBatchForm = ({ eventId, orderNumber, onSuccess }: UseBatchFormPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    showLoading("Salvando lote...");
+    showLoading(batchId ? "Atualizando lote..." : "Salvando lote...");
 
     try {
       // Validações
@@ -113,7 +173,7 @@ export const useBatchForm = ({ eventId, orderNumber, onSuccess }: UseBatchFormPr
         title: formData.title,
         price: parseFloat(formData.price),
         total_tickets: parseInt(formData.totalTickets),
-        available_tickets: parseInt(formData.totalTickets),
+        available_tickets: batchId ? undefined : parseInt(formData.totalTickets), // Não atualiza available_tickets na edição
         start_date: `${formData.startDate}T${formData.startTime}:00Z`,
         end_date: formData.endDate ? `${formData.endDate}T${formData.endTime || "23:59"}:00Z` : null,
         visibility: formData.visibility,
@@ -123,24 +183,37 @@ export const useBatchForm = ({ eventId, orderNumber, onSuccess }: UseBatchFormPr
         max_purchase: formData.maxPurchase ? parseInt(formData.maxPurchase) : null,
         batch_group: formData.batchGroup || null,
         event_id: eventId,
-        order_number: orderNumber,
+        order_number: batchId ? undefined : orderNumber, // Não atualiza order_number na edição
         status: 'active'
       };
 
-      console.log("Enviando dados do lote:", batchData);
+      console.log(batchId ? "Atualizando lote:" : "Enviando dados do lote:", batchData);
 
-      const { data, error } = await supabase
-        .from('batches')
-        .insert([batchData])
-        .select();
-
-      if (error) {
-        console.error('Erro ao criar lote:', error);
-        throw new Error(`Erro ao criar lote: ${error.message}`);
+      let operation;
+      if (batchId) {
+        // Atualizando lote existente
+        operation = supabase
+          .from('batches')
+          .update(batchData)
+          .eq('id', batchId)
+          .select();
+      } else {
+        // Criando novo lote
+        operation = supabase
+          .from('batches')
+          .insert([batchData])
+          .select();
       }
 
-      console.log("Lote criado com sucesso:", data);
-      showSuccess("Lote criado com sucesso!");
+      const { data, error } = await operation;
+
+      if (error) {
+        console.error('Erro ao salvar lote:', error);
+        throw new Error(`Erro ao salvar lote: ${error.message}`);
+      }
+
+      console.log("Lote salvo com sucesso:", data);
+      showSuccess(batchId ? "Lote atualizado com sucesso!" : "Lote criado com sucesso!");
       
       // Limpar formulário
       resetForm();
@@ -149,8 +222,8 @@ export const useBatchForm = ({ eventId, orderNumber, onSuccess }: UseBatchFormPr
       onSuccess();
       
     } catch (error) {
-      console.error('Erro ao criar lote:', error);
-      showError(error instanceof Error ? error.message : "Erro ao criar lote");
+      console.error('Erro ao salvar lote:', error);
+      showError(error instanceof Error ? error.message : "Erro ao salvar lote");
     } finally {
       setIsSubmitting(false);
       hideLoading();
@@ -160,6 +233,7 @@ export const useBatchForm = ({ eventId, orderNumber, onSuccess }: UseBatchFormPr
   return {
     formData,
     isSubmitting,
+    isLoading,
     updateFormField,
     handleSubmit
   };

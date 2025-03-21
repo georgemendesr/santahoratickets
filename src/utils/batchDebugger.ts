@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { computeBatchStatus } from "./batchStatusUtils";
+import { Batch } from "@/types/event.types";
 
 // Função para diagnosticar lotes de um evento
 const diagnoseBatches = async (eventId: string) => {
@@ -69,7 +70,13 @@ const diagnoseBatches = async (eventId: string) => {
       }
       
       // Verificar status atual vs status esperado
-      const expectedStatus = computeBatchStatus(batch);
+      // Precisamos converter visibility para um tipo válido antes de passar para computeBatchStatus
+      const batchWithValidVisibility = {
+        ...batch,
+        visibility: (batch.visibility as "public" | "guest_only" | "internal_pdv") || "public"
+      } as Batch;
+      
+      const expectedStatus = computeBatchStatus(batchWithValidVisibility);
       console.log(`Status atual: ${batch.status}`);
       console.log(`Status esperado: ${expectedStatus}`);
       
@@ -85,7 +92,19 @@ const diagnoseBatches = async (eventId: string) => {
     });
     
     // Resumo final
-    const inconsistentStatuses = batches.filter(b => b.status !== computeBatchStatus(b));
+    const inconsistentStatuses = batches.map(batch => {
+      // Converter visibility para o tipo esperado
+      const batchWithValidVisibility = {
+        ...batch,
+        visibility: (batch.visibility as "public" | "guest_only" | "internal_pdv") || "public"
+      } as Batch;
+      
+      return {
+        batch: batchWithValidVisibility,
+        computedStatus: computeBatchStatus(batchWithValidVisibility)
+      };
+    }).filter(item => item.batch.status !== item.computedStatus);
+    
     const zeroTickets = batches.filter(b => b.available_tickets <= 0);
     const inconsistentTickets = batches.filter(b => b.available_tickets > b.total_tickets);
     
@@ -125,8 +144,13 @@ const fixBatchStatus = async (batchId: string) => {
       return;
     }
     
-    // Calcular o status correto
-    const correctStatus = computeBatchStatus(batch);
+    // Calcular o status correto - precisamos converter visibility para o tipo esperado
+    const batchWithValidVisibility = {
+      ...batch,
+      visibility: (batch.visibility as "public" | "guest_only" | "internal_pdv") || "public"
+    } as Batch;
+    
+    const correctStatus = computeBatchStatus(batchWithValidVisibility);
     console.log(`Status atual: ${batch.status}`);
     console.log(`Status correto: ${correctStatus}`);
     
@@ -175,7 +199,13 @@ const fixAllBatchesForEvent = async (eventId: string) => {
     
     // Corrigir cada lote
     for (const batch of batches) {
-      const correctStatus = computeBatchStatus(batch);
+      // Precisamos converter visibility para o tipo esperado
+      const batchWithValidVisibility = {
+        ...batch,
+        visibility: (batch.visibility as "public" | "guest_only" | "internal_pdv") || "public"
+      } as Batch;
+      
+      const correctStatus = computeBatchStatus(batchWithValidVisibility);
       
       if (batch.status !== correctStatus) {
         console.log(`Lote ${batch.title}: ${batch.status} -> ${correctStatus}`);

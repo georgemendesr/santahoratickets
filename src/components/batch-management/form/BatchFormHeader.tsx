@@ -1,7 +1,7 @@
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { InfoCircle } from "lucide-react";
+import { InfoIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface BatchFormHeaderProps {
@@ -55,7 +55,7 @@ export const BatchFormHeader: React.FC<BatchFormHeaderProps> = ({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <InfoCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                    <InfoIcon className="h-4 w-4 text-muted-foreground cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="w-60 text-sm">

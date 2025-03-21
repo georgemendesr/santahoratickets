@@ -26,8 +26,8 @@ export const PixPaymentInfo = ({ beneficiaryName, hasPixCode, pixCode }: PixPaym
     }
   }
   
-  // Usar apenas o nome da aplicação, ignorando o nome pessoal
-  const displayName = merchantName || "Santa Hora";
+  // Usar o nome extraído diretamente do código PIX
+  const displayName = merchantName || beneficiaryName || "Pagamento PIX";
   
   return (
     <>

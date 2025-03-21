@@ -3,11 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Event } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Calendar, Clock, MapPin, Ticket } from "lucide-react";
+import { getImageUrl } from "@/integrations/supabase/utils";
+import { getEventUrl } from "@/utils/navigation";
 
 export function EventHeader() {
   const navigate = useNavigate();
 
-  const { data: event } = useQuery({
+  const { data: event, isLoading } = useQuery({
     queryKey: ["featured-event"],
     queryFn: async () => {
       try {
@@ -26,7 +30,34 @@ export function EventHeader() {
         if (error) throw error;
         
         if (data) {
-          return data as Event;
+          // Buscar informação do lote ativo
+          const { data: batchData, error: batchError } = await supabase
+            .from("batches")
+            .select("*")
+            .eq("event_id", data.id)
+            .eq("is_visible", true)
+            .order('price', { ascending: true });
+            
+          if (batchError) throw batchError;
+          
+          // Filtrar lotes ativos
+          const activeBatches = batchData.filter(batch => {
+            const now = new Date();
+            const startDate = new Date(batch.start_date);
+            const endDate = batch.end_date ? new Date(batch.end_date) : null;
+            
+            return (
+              batch.available_tickets > 0 &&
+              startDate <= now &&
+              (!endDate || endDate >= now) &&
+              batch.status === 'active'
+            );
+          });
+          
+          return {
+            ...data as Event,
+            activeBatch: activeBatches.length > 0 ? activeBatches[0] : null
+          };
         }
         
         return null;
@@ -37,29 +68,135 @@ export function EventHeader() {
     },
   });
 
+  // Verificar se a imagem existe e formar a URL correta
+  const imageUrl = event?.image 
+    ? (event.image.startsWith("http") 
+        ? event.image 
+        : (event.image.startsWith("/") 
+          ? event.image 
+          : getImageUrl(event.image).publicUrl))
+    : "/lovable-uploads/c07e81e6-595c-4636-8fef-1f61c7240f65.png";
+
+  const handleViewDetails = () => {
+    if (event) {
+      navigate(getEventUrl(event.id));
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="relative h-screen flex items-center justify-center">
+        <div className="h-16 w-16 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!event) {
+    return (
+      <div className="relative h-[70vh] flex items-center justify-center">
+        <div className="absolute inset-0">
+          <div className="relative h-full w-full">
+            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-transparent z-10" />
+            <img 
+              src="/lovable-uploads/41a95ecf-db21-429e-949c-f125b594e382.png"
+              alt="Santa Hora - Ambiente"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+
+        <div className="relative z-20 container mx-auto px-4 text-center">
+          <div className="max-w-2xl mx-auto text-white">
+            <img 
+              src="/lovable-uploads/84e088a9-3b7b-41d9-9ef3-dd2894f717cf.png" 
+              alt="Logo Santa Hora" 
+              className="h-48 mx-auto filter drop-shadow-2xl mb-8"
+            />
+            <h2 className="text-3xl font-bold mb-4">Nenhum evento disponível no momento</h2>
+            <p className="text-xl mb-8">Fique ligado! Em breve teremos novidades incríveis para você.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Determinar informações de lote para exibição
+  let batchInfo = {
+    name: "Esgotado",
+    class: "bg-red-500 text-white"
+  };
+  
+  if (event.activeBatch) {
+    batchInfo = {
+      name: `R$ ${event.activeBatch.price.toFixed(2).replace('.', ',')}`,
+      class: "bg-emerald-500 text-white"
+    };
+  }
+  
+  // Verificar se o evento já aconteceu
+  const eventDate = new Date(event.date);
+  const isPastEvent = eventDate < new Date();
+
   return (
-    <div className="relative h-[50vh] flex items-center justify-center">
+    <div className="relative min-h-[90vh] flex items-center justify-center py-16">
       {/* Background com overlay mais escuro */}
       <div className="absolute inset-0">
         <div className="relative h-full w-full">
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-transparent z-10" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/30 z-10" />
           <img 
-            src="/lovable-uploads/41a95ecf-db21-429e-949c-f125b594e382.png"
-            alt="Santa Hora - Ambiente"
+            src={imageUrl}
+            alt={event.title}
             className="w-full h-full object-cover"
           />
         </div>
       </div>
 
-      {/* Conteúdo centralizado - apenas o logo */}
-      <div className="relative z-20 container mx-auto px-4 text-center">
-        <div className="max-w-4xl mx-auto">
-          <div className="relative">
-            <img 
-              src="/lovable-uploads/84e088a9-3b7b-41d9-9ef3-dd2894f717cf.png" 
-              alt="Logo Santa Hora" 
-              className="h-48 mx-auto filter drop-shadow-2xl"
-            />
+      {/* Conteúdo centralizado */}
+      <div className="relative z-20 container mx-auto px-4">
+        <div className="max-w-5xl mx-auto rounded-2xl overflow-hidden backdrop-blur-md bg-white/10 shadow-2xl">
+          <div className="p-6 md:p-10 text-white">
+            <div className="flex flex-col md:flex-row gap-8">
+              <div className="md:w-1/2">
+                <img 
+                  src={imageUrl}
+                  alt={event.title}
+                  className="w-full h-auto rounded-xl shadow-lg"
+                />
+                <div className="mt-4 flex justify-end">
+                  <span className={`px-4 py-2 rounded-full text-sm font-medium ${batchInfo.class} bg-white/90`}>
+                    {batchInfo.name}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="md:w-1/2 space-y-6">
+                <h1 className="text-4xl font-bold">{event.title}</h1>
+                <p className="text-lg opacity-90">{event.description}</p>
+                
+                <div className="space-y-4 text-white">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-6 w-6 text-[#8B5CF6]" />
+                    <span className="text-lg">{event.date}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Clock className="h-6 w-6 text-[#8B5CF6]" />
+                    <span className="text-lg">{event.time}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <MapPin className="h-6 w-6 text-[#8B5CF6]" />
+                    <span className="text-lg">{event.location}</span>
+                  </div>
+                </div>
+                
+                <Button 
+                  className="w-full py-6 text-lg bg-[#8B5CF6] hover:bg-[#7C3AED]" 
+                  onClick={handleViewDetails}
+                >
+                  <Ticket className="mr-2 h-5 w-5" />
+                  {isPastEvent ? "Ver Detalhes" : "Comprar Pulseira"}
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

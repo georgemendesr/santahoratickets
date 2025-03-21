@@ -10,8 +10,8 @@ export function EventHeader({ event }: EventHeaderProps) {
   return (
     <div className="text-center mb-6">
       <img 
-        src="/lovable-uploads/0791f14f-3770-44d6-8ff3-1e714a1d1243.png"
-        alt="Bora Pagodear"
+        src="/lovable-uploads/84e088a9-3b7b-41d9-9ef3-dd2894f717cf.png"
+        alt="Santa Hora"
         className="h-16 mx-auto"
       />
     </div>

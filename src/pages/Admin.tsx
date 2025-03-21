@@ -9,21 +9,23 @@ import { DashboardCharts } from "@/components/admin/dashboard/DashboardCharts";
 import { ActionCards } from "@/components/admin/dashboard/ActionCards";
 
 const Admin = () => {
-  const { data: dashboardData, isLoading } = useQuery({
+  const { data: dashboardData, isLoading, error } = useQuery({
     queryKey: ["admin-dashboard"],
     queryFn: async () => {
-      const { data: events, error } = await supabase
-        .from("events")
-        .select("*")
-        .order("date", { ascending: false })
-        .limit(5);
+      try {
+        const { data: events, error } = await supabase
+          .from("events")
+          .select("*")
+          .order("date", { ascending: false })
+          .limit(5);
+          
+        if (error) throw error;
         
-      if (error) {
+        return events || [];
+      } catch (error) {
         console.error("Error fetching dashboard data:", error);
         return [];
       }
-      
-      return events || [];
     },
   });
 
@@ -31,6 +33,26 @@ const Admin = () => {
   const totalTickets = dashboardData?.reduce((acc, event) => acc + (event?.approved_tickets || 0), 0) || 0;
   const eventsCount = dashboardData?.length || 0;
   const averageTicket = totalTickets ? totalRevenue / totalTickets : 0;
+  
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="container mx-auto max-w-7xl p-4">
+          <p className="text-center">Carregando dados do dashboard...</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+  
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="container mx-auto max-w-7xl p-4">
+          <p className="text-center text-red-500">Erro ao carregar dados do dashboard.</p>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>

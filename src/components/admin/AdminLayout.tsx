@@ -57,17 +57,3 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
     </div>
   );
 }
-
-// Higher-Order Component (HOC) para adicionar AdminLayout a um componente
-export function withAdminLayout<P extends object>(
-  Component: React.ComponentType<P>,
-  layoutProps: Omit<AdminLayoutProps, 'children'> = {}
-) {
-  return function WithAdminLayout(props: P) {
-    return (
-      <AdminLayout {...layoutProps}>
-        <Component {...props} />
-      </AdminLayout>
-    );
-  };
-}

@@ -68,7 +68,7 @@ export function EventCard({
           />
           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="absolute top-3 right-3">
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${batchInfo.class} bg-white/90`}>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${batchInfo.class}`}>
               {batchInfo.name}
             </span>
           </div>

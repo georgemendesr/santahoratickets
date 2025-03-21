@@ -9,6 +9,9 @@ const EventDetails = lazy(() => import("@/pages/EventDetails"));
 const EditEvent = lazy(() => import("@/pages/EditEvent"));
 const Rewards = lazy(() => import("@/pages/Rewards"));
 const MyVouchers = lazy(() => import("@/pages/MyVouchers"));
+const Checkout = lazy(() => import("@/pages/Checkout"));
+const CheckoutFinish = lazy(() => import("@/pages/CheckoutFinish"));
+const PaymentStatus = lazy(() => import("@/pages/PaymentStatus"));
 // Admin imports
 const Admin = lazy(() => import("@/pages/Admin"));
 const AdminEventos = lazy(() => import("@/pages/AdminEventos"));
@@ -61,6 +64,22 @@ export const routes = [
     component: EditEvent,
     private: true,
     adminOnly: true
+  },
+  // Adicionando rotas de checkout
+  {
+    path: '/checkout/:id',
+    component: Checkout,
+    private: false,
+  },
+  {
+    path: '/checkout/:id/finish',
+    component: CheckoutFinish,
+    private: false,
+  },
+  {
+    path: '/payment-status',
+    component: PaymentStatus,
+    private: false,
   },
   {
     path: '/admin',

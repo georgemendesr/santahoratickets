@@ -66,13 +66,13 @@ const CheckoutFinish = () => {
     setPhone,
     email,
     setEmail,
-    isLoading,
+    isLoading: isLoadingCheckout,
     showPaymentForm,
     handleSubmitProfile,
     handlePayment,
   } = useCheckoutState(session, eventId, selectedBatch);
 
-  const isLoading = isLoadingEventData || isLoadingBatch || !selectedBatch;
+  const isLoading = isLoadingEventData || isLoadingBatch || !selectedBatch || isLoadingCheckout;
 
   if (isLoading) {
     return (

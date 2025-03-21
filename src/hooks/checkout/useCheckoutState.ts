@@ -79,6 +79,20 @@ export function useCheckoutState(
 
       if (error) {
         console.error("Erro na resposta da Edge Function:", error);
+        
+        // Tratamento mais detalhado do erro
+        if (error.message.includes("Edge Function returned a non-2xx status code")) {
+          toast.dismiss(toastId);
+          toast.error("Falha ao processar o pagamento. Por favor, tente novamente em alguns instantes.", {
+            duration: 5000,
+          });
+          
+          // Mesmo com erro, vamos tentar navegar para a tela de status com os dados que temos
+          // Isso evita que o usuário fique preso na tela de checkout
+          navigate(`/payment-status?status=pending&payment_id=${preference.id}&external_reference=${eventId}|${preference.id}`);
+          return;
+        }
+        
         throw error;
       }
 
@@ -107,16 +121,16 @@ export function useCheckoutState(
         stack: error.stack
       });
       toast.dismiss(toastId);
-      toast.error(
-        error.message || "Erro ao processar seu pagamento. Tente novamente.",
-        {
-          duration: 5000,
-          action: {
-            label: "Tentar Novamente",
-            onClick: () => handlePayment(paymentData)
-          }
+      
+      // Mensagem de erro mais informativa
+      const errorMessage = error.message || "Erro ao processar seu pagamento. Tente novamente.";
+      toast.error(errorMessage, {
+        duration: 5000,
+        action: {
+          label: "Tentar Novamente",
+          onClick: () => handlePayment(paymentData)
         }
-      );
+      });
     } finally {
       setIsLoading(false);
     }

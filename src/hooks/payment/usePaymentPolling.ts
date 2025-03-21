@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { usePixData } from "./usePixData";
 import { usePaymentStatus } from "./usePaymentStatus";
+import { toast } from "sonner";
 
 interface UsePaymentPollingProps {
   preferenceId: string | undefined | null;
@@ -21,6 +22,7 @@ export const usePaymentPolling = ({
   // Estado para controlar se o QR code foi carregado
   const [qrCodeLoaded, setQrCodeLoaded] = useState<boolean>(false);
   const [fallbackQrUsed, setFallbackQrUsed] = useState<boolean>(false);
+  const [retryCount, setRetryCount] = useState<number>(0);
   
   // Verificação de cache com validação
   useEffect(() => {
@@ -85,11 +87,26 @@ export const usePaymentPolling = ({
     }
   }, [qrCode, qrCodeBase64, preferenceId, fallbackQrUsed]);
 
+  // Retry automaticamente se não conseguir carregar o QR code
+  useEffect(() => {
+    if (error && !qrCode && retryCount < 3 && !isLoading) {
+      const timer = setTimeout(() => {
+        console.log(`Tentativa ${retryCount + 1} de 3 para carregar o QR code...`);
+        setRetryCount(prev => prev + 1);
+        refreshPixData();
+        toast.info("Tentando gerar o QR code novamente...");
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error, qrCode, retryCount, isLoading, refreshPixData]);
+
   // Callback otimizado para atualizar o QR code
   const handleRefreshPixData = useCallback(() => {
     console.log("Solicitando atualização completa dos dados PIX");
     setQrCodeLoaded(false);
     setFallbackQrUsed(false);
+    setRetryCount(0);
     refreshPixData();
   }, [refreshPixData]);
 
@@ -98,8 +115,12 @@ export const usePaymentPolling = ({
     if (qrCode && !qrCodeLoaded) {
       console.log("QR code carregado com sucesso");
       setQrCodeLoaded(true);
+      
+      if (!qrCodeBase64) {
+        toast.warning("QR code disponível apenas como texto. Use a opção Copia e Cola.");
+      }
     }
-  }, [qrCode, qrCodeLoaded]);
+  }, [qrCode, qrCodeBase64, qrCodeLoaded]);
 
   // Limpeza de dados em caso de problemas
   useEffect(() => {
@@ -129,6 +150,7 @@ export const usePaymentPolling = ({
   useEffect(() => {
     if ((!initialStatus && !preferenceId) || (!initialStatus && !payment_id)) {
       console.log("Dados insuficientes, redirecionando para home");
+      toast.error("Dados de pagamento incompletos");
       navigate("/");
     }
   }, [initialStatus, preferenceId, payment_id, navigate]);
@@ -143,9 +165,10 @@ export const usePaymentPolling = ({
       paymentId: payment_id,
       pollingActive: isPolling,
       qrCodeLoaded,
-      fallbackQrUsed
+      fallbackQrUsed,
+      retryCount
     });
-  }, [qrCode, qrCodeBase64, isLoading, error, payment_id, isPolling, qrCodeLoaded, fallbackQrUsed]);
+  }, [qrCode, qrCodeBase64, isLoading, error, payment_id, isPolling, qrCodeLoaded, fallbackQrUsed, retryCount]);
 
   // Determinar o erro a mostrar para o usuário
   const userFacingError = fallbackQrUsed 

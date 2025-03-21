@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0"
 import qrcode from "https://esm.sh/qrcode@1.5.3"
@@ -70,6 +71,15 @@ function generatePixPayload(
     description
   });
   
+  // Validar dados de entrada para evitar erros
+  if (!merchantName) merchantName = "Comerciante";
+  if (!merchantCity) merchantCity = "SAO PAULO";
+  if (!pixKey) pixKey = "00000000000";
+  if (!txid) {
+    console.error("TXID é obrigatório!");
+    throw new Error("TXID é obrigatório para geração do PIX");
+  }
+  
   const payload = {};
   payload["00"] = "01";
   
@@ -130,12 +140,19 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    )
+    // Inicializar cliente Supabase com chaves de ambiente
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Variáveis de ambiente SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não definidas");
+    }
+    
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-    const { preferenceId, eventId, batchId, paymentType, regenerate } = await req.json()
+    // Extrair parâmetros da requisição
+    const requestData = await req.json();
+    const { preferenceId, eventId, batchId, paymentType, regenerate } = requestData;
 
     console.log("Recebendo solicitação de pagamento:", { 
       preferenceId, 
@@ -143,27 +160,30 @@ serve(async (req) => {
       batchId, 
       paymentType,
       regenerate
-    })
+    });
 
+    // Validação básica
     if (!preferenceId) {
-      throw new Error("ID da preferência não fornecido")
+      throw new Error("ID da preferência não fornecido");
     }
 
+    // Buscar preferência de pagamento
     const { data: preference, error: prefError } = await supabaseClient
       .from('payment_preferences')
       .select('*')
       .eq('id', preferenceId)
-      .single()
+      .single();
 
     if (prefError) {
-      console.error("Erro ao buscar preferência:", prefError)
-      throw new Error(`Preferência não encontrada: ${prefError.message}`)
+      console.error("Erro ao buscar preferência:", prefError);
+      throw new Error(`Preferência não encontrada: ${prefError.message}`);
     }
 
     if (!preference) {
-      throw new Error("Preferência não encontrada")
+      throw new Error("Preferência não encontrada");
     }
 
+    // Verificar se é pagamento PIX
     if (preference.payment_type !== 'pix') {
       return new Response(
         JSON.stringify({ 
@@ -172,7 +192,7 @@ serve(async (req) => {
           data: null
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      );
     }
 
     console.log("Gerando QR Code PIX para a preferência:", {
@@ -181,21 +201,27 @@ serve(async (req) => {
       eventId: preference.event_id,
       userId: preference.user_id,
       amount: preference.total_amount
-    })
+    });
 
+    // Buscar dados do evento
     const { data: event, error: eventError } = await supabaseClient
       .from('events')
       .select('title, location, organizer_name')
       .eq('id', preference.event_id)
       .single();
 
-    if (eventError || !event) {
-      console.error("Erro ao buscar dados do evento:", eventError)
-      throw new Error(`Evento não encontrado: ${eventError?.message || "Dados ausentes"}`)
+    if (eventError) {
+      console.error("Erro ao buscar dados do evento:", eventError);
+      throw new Error(`Evento não encontrado: ${eventError.message}`);
+    }
+
+    if (!event) {
+      throw new Error("Evento não encontrado ou dados ausentes");
     }
 
     console.log("Dados do evento encontrados:", event);
 
+    // Buscar ID do organizador do evento
     const { data: eventOwnerData, error: eventOwnerError } = await supabaseClient
       .from('events')
       .select('user_id')
@@ -204,28 +230,36 @@ serve(async (req) => {
 
     if (eventOwnerError) {
       console.error("Erro ao buscar o ID do organizador do evento:", eventOwnerError);
+      throw new Error(`Não foi possível identificar o organizador: ${eventOwnerError.message}`);
     }
 
-    let organizerProfile = null;
-    if (eventOwnerData && eventOwnerData.user_id) {
-      const { data: orgProfile, error: orgProfileError } = await supabaseClient
-        .from('user_profiles')
-        .select('name, cpf')
-        .eq('id', eventOwnerData.user_id)
-        .single();
-      
-      if (orgProfileError) {
-        console.error("Erro ao buscar dados do perfil do organizador:", orgProfileError);
-      } else if (orgProfile) {
-        organizerProfile = orgProfile;
-        console.log("Perfil do organizador encontrado:", organizerProfile);
-      }
+    if (!eventOwnerData || !eventOwnerData.user_id) {
+      console.error("ID do organizador não encontrado no evento");
+      throw new Error("Evento não possui um organizador válido");
     }
 
-    const merchantName = event.organizer_name || event.title;
+    // Buscar perfil do organizador para obter CPF (chave PIX)
+    const { data: organizerProfile, error: orgProfileError } = await supabaseClient
+      .from('user_profiles')
+      .select('name, cpf')
+      .eq('id', eventOwnerData.user_id)
+      .single();
     
-    const pixKey = organizerProfile?.cpf || "00000000000";
+    if (orgProfileError) {
+      console.error("Erro ao buscar dados do perfil do organizador:", orgProfileError);
+      throw new Error(`Perfil do organizador não encontrado: ${orgProfileError.message}`);
+    }
     
+    if (!organizerProfile || !organizerProfile.cpf) {
+      console.error("CPF do organizador não encontrado", organizerProfile);
+      throw new Error("Organizador não possui CPF cadastrado para chave PIX");
+    }
+
+    console.log("Perfil do organizador encontrado:", organizerProfile);
+
+    // Preparar dados para geração do PIX
+    const merchantName = event.organizer_name || organizerProfile.name || event.title;
+    const pixKey = organizerProfile.cpf;
     const merchantCity = event.location?.split(',').pop()?.trim() || "SAO PAULO";
     const amount = preference.total_amount;
     const txid = preferenceId.replace(/-/g, '').substring(0, 25);
@@ -237,12 +271,10 @@ serve(async (req) => {
       merchantCity,
       amount,
       txid,
-      description,
-      eventTitle: event.title,
-      eventLocation: event.location,
-      organizerInfo: organizerProfile ? "Disponível" : "Não disponível"
+      description
     });
 
+    // Gerar código PIX
     let qrCode = null;
     try {
       qrCode = generatePixPayload(
@@ -259,10 +291,12 @@ serve(async (req) => {
       throw new Error(`Falha na geração do código PIX: ${pixError.message}`);
     }
     
+    // Gerar QR code como imagem
     let qrCodeBase64 = null;
     let generateSuccess = false;
     
     try {
+      // Tentar gerar QR code com configurações ideais
       try {
         console.log("Tentando gerar QR code com as configurações principais");
         qrCodeBase64 = await qrcode.toDataURL(qrCode, {
@@ -280,6 +314,7 @@ serve(async (req) => {
       } catch (qrError) {
         console.error("Primeira tentativa de gerar QR code falhou:", qrError);
         
+        // Segunda tentativa com configurações simplificadas
         try {
           console.log("Tentando gerar QR code com configurações simplificadas");
           qrCodeBase64 = await qrcode.toDataURL(qrCode, {
@@ -291,6 +326,8 @@ serve(async (req) => {
           console.log("QR Code base64 gerado com sucesso na segunda tentativa");
         } catch (retryError) {
           console.error("Segunda tentativa de gerar QR code também falhou:", retryError);
+          
+          // Terceira tentativa com configurações mínimas
           try {
             console.log("Tentativa final: QR code sem configurações avançadas");
             qrCodeBase64 = await qrcode.toDataURL(qrCode);
@@ -298,14 +335,17 @@ serve(async (req) => {
             console.log("QR Code base64 gerado com sucesso na tentativa básica");
           } catch (finalError) {
             console.error("Todas as tentativas de gerar QR code falharam:", finalError);
+            throw new Error(`Não foi possível gerar a imagem QR: ${finalError.message}`);
           }
         }
       }
       
+      // Limpar prefixo da string base64
       const base64Clean = typeof qrCodeBase64 === 'string' 
         ? qrCodeBase64.replace(/^data:image\/png;base64,/, '')
         : null;
 
+      // Atualizar preferência com os dados do QR code
       const { error: updateError } = await supabaseClient
         .from('payment_preferences')
         .update({
@@ -323,6 +363,7 @@ serve(async (req) => {
 
       console.log("Preferência atualizada com sucesso com os dados de PIX");
 
+      // Preparar resposta de sucesso
       const successMessage = generateSuccess 
         ? "QR Code PIX gerado com sucesso"
         : "Código PIX gerado com sucesso, mas houve erro no QR Code";
@@ -344,6 +385,7 @@ serve(async (req) => {
     } catch (qrError) {
       console.error("Erro ao gerar QR code:", qrError);
       
+      // Mesmo com erro na geração da imagem QR, retornar o código PIX
       return new Response(
         JSON.stringify({
           success: true,
@@ -369,7 +411,7 @@ serve(async (req) => {
         error: error.toString()
       }),
       { 
-        status: 400,
+        status: 500, // Mudando para 500 para indicar erro do servidor em vez de erro de requisição
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );

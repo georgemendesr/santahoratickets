@@ -37,24 +37,33 @@ export const usePixData = ({ preferenceId }: UsePixDataProps) => {
     setLastAttemptTime(now);
     setAttempts(prev => prev + 1);
     setError(null);
+    setIsLoading(true);
     
     try {
       console.log(`Tentativa ${attempts + 1} de regenerar pagamento PIX:`, prefId);
       
       // Chamar o edge function para regenerar o pagamento PIX
-      const { data, error } = await supabase.functions.invoke("create-payment", {
+      const { data, error: invokeError } = await supabase.functions.invoke("create-payment", {
         body: {
           preferenceId: prefId,
           regenerate: true
         }
       });
 
-      if (error) {
-        console.error("Erro ao regenerar pagamento PIX:", error);
-        throw error;
+      if (invokeError) {
+        console.error("Erro ao regenerar pagamento PIX:", invokeError);
+        throw invokeError;
       }
 
       console.log("Resposta da regeneração PIX:", data);
+      
+      if (!data) {
+        throw new Error("Resposta vazia do servidor");
+      }
+      
+      if (data.error) {
+        throw new Error(data.message || "Erro no servidor ao processar pagamento");
+      }
       
       if (data && data.data) {
         if (data.data.qr_code) {
@@ -78,9 +87,23 @@ export const usePixData = ({ preferenceId }: UsePixDataProps) => {
       } else {
         throw new Error("Dados de PIX não retornados pelo servidor");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao tentar regenerar pagamento PIX:", error);
-      setError("Erro ao gerar código PIX. Você pode tentar novamente ou usar outro método de pagamento.");
+      
+      let errorMessage = "Erro ao gerar código PIX. ";
+      
+      // Tentar extrair mensagem de erro mais específica
+      if (error.message) {
+        if (error.message.includes("Edge Function returned a non-2xx status code")) {
+          errorMessage += "O servidor não conseguiu processar a solicitação.";
+        } else {
+          errorMessage += error.message;
+        }
+      } else {
+        errorMessage += "Tente novamente ou use outro método de pagamento.";
+      }
+      
+      setError(errorMessage);
       setIsLoading(false);
       
       // Tentar novamente automaticamente após um tempo
@@ -150,9 +173,20 @@ export const usePixData = ({ preferenceId }: UsePixDataProps) => {
       } else {
         setIsLoading(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao buscar dados do PIX:", error);
-      setError("Erro ao carregar dados do pagamento");
+      
+      let errorMessage = "Erro ao carregar dados do pagamento: ";
+      
+      if (error.message) {
+        if (error.message.includes("Edge Function returned a non-2xx status code")) {
+          errorMessage += "Falha na comunicação com o servidor.";
+        } else {
+          errorMessage += error.message;
+        }
+      }
+      
+      setError(errorMessage);
       setIsLoading(false);
       
       // Tentar novamente automaticamente após um tempo

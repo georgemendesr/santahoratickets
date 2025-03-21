@@ -187,6 +187,7 @@ export const useBatchForm = ({ eventId, orderNumber, batchId, onSuccess }: UseBa
         }
         
         if (currentBatch) {
+          // Calcular quantos ingressos foram vendidos
           soldTickets = currentBatch.total_tickets - currentBatch.available_tickets;
           console.log(`Lote tem ${soldTickets} ingressos vendidos de ${currentBatch.total_tickets} total`);
         }
@@ -201,13 +202,36 @@ export const useBatchForm = ({ eventId, orderNumber, batchId, onSuccess }: UseBa
         ? Math.max(0, newTotalTickets - soldTickets)
         : newTotalTickets;
 
-      // Determinar status baseado nos tickets disponíveis
-      let status = formData.status || 'active';
-      if (availableTickets <= 0 && status === 'active') {
+      console.log("Novos valores calculados:", {
+        newTotalTickets,
+        availableTickets,
+        soldTickets
+      });
+
+      // Determinar status baseado nos tickets disponíveis e data
+      let status = "active";
+      
+      // Verificar se tem ingressos disponíveis
+      if (availableTickets <= 0) {
         status = 'sold_out';
-      } else if (availableTickets > 0 && status === 'sold_out') {
-        status = 'active';
+      } else {
+        // Verificar datas
+        const now = new Date();
+        const startDateTime = new Date(`${formData.startDate}T${formData.startTime}:00Z`);
+        const endDateTime = formData.endDate 
+          ? new Date(`${formData.endDate}T${formData.endTime || "23:59"}:00Z`) 
+          : null;
+          
+        if (now < startDateTime) {
+          status = 'upcoming';
+        } else if (endDateTime && now > endDateTime) {
+          status = 'ended';
+        } else {
+          status = 'active';
+        }
       }
+
+      console.log("Status calculado para o lote:", status);
 
       const batchData = {
         title: formData.title,

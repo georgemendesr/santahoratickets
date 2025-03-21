@@ -21,11 +21,18 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tag, Edit, Trash2, Copy, Check, X } from "lucide-react";
+import { Tag, Edit, Trash2, Copy, Check, X, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { BatchProgressIndicator } from "./BatchProgressIndicator";
+import { BatchStatusBadge } from "./BatchStatusBadge";
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
 
 interface BatchListProps {
   eventId: string;
@@ -37,6 +44,7 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
   const [isToggling, setIsToggling] = useState<string | null>(null);
   const [isDuplicating, setIsDuplicating] = useState<string | null>(null);
   const [isResetting, setIsResetting] = useState<string | null>(null);
+  const [isFixingAvailability, setIsFixingAvailability] = useState<string | null>(null);
 
   const { data: batches, isLoading, refetch } = useQuery({
     queryKey: ['batches', eventId],
@@ -69,29 +77,17 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
   };
 
   const getBatchStatus = (batch: Batch) => {
-    // Se o status estiver explicitamente definido como sold_out, use-o
-    if (batch.status === 'sold_out' && batch.available_tickets <= 0) return 'Esgotado';
-    if (batch.status === 'ended') return 'Encerrado';
-    if (!batch.is_visible) return 'Desativado';
-    
-    const now = new Date();
-    const startDate = new Date(batch.start_date);
-    const endDate = batch.end_date ? new Date(batch.end_date) : null;
-    
-    if (now < startDate) return 'Aguardando';
-    if (endDate && now > endDate) return 'Encerrado';
-    return 'Ativo';
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Ativo': return 'bg-green-100 text-green-800';
-      case 'Aguardando': return 'bg-blue-100 text-blue-800';
-      case 'Encerrado': return 'bg-gray-100 text-gray-800';
-      case 'Esgotado': return 'bg-red-100 text-red-800';
-      case 'Desativado': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+    return (
+      <BatchStatusBadge 
+        status={batch.status}
+        isVisible={batch.is_visible}
+        startDate={batch.start_date}
+        endDate={batch.end_date}
+        availableTickets={batch.available_tickets}
+        totalTickets={batch.total_tickets}
+        showDetails={true}
+      />
+    );
   };
 
   const handleDeleteBatch = async (batchId: string) => {
@@ -150,15 +146,11 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
     setIsResetting(batch.id);
     
     try {
-      // Se não houver ingressos disponíveis, garantir que todos os ingressos estão disponíveis
-      // Este é um fix para o problema de lotes aparecendo como esgotados sem vendas
-      const availableTickets = batch.total_tickets;
-      
+      // Garantir que o status seja 'active'
       const { error } = await supabase
         .from('batches')
         .update({ 
-          status: 'active',
-          available_tickets: availableTickets
+          status: 'active'
         })
         .eq('id', batch.id);
         
@@ -171,6 +163,35 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
       toast.error('Não foi possível reativar o lote.');
     } finally {
       setIsResetting(null);
+    }
+  };
+
+  const fixAvailableTickets = async (batch: Batch) => {
+    if (!confirm(`Tem certeza que deseja corrigir a disponibilidade de ingressos deste lote? Isso vai definir os ingressos disponíveis para o mesmo valor do total de ingressos.`)) {
+      return;
+    }
+    
+    setIsFixingAvailability(batch.id);
+    
+    try {
+      // Corrigir available_tickets para ser igual ao total_tickets
+      const { error } = await supabase
+        .from('batches')
+        .update({ 
+          available_tickets: batch.total_tickets,
+          status: 'active'
+        })
+        .eq('id', batch.id);
+        
+      if (error) throw error;
+      
+      refetch();
+      toast.success("Disponibilidade de ingressos corrigida com sucesso");
+    } catch (error) {
+      console.error('Erro ao corrigir disponibilidade:', error);
+      toast.error('Não foi possível corrigir a disponibilidade de ingressos.');
+    } finally {
+      setIsFixingAvailability(null);
     }
   };
 
@@ -214,6 +235,10 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
     } finally {
       setIsDuplicating(null);
     }
+  };
+
+  const hasInconsistentTickets = (batch: Batch) => {
+    return batch.available_tickets <= 0 && batch.status !== 'sold_out';
   };
 
   if (isLoading) {
@@ -267,11 +292,10 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
           </TableHeader>
           <TableBody>
             {batches.map((batch) => {
-              const status = getBatchStatus(batch);
-              const statusClass = getStatusColor(status);
+              const needsFix = hasInconsistentTickets(batch);
               
               return (
-                <TableRow key={batch.id}>
+                <TableRow key={batch.id} className={needsFix ? "bg-yellow-50" : ""}>
                   <TableCell>{batch.order_number}</TableCell>
                   <TableCell>
                     <button 
@@ -280,6 +304,12 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
                     >
                       {batch.title}
                     </button>
+                    {needsFix && (
+                      <div className="flex items-center text-yellow-600 text-xs mt-1">
+                        <AlertTriangle className="h-3 w-3 mr-1" />
+                        Inconsistência detectada
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell>R$ {batch.price.toFixed(2)}</TableCell>
                   <TableCell>
@@ -312,24 +342,55 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
-                      <Badge className={statusClass}>
-                        {status}
-                      </Badge>
-                      {(batch.status === 'sold_out' || batch.status === 'ended') && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => resetBatchStatus(batch)}
-                          disabled={isResetting === batch.id}
-                          title="Reativar lote"
-                          className="h-5 w-5"
-                        >
-                          {isResetting === batch.id ? (
-                            <span className="h-3 w-3 animate-spin rounded-full border-2 border-t-transparent border-blue-500"></span>
-                          ) : (
-                            <Check className="h-3 w-3" />
-                          )}
-                        </Button>
+                      {getBatchStatus(batch)}
+                      
+                      {(batch.status === 'sold_out' || batch.status === 'ended' || needsFix) && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => resetBatchStatus(batch)}
+                                disabled={isResetting === batch.id}
+                                className="h-6 w-6 rounded-full"
+                              >
+                                {isResetting === batch.id ? (
+                                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-t-transparent border-blue-500"></span>
+                                ) : (
+                                  <Check className="h-3 w-3" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Reativar lote</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      
+                      {needsFix && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => fixAvailableTickets(batch)}
+                                disabled={isFixingAvailability === batch.id}
+                                className="h-6 text-xs bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100"
+                              >
+                                {isFixingAvailability === batch.id ? (
+                                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-t-transparent border-yellow-500 mr-1"></span>
+                                ) : null}
+                                Corrigir
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Corrigir disponibilidade de ingressos</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       )}
                     </div>
                   </TableCell>

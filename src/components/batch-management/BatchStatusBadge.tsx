@@ -11,6 +11,8 @@ interface BatchStatusBadgeProps {
   startDate: string;
   endDate?: string | null;
   showDetails?: boolean;
+  availableTickets?: number;
+  totalTickets?: number;
 }
 
 export const BatchStatusBadge = ({
@@ -19,6 +21,8 @@ export const BatchStatusBadge = ({
   startDate,
   endDate,
   showDetails = true,
+  availableTickets,
+  totalTickets,
 }: BatchStatusBadgeProps) => {
   const now = new Date();
   const start = new Date(startDate);
@@ -26,11 +30,26 @@ export const BatchStatusBadge = ({
   
   // Determine actual status
   const getStatus = () => {
-    if (status === "sold_out") return "sold_out";
+    // Se não está visível, status é "hidden"
     if (!isVisible) return "hidden";
+    
+    // Verificar ingressos disponíveis (prioridade máxima)
+    if (availableTickets !== undefined && totalTickets !== undefined) {
+      if (availableTickets <= 0) return "sold_out";
+    } else if (status === "sold_out") {
+      return "sold_out";
+    }
+    
+    // Verificar datas
     if (start > now) return "upcoming";
     if (end && end < now) return "ended";
-    return status || "active";
+    
+    // Se tudo estiver ok, verificar status do banco
+    if (status === "active" || status === "upcoming" || status === "ended" || status === "sold_out") {
+      return status;
+    }
+    
+    return "active"; // Default
   };
   
   const currentStatus = getStatus();
@@ -87,6 +106,9 @@ export const BatchStatusBadge = ({
         <div className="text-xs">
           <div>Início: {formatDateLocale(start)}</div>
           {end && <div>Término: {formatDateLocale(end)}</div>}
+          {availableTickets !== undefined && totalTickets !== undefined && (
+            <div>Ingressos: {availableTickets} de {totalTickets} disponíveis</div>
+          )}
           {!isVisible && <div className="mt-1 font-medium">Este lote está oculto para os clientes</div>}
         </div>
       </>

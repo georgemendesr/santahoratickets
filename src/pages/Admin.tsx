@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -41,20 +41,9 @@ const Admin = () => {
     staleTime: 60000, // Cache por 1 minuto
   });
 
-  // Notifica o usuário sobre erros
-  useEffect(() => {
-    if (error) {
-      console.error("Admin - Erro capturado no useEffect:", error);
-      toast({
-        title: "Erro ao carregar dados",
-        description: error instanceof Error ? error.message : "Erro desconhecido",
-        variant: "destructive",
-      });
-    }
-  }, [error, toast]);
-
   // Em caso de erro, exibimos uma mensagem amigável
   if (error) {
+    console.error("Admin - Erro ao carregar dashboard:", error);
     return (
       <AdminLayout>
         <div className="container mx-auto max-w-7xl">
@@ -113,12 +102,15 @@ const Admin = () => {
         {events.length > 0 ? (
           <DashboardCharts events={events} />
         ) : (
-          <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 text-amber-800 mb-8">
+          <div className="bg-amber-50 p-6 rounded-lg border border-amber-200 text-amber-800 mb-8">
             <p className="text-center">Nenhum evento encontrado. Crie seu primeiro evento para visualizar as estatísticas.</p>
           </div>
         )}
 
-        <ActionCards />
+        <div className="mt-8">
+          <h2 className="text-xl font-bold mb-4">Acesso Rápido</h2>
+          <ActionCards />
+        </div>
       </div>
     </AdminLayout>
   );

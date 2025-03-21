@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { MainHeader } from '@/components/layout/MainHeader';
@@ -17,20 +17,18 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
   const navigate = useNavigate();
   const { toast } = useToast();
   const [initialized, setInitialized] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
   
   // Executamos a verificação de autenticação apenas uma vez ao montar o componente
   useEffect(() => {
     console.log("AdminLayout - Montando componente");
     
-    if (!authChecked) {
+    if (!initialized) {
       const initAuth = async () => {
         try {
           console.log("AdminLayout - Iniciando verificação de autenticação");
           await checkAuth();
           console.log("AdminLayout - Autenticação verificada com sucesso");
           setInitialized(true);
-          setAuthChecked(true);
         } catch (error) {
           console.error("AdminLayout - Erro ao verificar autenticação:", error);
           toast({
@@ -39,7 +37,6 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
             variant: "destructive",
           });
           setInitialized(true);
-          setAuthChecked(true);
         }
       };
       
@@ -50,7 +47,7 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
     return () => {
       console.log("AdminLayout - Desmontando componente");
     };
-  }, [checkAuth, toast, authChecked]);
+  }, [checkAuth, toast, initialized]);
   
   // Efeito separado para lidar com redirecionamento
   useEffect(() => {

@@ -1,6 +1,18 @@
 
 import { Link, useLocation } from "react-router-dom";
-import { CalendarDays, TicketIcon, Users, DollarSign, BarChart3, Gift, ArrowUpRight, LayoutDashboard, Settings } from "lucide-react";
+import { 
+  CalendarDays, 
+  TicketIcon, 
+  Users, 
+  DollarSign, 
+  BarChart3, 
+  Gift, 
+  ArrowUpRight, 
+  LayoutDashboard, 
+  Settings,
+  Ticket,
+  Share2
+} from "lucide-react";
 import { ROUTES } from "@/routes";
 
 export function AdminSidebar() {
@@ -19,28 +31,8 @@ export function AdminSidebar() {
       </div>
       
       <nav className="py-4">
-        <ul className="space-y-1">
-          <MenuItem 
-            icon={<CalendarDays className="h-5 w-5" />} 
-            label="Eventos" 
-            to={ROUTES.ADMIN.EVENTS} 
-            isActive={isActive(ROUTES.ADMIN.EVENTS)} 
-          />
-          
-          <MenuItem 
-            icon={<TicketIcon className="h-5 w-5" />} 
-            label="Meus Ingressos" 
-            to="/meus-ingressos" 
-            isActive={isActive("/meus-ingressos")} 
-          />
-          
-          <MenuItem 
-            icon={<Gift className="h-5 w-5" />} 
-            label="Recompensas" 
-            to={ROUTES.ADMIN.LOYALTY} 
-            isActive={isActive(ROUTES.ADMIN.LOYALTY)} 
-          />
-          
+        <div className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase">Principal</div>
+        <ul className="mb-6 space-y-1">
           <MenuItem 
             icon={<LayoutDashboard className="h-5 w-5" />} 
             label="Dashboard" 
@@ -49,10 +41,58 @@ export function AdminSidebar() {
           />
           
           <MenuItem 
+            icon={<CalendarDays className="h-5 w-5" />} 
+            label="Eventos" 
+            to={ROUTES.ADMIN.EVENTS} 
+            isActive={isActive(ROUTES.ADMIN.EVENTS)} 
+          />
+          
+          <MenuItem 
+            icon={<Ticket className="h-5 w-5" />} 
+            label="Ingressos" 
+            to="/admin/vouchers" 
+            isActive={isActive("/admin/vouchers")} 
+          />
+        </ul>
+        
+        <div className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase">Marketing</div>
+        <ul className="mb-6 space-y-1">
+          <MenuItem 
+            icon={<Gift className="h-5 w-5" />} 
+            label="Fidelidade" 
+            to={ROUTES.ADMIN.LOYALTY} 
+            isActive={isActive(ROUTES.ADMIN.LOYALTY)} 
+          />
+          
+          <MenuItem 
+            icon={<Share2 className="h-5 w-5" />} 
+            label="Indicações" 
+            to={ROUTES.ADMIN.REFERRALS} 
+            isActive={isActive(ROUTES.ADMIN.REFERRALS)} 
+          />
+          
+          <MenuItem 
+            icon={<BarChart3 className="h-5 w-5" />} 
+            label="Analytics" 
+            to="/admin/analytics" 
+            isActive={isActive("/admin/analytics")} 
+          />
+        </ul>
+        
+        <div className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase">Gerenciamento</div>
+        <ul className="mb-6 space-y-1">
+          <MenuItem 
             icon={<Users className="h-5 w-5" />} 
             label="Usuários" 
             to={ROUTES.ADMIN.USERS} 
             isActive={isActive(ROUTES.ADMIN.USERS)} 
+          />
+          
+          <MenuItem 
+            icon={<DollarSign className="h-5 w-5" />} 
+            label="Financeiro" 
+            to="/admin/financeiro" 
+            isActive={isActive("/admin/financeiro")} 
           />
           
           <MenuItem 

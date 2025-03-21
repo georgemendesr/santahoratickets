@@ -14,7 +14,7 @@ import {
   Settings, 
   DollarSign,
   Star,
-  ArrowUpRight
+  Ticket
 } from "lucide-react";
 
 export function ActionCards() {
@@ -23,12 +23,12 @@ export function ActionCards() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <Card className="border-none shadow-md">
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-gray-800">
             <CalendarDays className="h-5 w-5 text-amber-500" />
-            Eventos
+            Gerenciar Eventos
           </CardTitle>
-          <CardDescription>Gerenciar eventos e ingressos</CardDescription>
+          <CardDescription>Criar e editar eventos</CardDescription>
         </CardHeader>
         <CardContent>
           <Button 
@@ -36,56 +36,37 @@ export function ActionCards() {
             className="w-full"
             onClick={() => navigate("/admin/eventos")}
           >
-            Ver Eventos
+            Acessar
           </Button>
         </CardContent>
       </Card>
 
       <Card className="border-none shadow-md">
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-gray-800">
-            <Users className="h-5 w-5 text-amber-500" />
-            Usuários
+            <Ticket className="h-5 w-5 text-amber-500" />
+            Ingressos
           </CardTitle>
-          <CardDescription>Gerenciar usuários e permissões</CardDescription>
+          <CardDescription>Gerenciar ingressos e vouchers</CardDescription>
         </CardHeader>
         <CardContent>
           <Button 
             variant="outline" 
             className="w-full"
-            onClick={() => navigate("/admin/users")}
+            onClick={() => navigate("/admin/vouchers")}
           >
-            Ver Usuários
+            Acessar
           </Button>
         </CardContent>
       </Card>
 
       <Card className="border-none shadow-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-gray-800">
-            <Settings className="h-5 w-5 text-amber-500" />
-            Configurações
-          </CardTitle>
-          <CardDescription>Personalizar a plataforma</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button 
-            variant="outline" 
-            className="w-full"
-            onClick={() => navigate("/admin/configuracoes")}
-          >
-            Configurar
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card className="border-none shadow-md">
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-gray-800">
             <DollarSign className="h-5 w-5 text-amber-500" />
             Financeiro
           </CardTitle>
-          <CardDescription>Gestão financeira e relatórios</CardDescription>
+          <CardDescription>Relatórios e controle financeiro</CardDescription>
         </CardHeader>
         <CardContent>
           <Button 
@@ -93,45 +74,7 @@ export function ActionCards() {
             className="w-full"
             onClick={() => navigate("/admin/financeiro")}
           >
-            Ver Relatórios
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card className="border-none shadow-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-gray-800">
-            <Star className="h-5 w-5 text-amber-500" />
-            Fidelidade
-          </CardTitle>
-          <CardDescription>Gerenciar programa de fidelidade</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button 
-            variant="outline" 
-            className="w-full"
-            onClick={() => navigate("/admin/loyalty")}
-          >
-            Ver Programa
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card className="border-none shadow-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-gray-800">
-            <ArrowUpRight className="h-5 w-5 text-amber-500" />
-            Indicações
-          </CardTitle>
-          <CardDescription>Sistema de indicação de clientes</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button 
-            variant="outline" 
-            className="w-full"
-            onClick={() => navigate("/admin/referrals")}
-          >
-            Ver Indicações
+            Acessar
           </Button>
         </CardContent>
       </Card>

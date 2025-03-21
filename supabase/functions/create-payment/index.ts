@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0"
 import qrcode from "https://esm.sh/qrcode@1.5.3"
@@ -40,20 +39,16 @@ function crc16CCITT(str) {
     0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0
   ];
 
-  // Inicializa o valor do CRC
   let crc = 0xFFFF;
   
-  // Calcula o CRC
   for (let i = 0; i < str.length; i++) {
     const c = str.charCodeAt(i);
     const j = (c ^ (crc >> 8)) & 0xFF;
     crc = crcTable[j] ^ (crc << 8);
   }
   
-  // Complemento de 2 de 16 bits
   crc = ((crc ^ 0) & 0xFFFF);
   
-  // Converte para hexadecimal de 4 caracteres
   return crc.toString(16).padStart(4, '0').toUpperCase();
 }
 
@@ -75,50 +70,38 @@ function generatePixPayload(
     description
   });
   
-  // Payload Format Indicator (obrigatório, fixo "01")
   const payload = {};
   payload["00"] = "01";
   
-  // Merchant Account Information (obrigatório para o domínio "br.gov.bcb.pix")
   payload["26"] = {
-    "00": "br.gov.bcb.pix", // GUI
-    "01": pixKey, // Chave PIX 
+    "00": "br.gov.bcb.pix",
+    "01": pixKey,
     ...(description ? { "02": description } : {})
   };
   
-  // Merchant Category Code (opcional, padrão "0000")
   payload["52"] = "0000";
   
-  // Transaction Currency (obrigatório, "986" para BRL)
   payload["53"] = "986";
   
-  // Transaction Amount (opcional para QR dinâmico, obrigatório para estático)
   if (amount) {
     payload["54"] = amount.toFixed(2);
   }
   
-  // Country Code (obrigatório, "BR")
   payload["58"] = "BR";
   
-  // Merchant Name (obrigatório)
   payload["59"] = merchantName;
   
-  // Merchant City (obrigatório)
   payload["60"] = merchantCity;
   
-  // Additional Data Field (opcional)
   payload["62"] = {
-    "05": txid // ID da transação
+    "05": txid
   };
   
-  // Converte o payload para string no formato do PIX
   let pixCode = "";
   
-  // Processa os campos de primeiro nível
   for (const [id, value] of Object.entries(payload)) {
     if (typeof value === "object") {
       let subValue = "";
-      // Processa subcampos
       for (const [subId, subContent] of Object.entries(value)) {
         subValue += `${subId}${subContent.length.toString().padStart(2, '0')}${subContent}`;
       }
@@ -128,10 +111,8 @@ function generatePixPayload(
     }
   }
   
-  // Adiciona os campos obrigatórios finais
   pixCode += "6304";
   
-  // Calcula e adiciona o CRC16
   const crcValue = crc16CCITT(pixCode);
   pixCode += crcValue;
   
@@ -144,13 +125,11 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Configurações do Supabase
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -170,7 +149,6 @@ serve(async (req) => {
       throw new Error("ID da preferência não fornecido")
     }
 
-    // Buscar a preferência de pagamento
     const { data: preference, error: prefError } = await supabaseClient
       .from('payment_preferences')
       .select('*')
@@ -186,7 +164,6 @@ serve(async (req) => {
       throw new Error("Preferência não encontrada")
     }
 
-    // Se o pagamento não for do tipo PIX, apenas retorne
     if (preference.payment_type !== 'pix') {
       return new Response(
         JSON.stringify({ 
@@ -206,7 +183,6 @@ serve(async (req) => {
       amount: preference.total_amount
     })
 
-    // Buscar dados do evento
     const { data: event, error: eventError } = await supabaseClient
       .from('events')
       .select('title, location, organizer_name')
@@ -218,31 +194,44 @@ serve(async (req) => {
       throw new Error(`Evento não encontrado: ${eventError?.message || "Dados ausentes"}`)
     }
 
-    // Buscar dados do organizador (perfil do usuário que está comprando)
-    const { data: organizerProfile, error: organizerError } = await supabaseClient
-      .from('user_profiles')
-      .select('name, cpf')
-      .eq('id', preference.user_id)
+    console.log("Dados do evento encontrados:", event);
+
+    const { data: eventOwnerData, error: eventOwnerError } = await supabaseClient
+      .from('events')
+      .select('user_id')
+      .eq('id', preference.event_id)
       .single();
 
-    if (organizerError) {
-      console.error("Erro ao buscar dados do perfil do usuário:", organizerError)
+    if (eventOwnerError) {
+      console.error("Erro ao buscar o ID do organizador do evento:", eventOwnerError);
     }
 
-    // Determinar o nome do beneficiário (use o nome do organizador do evento ou o título do evento)
+    let organizerProfile = null;
+    if (eventOwnerData && eventOwnerData.user_id) {
+      const { data: orgProfile, error: orgProfileError } = await supabaseClient
+        .from('user_profiles')
+        .select('name, cpf')
+        .eq('id', eventOwnerData.user_id)
+        .single();
+      
+      if (orgProfileError) {
+        console.error("Erro ao buscar dados do perfil do organizador:", orgProfileError);
+      } else if (orgProfile) {
+        organizerProfile = orgProfile;
+        console.log("Perfil do organizador encontrado:", organizerProfile);
+      }
+    }
+
     const merchantName = event.organizer_name || event.title;
     
-    // Determinar chave PIX - idealmente seria configurada nas preferências do usuário
-    const pixKey = organizerProfile?.cpf || ""; 
+    const pixKey = organizerProfile?.cpf || "00000000000";
     
-    // Determinar a cidade do evento
     const merchantCity = event.location?.split(',').pop()?.trim() || "SAO PAULO";
     const amount = preference.total_amount;
     const txid = preferenceId.replace(/-/g, '').substring(0, 25);
     const description = event?.title || "Ingresso";
 
-    // Log detalhado dos dados que serão usados
-    console.log("Dados completos para geração:", {
+    console.log("Dados completos para geração do PIX:", {
       pixKey,
       merchantName,
       merchantCity,
@@ -250,10 +239,10 @@ serve(async (req) => {
       txid,
       description,
       eventTitle: event.title,
-      eventLocation: event.location
+      eventLocation: event.location,
+      organizerInfo: organizerProfile ? "Disponível" : "Não disponível"
     });
 
-    // Gerar PIX
     let qrCode = null;
     try {
       qrCode = generatePixPayload(
@@ -264,7 +253,7 @@ serve(async (req) => {
         amount,
         description
       );
-      console.log("Código PIX gerado com sucesso");
+      console.log("Código PIX gerado com sucesso:", qrCode.substring(0, 30) + "...");
     } catch (pixError) {
       console.error("Erro na geração do código PIX:", pixError);
       throw new Error(`Falha na geração do código PIX: ${pixError.message}`);
@@ -274,8 +263,8 @@ serve(async (req) => {
     let generateSuccess = false;
     
     try {
-      // Tenta gerar o QR code com maior nível de correção de erros
       try {
+        console.log("Tentando gerar QR code com as configurações principais");
         qrCodeBase64 = await qrcode.toDataURL(qrCode, {
           errorCorrectionLevel: 'H',
           margin: 1,
@@ -291,8 +280,8 @@ serve(async (req) => {
       } catch (qrError) {
         console.error("Primeira tentativa de gerar QR code falhou:", qrError);
         
-        // Segunda tentativa com configurações mais simples
         try {
+          console.log("Tentando gerar QR code com configurações simplificadas");
           qrCodeBase64 = await qrcode.toDataURL(qrCode, {
             errorCorrectionLevel: 'M',
             margin: 1,
@@ -302,16 +291,21 @@ serve(async (req) => {
           console.log("QR Code base64 gerado com sucesso na segunda tentativa");
         } catch (retryError) {
           console.error("Segunda tentativa de gerar QR code também falhou:", retryError);
-          // Continuar, mesmo sem o QR code base64
+          try {
+            console.log("Tentativa final: QR code sem configurações avançadas");
+            qrCodeBase64 = await qrcode.toDataURL(qrCode);
+            generateSuccess = true;
+            console.log("QR Code base64 gerado com sucesso na tentativa básica");
+          } catch (finalError) {
+            console.error("Todas as tentativas de gerar QR code falharam:", finalError);
+          }
         }
       }
       
-      // Remover o prefixo data:image/png;base64, do base64
       const base64Clean = typeof qrCodeBase64 === 'string' 
         ? qrCodeBase64.replace(/^data:image\/png;base64,/, '')
         : null;
 
-      // Atualizar a preferência com os dados do PIX
       const { error: updateError } = await supabaseClient
         .from('payment_preferences')
         .update({
@@ -329,7 +323,6 @@ serve(async (req) => {
 
       console.log("Preferência atualizada com sucesso com os dados de PIX");
 
-      // Retornar a resposta com o status adequado
       const successMessage = generateSuccess 
         ? "QR Code PIX gerado com sucesso"
         : "Código PIX gerado com sucesso, mas houve erro no QR Code";
@@ -351,7 +344,6 @@ serve(async (req) => {
     } catch (qrError) {
       console.error("Erro ao gerar QR code:", qrError);
       
-      // Mesmo com erro no QR, retornar o código PIX
       return new Response(
         JSON.stringify({
           success: true,

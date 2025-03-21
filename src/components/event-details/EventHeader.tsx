@@ -1,5 +1,6 @@
 
 import { Event } from "@/types";
+import { getImageUrl } from "@/integrations/supabase/utils";
 
 interface EventHeaderProps {
   event?: Event;

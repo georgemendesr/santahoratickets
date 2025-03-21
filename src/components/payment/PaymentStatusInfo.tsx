@@ -18,9 +18,10 @@ interface PaymentStatusInfoProps {
   status: string | null;
   eventId: string | undefined;
   navigate: (path: string) => void;
+  errorMessage?: string | null;
 }
 
-export const getStatusInfo = ({ status, eventId, navigate }: PaymentStatusInfoProps): StatusInfo => {
+export const getStatusInfo = ({ status, eventId, navigate, errorMessage }: PaymentStatusInfoProps): StatusInfo => {
   switch (status) {
     case "approved":
       return {
@@ -58,6 +59,18 @@ export const getStatusInfo = ({ status, eventId, navigate }: PaymentStatusInfoPr
           className: "bg-red-50 border-red-200 text-red-800"
         }
       };
+    case "error":
+      return {
+        title: "Erro ao Gerar PIX",
+        description: "Não foi possível gerar o código PIX.",
+        icon: <AlertCircle className="w-12 h-12 text-red-500" />,
+        buttonText: "Tentar Novamente",
+        buttonAction: () => navigate(`/event/${eventId}`),
+        alert: {
+          description: errorMessage || "Ocorreu um erro inesperado. Por favor, tente novamente.",
+          className: "bg-red-50 border-red-200 text-red-800"
+        }
+      };
     default:
       return {
         title: "Status Desconhecido",
@@ -73,8 +86,8 @@ export const getStatusInfo = ({ status, eventId, navigate }: PaymentStatusInfoPr
   }
 };
 
-export const PaymentStatusInfo = ({ status, eventId, navigate }: PaymentStatusInfoProps) => {
-  const statusInfo = getStatusInfo({ status, eventId, navigate });
+export const PaymentStatusInfo = ({ status, eventId, navigate, errorMessage }: PaymentStatusInfoProps) => {
+  const statusInfo = getStatusInfo({ status, eventId, navigate, errorMessage });
 
   return (
     <>

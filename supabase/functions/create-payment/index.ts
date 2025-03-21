@@ -64,12 +64,17 @@ serve(async (req) => {
 
     console.log("Gerando QR Code PIX para a preferência:", preferenceId)
 
+    // Gerar um UUID consistente para o código PIX
+    const qrUUID = crypto.randomUUID();
+    
     // Simular geração de QR Code PIX (em produção, isso seria integrado com MercadoPago ou outro provedor)
-    const qrCode = `00020126580014BR.GOV.BCB.PIX0136${crypto.randomUUID()}520400005303986540${preference.total_amount.toFixed(2)}5802BR5913Bora Pagodear6008Sao Paulo62070503***630452E5`
+    const qrCode = `00020126580014BR.GOV.BCB.PIX0136${qrUUID}520400005303986540${preference.total_amount.toFixed(2)}5802BR5913Bora Pagodear6008Sao Paulo62070503***630452E5`
+    
+    // QR code base64 (fixo para demonstração)
     const qrCodeBase64 = "iVBORw0KGgoAAAANSUhEUgAAAIQAAACECAYAAABRRIOnAAAAAklEQVR4AewaftIAAAOtSURBVO3BQY4cy5LAQDLQ978yR0tfJZCoamn+GDezP1jrEoe1LnJY6yKHtS5yWOsih7UucljrIoe1LnJY6yKHtS5yWOsih7UucljrIoe1LnJY6yKHtS7yw4dU/qaKJ5STiieqmcpU8YTyTRVPKFPFE8rfVPHJYa2LHNa6yGGti/zwZRXfpPKEMlVMKicqU8UTylQxqUwVTyhTxVTxTSrfdFjrIoe1LnJY6yI//GEqTyh/U8WkMlU8UfFNyhPKVDGpnKicqPxNh7UucljrIoe1LvLDf5zKVDGpTBWTylQxqZyoTBWTylQxqUwVk8pU8f/ksNZFDmtd5LDWRX74y1ROVDyhTBVPVDyhTBWTyonKEypTxaTyb3ZY6yKHtS5yWOsiP3xZxb9JxaTyhMpUMalMFZPKicpJxaQyVUwqU8UTFf9mh7UucljrIoe1LvLDh1T+pop/k8pUMalMFU+onKhMFZPKVDGpnKicVHzTYa2LHNa6yGGti9kf/D9WMalMFZPKVDGpTBWTylQxqUwVk8pU8YTKVDGpTBWTylQxqUwVk8pUMalMFd90WOsih7UucljrIj98SOWkYlKZKiaVqWJSmSomlaliUpkqTlROKiaVqWJSmSomlaliUjlRmSqeUKaKk4o/6bDWRQ5rXeSw1kV++LKKSWWqmFSmihOVqWJSmSomlaliUplUTiomlaliUpkqJpWpYlI5qZhUpoqTikllqphUTiomlaliUvmmw1oXOax1kcNaF/nhQypTxaQyVTypmFQmlaliUpkqJpWpYlJ5QmWqeEKZKiaVqWJSOamYVKaKSeUJlaliUpkqJpUnKj45rHWRw1oXOax1kR8+VDGpnFQ8oUwVJypTxRPKVDGpnFRMKlPFpPJNylQxqUwVJxWfVHxyWOsih7UucljrIvYHH1CZKiaVqWJSmSomlaniCZWpYlKZKp5QmSqeUJkqJpWpYlKZKiaVqWJSmSo+UZkqJpWp4gmVqeKTw1oXOax1kcNaF/nhQyp/U8UTFZPKicpUMan8TRWTylQxqUwVk8qJylQxqZxUfHJY6yKHtS5yWOsiP3xZxTepnFRMKk+oTBUnKlPFpHJS8YQyVTyp+KbDWhc5rHWRw1oX+eEPU3lC+UTlRGWqmFSmiieUJyomlUllqjhRmSomlRMVnxzWushhrYsc1rrID/9xKlPFpPJExROVyomKSWWqmFSmiieUqWJSmSo+Oax1kcNaFzmsdZEf/jKVb6qYVKaKSWWqmFSmihOVqWJSOal4QjlROal4ouKbDmtd5LDWRQ5rXeSHL6v4myqeUE5UpopJ5aRiUplUTiomlaliUjmpmFSmihOVv+mw1kUOa13ksNZFDmtd5LDWRQ5rXeSw1kUOa13ksNZFDmtd5LDWRQ5rXeSw1kUOa13ksNZFDmtd5LDWRQ5rXeS/AAEnZwGpXF8AAAAASUVORK5CYII="
 
     // Atualizar a preferência com os dados do PIX
-    await supabaseClient
+    const { error: updateError } = await supabaseClient
       .from('payment_preferences')
       .update({
         qr_code: qrCode,
@@ -78,11 +83,18 @@ serve(async (req) => {
       })
       .eq('id', preferenceId)
 
+    if (updateError) {
+      console.error("Erro ao atualizar preferência com QR code:", updateError)
+      throw new Error(`Erro ao gerar QR code: ${updateError.message}`)
+    }
+
     // Por fim, retorne os dados ao cliente
     return new Response(
       JSON.stringify({
         success: true,
         message: "QR Code PIX gerado com sucesso",
+        status: "pending",
+        payment_id: preferenceId,
         data: {
           preferenceId,
           qr_code: qrCode,

@@ -43,7 +43,12 @@ export function PIXForm({ amount, onSubmit, isSubmitting }: PIXFormProps) {
           disabled={isSubmitting}
           className="w-full bg-emerald-600 hover:bg-emerald-700"
         >
-          {isSubmitting ? "Gerando PIX..." : "Gerar PIX"}
+          {isSubmitting ? (
+            <>
+              <div className="mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              Gerando PIX...
+            </>
+          ) : "Gerar PIX"}
         </Button>
 
         <div className="flex justify-center mt-4">

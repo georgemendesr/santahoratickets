@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { PixQRCode } from "@/components/payment/PixQRCode";
 import { PaymentStatusInfo, getStatusInfo } from "@/components/payment/PaymentStatusInfo";
 import { usePaymentPolling } from "@/hooks/usePaymentPolling";
+import { CheckoutLayout } from "@/components/checkout/CheckoutLayout";
 
 const PaymentStatus = () => {
   const [searchParams] = useSearchParams();
@@ -17,7 +18,7 @@ const PaymentStatus = () => {
   const eventId = reference?.split("|")[0];
   const preferenceId = reference?.split("|")[1];
 
-  const { qrCode, qrCodeBase64 } = usePaymentPolling({
+  const { qrCode, qrCodeBase64, isLoading, error } = usePaymentPolling({
     preferenceId,
     payment_id,
     reference,
@@ -25,25 +26,25 @@ const PaymentStatus = () => {
     navigate
   });
 
-  // Redirecionar para home se não houver status
-  if (!status || !payment_id) {
-    navigate("/");
-    return null;
-  }
+  // Redirecionar para home se não houver status ou preferenceId
+  useEffect(() => {
+    if ((!status && !preferenceId) || (!status && !payment_id)) {
+      navigate("/");
+    }
+  }, [status, preferenceId, payment_id, navigate]);
 
-  const statusInfo = getStatusInfo({ status, eventId, navigate });
+  // Determinar o status apropriado para exibição
+  const displayStatus = status || (error ? "error" : "pending");
+  const statusInfo = getStatusInfo({ 
+    status: displayStatus, 
+    eventId, 
+    navigate,
+    errorMessage: error
+  });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary">
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center mb-8">
-          <img 
-            src="/lovable-uploads/0791f14f-3770-44d6-8ff3-1e714a1d1243.png"
-            alt="Bora Pagodear"
-            className="h-16 mx-auto"
-          />
-        </div>
-        
+    <CheckoutLayout>
+      <div className="text-center mb-8">
         <Button 
           variant="ghost" 
           className="mb-8" 
@@ -57,17 +58,25 @@ const PaymentStatus = () => {
           <Card>
             <CardHeader>
               <PaymentStatusInfo
-                status={status}
+                status={displayStatus}
                 eventId={eventId}
                 navigate={navigate}
+                errorMessage={error}
               />
             </CardHeader>
             <CardContent className="space-y-6">
-              {status === "pending" && qrCodeBase64 && qrCode && (
+              {displayStatus === "pending" && !isLoading && qrCodeBase64 && qrCode && (
                 <PixQRCode
                   qrCode={qrCode}
                   qrCodeBase64={qrCodeBase64}
                 />
+              )}
+
+              {isLoading && (
+                <div className="flex flex-col items-center py-8 space-y-4">
+                  <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-center text-muted-foreground">Gerando código PIX...</p>
+                </div>
               )}
 
               {payment_id && (
@@ -86,7 +95,7 @@ const PaymentStatus = () => {
           </Card>
         </div>
       </div>
-    </div>
+    </CheckoutLayout>
   );
 };
 

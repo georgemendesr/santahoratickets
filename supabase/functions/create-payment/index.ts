@@ -78,12 +78,12 @@ serve(async (req) => {
     // específica do gateway de pagamento ou uma biblioteca de PIX completa
     const qrCode = `00020126330014BR.GOV.BCB.PIX0111${pixKey}0221Pagamento de Ingresso52040000530398654${String(amount).padStart(2, '0')}5802BR5913${merchantName}6008${city}6304${txid}`
     
+    let qrCodeBase64 = null;
+    let generateSuccess = false;
+    
     try {
-      // Gerar QR code base64 com tratamento de erros aprimorado
-      let qrCodeBase64 = null;
-      
+      // Tenta gerar o QR code com maior nível de correção de erros
       try {
-        // Tenta gerar o QR code com maior nível de correção de erros
         qrCodeBase64 = await qrcode.toDataURL(qrCode, {
           errorCorrectionLevel: 'H',
           margin: 1,
@@ -94,6 +94,7 @@ serve(async (req) => {
             light: '#ffffff'
           }
         });
+        generateSuccess = true;
       } catch (qrError) {
         console.error("Erro na primeira tentativa de gerar QR code:", qrError);
         
@@ -104,6 +105,7 @@ serve(async (req) => {
             margin: 1,
             scale: 4
           });
+          generateSuccess = true;
         } catch (retryError) {
           console.error("Erro também na segunda tentativa:", retryError);
           // Continuar, mesmo sem o QR code base64
@@ -131,11 +133,15 @@ serve(async (req) => {
         throw new Error(`Erro ao atualizar QR code: ${updateError.message}`)
       }
 
-      // Por fim, retorne os dados ao cliente
+      // Retornar a resposta com o status adequado
+      const successMessage = generateSuccess 
+        ? "QR Code PIX gerado com sucesso"
+        : "Código PIX gerado com sucesso, mas houve erro no QR Code";
+        
       return new Response(
         JSON.stringify({
           success: true,
-          message: "QR Code PIX gerado com sucesso",
+          message: successMessage,
           status: "pending",
           payment_id: preferenceId,
           data: {

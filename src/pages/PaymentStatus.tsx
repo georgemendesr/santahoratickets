@@ -24,7 +24,8 @@ const PaymentStatus = () => {
     isLoading, 
     error,
     refreshPixData,
-    qrCodeLoaded
+    qrCodeLoaded,
+    fallbackQrUsed
   } = usePaymentPolling({
     preferenceId,
     payment_id,
@@ -62,7 +63,8 @@ const PaymentStatus = () => {
     qrCodeBase64: qrCodeBase64 ? "Has QR Base64" : "No QR Base64",
     isLoading,
     error,
-    qrCodeLoaded
+    qrCodeLoaded,
+    fallbackQrUsed
   });
 
   return (
@@ -97,7 +99,8 @@ const PaymentStatus = () => {
                     </div>
                   ) : (
                     <div>
-                      {error && (
+                      {/* Se temos o código, não mostrar a mensagem de erro quando usamos o fallback */}
+                      {error && !qrCode && (
                         <div className="flex flex-col items-center py-4 space-y-3 mb-4">
                           <div className="text-amber-500 bg-amber-50 p-3 rounded-full">
                             <RefreshCw className="w-8 h-8" />
@@ -117,13 +120,13 @@ const PaymentStatus = () => {
                         </div>
                       )}
                       
-                      {/* Mostrar o componente PixQRCode mesmo se houver erro, desde que tenhamos pelo menos o código */}
+                      {/* Mostrar o componente PixQRCode sempre que tivermos o código PIX, mesmo se for fallback */}
                       {qrCode && (
                         <PixQRCode
                           qrCode={qrCode}
                           qrCodeBase64={qrCodeBase64}
                           onRefresh={refreshPixData}
-                          error={error}
+                          error={fallbackQrUsed ? null : error}
                         />
                       )}
                       

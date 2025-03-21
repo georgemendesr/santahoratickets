@@ -18,7 +18,9 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
   const [imageRetries, setImageRetries] = useState(0);
   
   // URLs de fallback (imagens externas confiáveis)
-  const fallbackQrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(qrCode || "");
+  const fallbackQrCodeUrl = qrCode 
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCode)}` 
+    : null;
   
   useEffect(() => {
     if (qrCodeBase64) {
@@ -28,17 +30,24 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
           setQrCodeUrl(`data:image/png;base64,${qrCodeBase64}`);
           setShowImageError(false);
           setImageRetries(0);
-        } else {
-          console.error("QR code base64 vazio");
+        } else if (fallbackQrCodeUrl) {
+          console.log("Usando URL de fallback para QR code");
           setQrCodeUrl(fallbackQrCodeUrl);
           setShowImageError(false);
+        } else {
+          console.error("QR code base64 vazio e não há código PIX para fallback");
+          setShowImageError(true);
         }
       } catch (error) {
         console.error("Erro ao processar base64:", error);
-        setQrCodeUrl(fallbackQrCodeUrl);
-        setShowImageError(false);
+        if (fallbackQrCodeUrl) {
+          setQrCodeUrl(fallbackQrCodeUrl);
+          setShowImageError(false);
+        } else {
+          setShowImageError(true);
+        }
       }
-    } else if (qrCode) {
+    } else if (fallbackQrCodeUrl) {
       // Se temos o código PIX mas não o QR code base64, usar o serviço alternativo
       setQrCodeUrl(fallbackQrCodeUrl);
       setShowImageError(false);
@@ -54,15 +63,9 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
     console.error("Erro ao carregar QR code");
     
     // Tentar novamente usando o serviço alternativo
-    if (imageRetries < 3) {
+    if (imageRetries < 3 && fallbackQrCodeUrl) {
       setImageRetries(prev => prev + 1);
-      
-      // Se temos o código PIX, usar o serviço alternativo
-      if (qrCode) {
-        setQrCodeUrl(fallbackQrCodeUrl);
-      } else {
-        setShowImageError(true);
-      }
+      setQrCodeUrl(fallbackQrCodeUrl);
     } else {
       setShowImageError(true);
     }
@@ -89,13 +92,17 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
     }
   };
 
+  // Determinar se devemos mostrar erro ou QR code
+  const shouldShowQrCode = qrCodeUrl && !showImageError;
+  const shouldShowErrorMessage = !shouldShowQrCode && qrCode;
+  
   return (
     <div className="flex flex-col items-center space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
       <div className="flex justify-between items-center w-full">
         <p className="font-medium text-center flex-1">
-          {showImageError 
-            ? "Copie o código PIX abaixo" 
-            : "Escaneie o QR Code ou copie o código"}
+          {shouldShowQrCode 
+            ? "Escaneie o QR Code ou copie o código" 
+            : "Copie o código PIX abaixo"}
         </p>
         
         {onRefresh && (
@@ -112,7 +119,7 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
         )}
       </div>
       
-      {qrCodeUrl && !showImageError ? (
+      {shouldShowQrCode ? (
         <div className="bg-white p-3 rounded-lg border border-gray-200">
           <img 
             src={qrCodeUrl}
@@ -121,13 +128,13 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
             onError={handleImageError}
           />
         </div>
-      ) : qrCode ? (
+      ) : shouldShowErrorMessage ? (
         // Exibir uma mensagem se não conseguir mostrar o QR code mas tiver o código PIX
         <div className="bg-white p-3 rounded-lg border border-gray-200">
           <div className="flex flex-col items-center">
             <AlertTriangle className="text-amber-500 mb-2" size={24} />
             <p className="text-sm text-gray-500 text-center mb-2">
-              QR Code não pôde ser exibido
+              Não foi possível exibir o QR Code
             </p>
             <p className="text-xs text-gray-400 text-center">
               Use o código PIX abaixo
@@ -144,7 +151,8 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
         </div>
       )}
       
-      {error && (
+      {/* Mostrar erro apenas se não tivermos QR code E tivermos um erro */}
+      {error && !shouldShowQrCode && (
         <div className="text-sm text-amber-600 text-center px-4 py-2 bg-amber-50 rounded-md border border-amber-200 w-full">
           {error}
         </div>
@@ -152,7 +160,7 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
       
       <div className="w-full">
         <p className="text-sm text-center mb-2">
-          {qrCodeUrl && !showImageError ? "Ou copie o código PIX:" : "Copie o código PIX:"}
+          {shouldShowQrCode ? "Ou copie o código PIX:" : "Copie o código PIX:"}
         </p>
         <div className="relative">
           <input
@@ -173,6 +181,14 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
           </Button>
         </div>
       </div>
+      
+      {/* Aviso ao final para código PIX sem QR code */}
+      {qrCode && !qrCodeBase64 && (
+        <div className="text-sm text-center text-amber-600 bg-amber-50 p-2 rounded-md border border-amber-200 w-full">
+          O código PIX foi gerado, mas não foi possível criar a imagem QR. 
+          Você pode copiar o código acima para realizar o pagamento.
+        </div>
+      )}
     </div>
   );
 };

@@ -20,6 +20,7 @@ export const usePaymentPolling = ({
 }: UsePaymentPollingProps) => {
   // Estado para controlar se o QR code foi carregado
   const [qrCodeLoaded, setQrCodeLoaded] = useState<boolean>(false);
+  const [fallbackQrUsed, setFallbackQrUsed] = useState<boolean>(false);
   
   // Verificar o cache do browser por dados PIX já carregados
   useEffect(() => {
@@ -31,7 +32,10 @@ export const usePaymentPolling = ({
             parsedData.qrCode && 
             Date.now() - parsedData.timestamp < 1000 * 60 * 10) { // Válido por 10 minutos
           console.log("Usando dados PIX em cache");
-          // Os dados serão processados pelo usePixData abaixo
+          // Verificar se estamos usando dados de fallback
+          if (parsedData.usingFallback) {
+            setFallbackQrUsed(true);
+          }
         }
       }
     } catch (error) {
@@ -58,17 +62,24 @@ export const usePaymentPolling = ({
           preferenceId,
           qrCode,
           qrCodeBase64,
+          usingFallback: !qrCodeBase64 && qrCode,
           timestamp: Date.now()
         }));
+        
+        // Se temos o código PIX mas não o QR Code base64, estamos usando fallback
+        if (!qrCodeBase64 && qrCode && !fallbackQrUsed) {
+          setFallbackQrUsed(true);
+        }
       } catch (error) {
         console.error("Erro ao salvar cache PIX:", error);
       }
     }
-  }, [qrCode, qrCodeBase64, preferenceId]);
+  }, [qrCode, qrCodeBase64, preferenceId, fallbackQrUsed]);
 
   // Callback otimizado para atualizar o QR code
   const handleRefreshPixData = useCallback(() => {
     setQrCodeLoaded(false);
+    setFallbackQrUsed(false);
     refreshPixData();
   }, [refreshPixData]);
 
@@ -120,16 +131,24 @@ export const usePaymentPolling = ({
       error: error || "No error",
       paymentId: payment_id,
       pollingActive: isPolling,
-      qrCodeLoaded
+      qrCodeLoaded,
+      fallbackQrUsed
     });
-  }, [qrCode, qrCodeBase64, isLoading, error, payment_id, isPolling, qrCodeLoaded]);
+  }, [qrCode, qrCodeBase64, isLoading, error, payment_id, isPolling, qrCodeLoaded, fallbackQrUsed]);
+
+  // Determinar o erro a mostrar para o usuário
+  // Se estamos usando fallback com serviço externo, mostrar uma mensagem mais suave
+  const userFacingError = fallbackQrUsed 
+    ? null  // Não mostrar erro se temos pelo menos o QR code via fallback
+    : error;
 
   return {
     qrCode,
     qrCodeBase64,
     isLoading,
-    error,
+    error: userFacingError,
     refreshPixData: handleRefreshPixData,
-    qrCodeLoaded
+    qrCodeLoaded,
+    fallbackQrUsed
   };
 };

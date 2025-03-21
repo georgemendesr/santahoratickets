@@ -159,15 +159,14 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
       )}
       
       <div className="w-full">
-        <p className="text-sm text-center mb-2">
+        <p className="text-sm text-center mb-2 font-medium">
           {shouldShowQrCode ? "Ou copie o código PIX:" : "Copie o código PIX:"}
         </p>
         <div className="relative">
-          <input
-            type="text"
+          <textarea
             value={qrCode || ""}
             readOnly
-            className="w-full p-2 text-sm bg-gray-50 border rounded pr-20"
+            className="w-full p-2 text-sm bg-gray-50 border rounded pr-20 min-h-[80px] resize-none"
           />
           <Button
             variant="ghost"
@@ -182,11 +181,10 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
         </div>
       </div>
       
-      {/* Aviso ao final para código PIX sem QR code */}
+      {/* Aviso em destaque para código PIX sem QR code */}
       {qrCode && !qrCodeBase64 && (
-        <div className="text-sm text-center text-amber-600 bg-amber-50 p-2 rounded-md border border-amber-200 w-full">
-          O código PIX foi gerado, mas não foi possível criar a imagem QR. 
-          Você pode copiar o código acima para realizar o pagamento.
+        <div className="text-sm text-center text-emerald-700 bg-emerald-50 p-3 rounded-md border border-emerald-200 w-full font-medium">
+          Use o código PIX acima para realizar o pagamento via copia e cola no seu aplicativo bancário.
         </div>
       )}
     </div>

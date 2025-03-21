@@ -122,12 +122,19 @@ const PaymentStatus = () => {
                       
                       {/* Mostrar o componente PixQRCode sempre que tivermos o código PIX, mesmo se for fallback */}
                       {qrCode && (
-                        <PixQRCode
-                          qrCode={qrCode}
-                          qrCodeBase64={qrCodeBase64}
-                          onRefresh={refreshPixData}
-                          error={fallbackQrUsed ? null : error}
-                        />
+                        <>
+                          <div className="bg-emerald-50 p-3 rounded-md border border-emerald-200 mb-4">
+                            <p className="text-sm text-emerald-700 font-medium text-center">
+                              Realize o pagamento em seu aplicativo bancário utilizando o código PIX abaixo.
+                            </p>
+                          </div>
+                          <PixQRCode
+                            qrCode={qrCode}
+                            qrCodeBase64={qrCodeBase64}
+                            onRefresh={refreshPixData}
+                            error={fallbackQrUsed ? null : error}
+                          />
+                        </>
                       )}
                       
                       {/* Adicionar botão de emergência caso nada tenha funcionado */}

@@ -209,7 +209,7 @@ serve(async (req) => {
     // Buscar dados do evento
     const { data: event, error: eventError } = await supabaseClient
       .from('events')
-      .select('title, location, id, user_id, organizer_name')
+      .select('title, location, organizer_name')
       .eq('id', preference.event_id)
       .single();
 
@@ -218,22 +218,22 @@ serve(async (req) => {
       throw new Error(`Evento não encontrado: ${eventError?.message || "Dados ausentes"}`)
     }
 
-    // Buscar dados do organizador (usuário que criou o evento)
+    // Buscar dados do organizador (perfil do usuário que está comprando)
     const { data: organizerProfile, error: organizerError } = await supabaseClient
       .from('user_profiles')
       .select('name, cpf')
-      .eq('id', event.user_id)
+      .eq('id', preference.user_id)
       .single();
 
     if (organizerError) {
-      console.error("Erro ao buscar dados do organizador:", organizerError)
+      console.error("Erro ao buscar dados do perfil do usuário:", organizerError)
     }
 
-    // Determinar o nome do beneficiário - usar nome do organizador ou do evento
-    const merchantName = organizerProfile?.name || event.organizer_name || event.title;
+    // Determinar o nome do beneficiário (use o nome do organizador do evento ou o título do evento)
+    const merchantName = event.organizer_name || event.title;
     
     // Determinar chave PIX - idealmente seria configurada nas preferências do usuário
-    const pixKey = organizerProfile?.cpf || ""; // Idealmente buscar da conta do organizador
+    const pixKey = organizerProfile?.cpf || ""; 
     
     // Determinar a cidade do evento
     const merchantCity = event.location?.split(',').pop()?.trim() || "SAO PAULO";

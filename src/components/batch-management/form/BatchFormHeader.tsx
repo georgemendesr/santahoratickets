@@ -9,6 +9,7 @@ interface BatchFormHeaderProps {
   setPrice: (value: string) => void;
   totalTickets: string; 
   setTotalTickets: (value: string) => void;
+  isEditing?: boolean; // Add isEditing prop
 }
 
 export const BatchFormHeader: React.FC<BatchFormHeaderProps> = ({
@@ -17,7 +18,8 @@ export const BatchFormHeader: React.FC<BatchFormHeaderProps> = ({
   price,
   setPrice, 
   totalTickets,
-  setTotalTickets
+  setTotalTickets,
+  isEditing
 }) => {
   return (
     <div className="space-y-4">
@@ -52,7 +54,13 @@ export const BatchFormHeader: React.FC<BatchFormHeaderProps> = ({
             value={totalTickets}
             onChange={(e) => setTotalTickets(e.target.value)}
             required
+            disabled={isEditing}
           />
+          {isEditing && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Não é possível alterar a quantidade após a criação do lote.
+            </p>
+          )}
         </div>
       </div>
     </div>

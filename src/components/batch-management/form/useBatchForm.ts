@@ -18,6 +18,7 @@ interface BatchFormData {
   minPurchase: string;
   maxPurchase: string;
   batchGroup: string;
+  status?: string; // Add status property
 }
 
 interface UseBatchFormProps {
@@ -91,7 +92,8 @@ export const useBatchForm = ({ eventId, orderNumber, batchId, onSuccess }: UseBa
             description: batch.description || "",
             minPurchase: batch.min_purchase.toString(),
             maxPurchase: batch.max_purchase ? batch.max_purchase.toString() : "",
-            batchGroup: batch.batch_group || ""
+            batchGroup: batch.batch_group || "",
+            status: batch.status || "active" // Include status in formData
           });
         }
       } catch (error) {
@@ -235,6 +237,7 @@ export const useBatchForm = ({ eventId, orderNumber, batchId, onSuccess }: UseBa
     isSubmitting,
     isLoading,
     updateFormField,
-    handleSubmit
+    handleSubmit,
+    isEditing: !!batchId // Add isEditing property to the return object
   };
 };

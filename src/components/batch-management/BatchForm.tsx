@@ -137,7 +137,7 @@ export const BatchForm = ({ eventId, orderNumber, batchId, onCancel, onSuccess }
           </div>
 
           {isEditing && (
-            <Alert variant="info" className="bg-blue-50 text-blue-800 border-blue-200">
+            <Alert variant="default" className="bg-blue-50 text-blue-800 border-blue-200">
               <InfoIcon className="h-4 w-4" />
               <AlertTitle>Edição de lote</AlertTitle>
               <AlertDescription>

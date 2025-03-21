@@ -16,12 +16,34 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
   const [showImageError, setShowImageError] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [imageRetries, setImageRetries] = useState(0);
+  const [formattedCode, setFormattedCode] = useState<string>("");
   
   // URLs de fallback (imagens externas confiáveis)
   const fallbackQrCodeUrl = qrCode 
     ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCode)}` 
     : null;
   
+  // Formatar o código PIX para melhorar legibilidade e copiabilidade
+  useEffect(() => {
+    if (qrCode) {
+      try {
+        // Verificar se é um código EMV (PIX padrão brasileiro)
+        if (qrCode.includes('br.gov.bcb.pix')) {
+          // Mantenha o código original, apenas formate para exibição
+          // Adicione espaços a cada 4 caracteres para facilitar verificação visual
+          const formattedPixCode = qrCode.replace(/(.{4})/g, '$1 ').trim();
+          setFormattedCode(formattedPixCode);
+        } else {
+          // Caso não seja um código reconhecido, use o original
+          setFormattedCode(qrCode);
+        }
+      } catch (error) {
+        console.error("Erro ao formatar código PIX:", error);
+        setFormattedCode(qrCode);
+      }
+    }
+  }, [qrCode]);
+
   useEffect(() => {
     if (qrCodeBase64) {
       try {
@@ -73,6 +95,7 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
 
   const handleCopyCode = () => {
     if (qrCode) {
+      // Sempre copiar o código PIX original (não formatado) para garantir compatibilidade
       navigator.clipboard.writeText(qrCode);
       toast.success("Código PIX copiado!");
     }
@@ -164,9 +187,9 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
         </p>
         <div className="relative">
           <textarea
-            value={qrCode || ""}
+            value={formattedCode || qrCode || ""}
             readOnly
-            className="w-full p-2 text-sm bg-gray-50 border rounded pr-20 min-h-[80px] resize-none"
+            className="w-full p-2 text-sm bg-gray-50 border rounded pr-20 min-h-[80px] resize-none font-mono"
           />
           <Button
             variant="ghost"
@@ -181,8 +204,8 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
         </div>
       </div>
       
-      {/* Aviso em destaque para código PIX sem QR code */}
-      {qrCode && !qrCodeBase64 && (
+      {/* Aviso em destaque para código PIX */}
+      {qrCode && (
         <div className="text-sm text-center text-emerald-700 bg-emerald-50 p-3 rounded-md border border-emerald-200 w-full font-medium">
           Use o código PIX acima para realizar o pagamento via copia e cola no seu aplicativo bancário.
         </div>

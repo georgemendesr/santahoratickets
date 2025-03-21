@@ -125,7 +125,7 @@ const PaymentStatus = () => {
                         <>
                           <div className="bg-emerald-50 p-3 rounded-md border border-emerald-200 mb-4">
                             <p className="text-sm text-emerald-700 font-medium text-center">
-                              Realize o pagamento em seu aplicativo bancário utilizando o código PIX abaixo.
+                              Realize o pagamento em seu aplicativo bancário utilizando PIX Copia e Cola com o código abaixo.
                             </p>
                           </div>
                           <PixQRCode
@@ -134,6 +134,11 @@ const PaymentStatus = () => {
                             onRefresh={refreshPixData}
                             error={fallbackQrUsed ? null : error}
                           />
+                          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                            <p className="text-sm text-blue-700 font-medium text-center">
+                              Se o QR Code não funcionar, use a opção "PIX Copia e Cola" no seu banco e cole o código acima.
+                            </p>
+                          </div>
                         </>
                       )}
                       

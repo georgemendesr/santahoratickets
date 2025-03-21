@@ -19,22 +19,37 @@ export function computeBatchStatus(
   }
 
   // Log detalhado para diagnóstico
-  console.log(`Computando status para lote ${batch.id} (${batch.title})`, {
+  console.group(`Computando status para lote ${batch.id} (${batch.title})`);
+  console.log("Propriedades do lote:", {
     isVisible: batch.is_visible,
     availableTickets: batch.available_tickets,
     totalTickets: batch.total_tickets,
     startDate: batch.start_date,
     endDate: batch.end_date,
-    now: now.toISOString()
+    now: now.toISOString(),
+    currentStatus: batch.status
   });
 
   // Se o lote não estiver visível, retornar hidden
   if (batch.is_visible === false) {
+    console.log("Lote está definido como NÃO visível (is_visible: false). Status calculado: hidden");
+    console.groupEnd();
     return 'hidden';
   }
   
   // Validação e obtenção segura de valores
-  const availableTickets = typeof batch.available_tickets === 'number' ? batch.available_tickets : 0;
+  let availableTickets: number;
+  
+  // Verificar se available_tickets é um número válido
+  if (batch.available_tickets === null || batch.available_tickets === undefined) {
+    console.warn("available_tickets é null ou undefined, usando 0 como fallback");
+    availableTickets = 0;
+  } else if (isNaN(Number(batch.available_tickets))) {
+    console.warn(`available_tickets não é um número válido: ${batch.available_tickets}, usando 0 como fallback`);
+    availableTickets = 0;
+  } else {
+    availableTickets = Number(batch.available_tickets);
+  }
   
   // Verificar se a data de início é válida
   let startDate;
@@ -64,21 +79,38 @@ export function computeBatchStatus(
     }
   }
   
+  // Log de comparação de datas
+  console.log("Comparação de datas:", {
+    now: now.toISOString(),
+    startDate: startDate.toISOString(),
+    endDate: endDate?.toISOString(),
+    beforeStart: now < startDate,
+    afterEnd: endDate ? now > endDate : false
+  });
+  
   // Verificar datas primeiro (prioridade mais alta)
   if (now < startDate) {
+    console.log("Status calculado: upcoming (data atual é anterior à data de início)");
+    console.groupEnd();
     return 'upcoming';
   }
   
   if (endDate && now > endDate) {
+    console.log("Status calculado: ended (data atual é posterior à data de término)");
+    console.groupEnd();
     return 'ended';
   }
   
   // Verificar disponibilidade (apenas se estiver dentro do período de vendas)
   if (availableTickets <= 0) {
+    console.log("Status calculado: sold_out (available_tickets <= 0)");
+    console.groupEnd();
     return 'sold_out';
   }
   
   // Se passou por todas as verificações, está ativo
+  console.log("Status calculado: active (todas as condições atendidas)");
+  console.groupEnd();
   return 'active';
 }
 
@@ -120,6 +152,20 @@ export function getBatchDebugInfo(batch: Batch): any {
     }
   }
   
+  // Validação e obtenção segura de valores
+  let availableTickets: number;
+  
+  // Verificar se available_tickets é um número válido
+  if (batch.available_tickets === null || batch.available_tickets === undefined) {
+    console.warn("available_tickets é null ou undefined, usando 0 como fallback");
+    availableTickets = 0;
+  } else if (isNaN(Number(batch.available_tickets))) {
+    console.warn(`available_tickets não é um número válido: ${batch.available_tickets}, usando 0 como fallback`);
+    availableTickets = 0;
+  } else {
+    availableTickets = Number(batch.available_tickets);
+  }
+  
   return {
     id: batch.id,
     title: batch.title,
@@ -131,9 +177,10 @@ export function getBatchDebugInfo(batch: Batch): any {
     beforeStart: now < startDate,
     afterEnd: endDate ? now > endDate : false,
     totalTickets: batch.total_tickets || 0,
-    availableTickets: batch.available_tickets || 0,
-    soldTickets: (batch.total_tickets || 0) - (batch.available_tickets || 0),
+    availableTickets: availableTickets,
+    soldTickets: (batch.total_tickets || 0) - availableTickets,
     status: batch.status,
-    computedStatus: computeBatchStatus(batch, now)
+    computedStatus: computeBatchStatus(batch, now),
+    rawBatch: batch
   };
 }

@@ -193,6 +193,136 @@ window.fixAvailableTickets = async (eventId: string) => {
   }
 };
 
+// Função para gerar log detalhado
+window.logBatchDetails = async (eventId: string) => {
+  try {
+    console.log("🔍 INICIANDO LOG DETALHADO DE LOTES");
+    console.log("🔍 Evento ID:", eventId);
+    
+    // Buscar lotes
+    const { data: batches, error: batchesError } = await supabase
+      .from('batches')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('order_number', { ascending: true });
+      
+    if (batchesError) {
+      console.error("❌ Erro ao buscar lotes:", batchesError);
+      return;
+    }
+    
+    if (!batches || batches.length === 0) {
+      console.log("ℹ️ Nenhum lote encontrado para este evento.");
+      return;
+    }
+    
+    console.log(`✅ Encontrados ${batches.length} lotes`);
+    
+    // Verificar cada lote em detalhe
+    for (const batch of batches) {
+      const now = new Date();
+      const startDate = new Date(batch.start_date);
+      const endDate = batch.end_date ? new Date(batch.end_date) : null;
+      
+      console.group(`🎫 ANÁLISE DETALHADA DO LOTE: ${batch.title} (ID: ${batch.id})`);
+      
+      // Informações básicas
+      console.log("📋 DADOS BÁSICOS");
+      console.log("- ID:", batch.id);
+      console.log("- Título:", batch.title);
+      console.log("- Descrição:", batch.description || "Não definida");
+      console.log("- ID do Evento:", batch.event_id);
+      console.log("- Ordem:", batch.order_number);
+      
+      // Visibilidade
+      console.log("\n🔍 CONFIGURAÇÕES DE VISIBILIDADE");
+      console.log("- Visibilidade:", batch.visibility);
+      console.log("- Está visível?", batch.is_visible ? "SIM" : "NÃO");
+      console.log("- Compra mínima:", batch.min_purchase);
+      console.log("- Compra máxima:", batch.max_purchase || "Sem limite");
+      console.log("- Grupo:", batch.batch_group || "Não agrupado");
+      
+      // Datas
+      console.log("\n📅 DATAS");
+      console.log("- Data inicial:", startDate.toLocaleString());
+      console.log("- Data final:", endDate ? endDate.toLocaleString() : "Sem data final");
+      console.log("- Data atual:", now.toLocaleString());
+      console.log("- Antes da data inicial?", now < startDate ? "SIM" : "NÃO");
+      console.log("- Depois da data final?", endDate && now > endDate ? "SIM" : "NÃO");
+      
+      // Ingressos e Status
+      console.log("\n🎟️ INGRESSOS E STATUS");
+      console.log("- Preço:", batch.price);
+      console.log("- Total de ingressos:", batch.total_tickets);
+      console.log("- Ingressos disponíveis:", batch.available_tickets);
+      console.log("- Ingressos vendidos:", batch.total_tickets - batch.available_tickets);
+      console.log("- Status na DB:", batch.status);
+      
+      // Status calculado
+      let calculatedStatus = "unknown";
+      if (!batch.is_visible) {
+        calculatedStatus = "hidden";
+      } else if (now < startDate) {
+        calculatedStatus = "upcoming";
+      } else if (endDate && now > endDate) {
+        calculatedStatus = "ended";
+      } else if (batch.available_tickets <= 0) {
+        calculatedStatus = "sold_out";
+      } else {
+        calculatedStatus = "active";
+      }
+      
+      console.log("- Status calculado:", calculatedStatus);
+      console.log("- Status corresponde?", batch.status === calculatedStatus ? "SIM" : "NÃO");
+      
+      // Problemas identificados
+      console.log("\n⚠️ PROBLEMAS IDENTIFICADOS");
+      
+      const problems = [];
+      
+      if (batch.status !== calculatedStatus) {
+        problems.push(`Status incorreto: ${batch.status} (deveria ser ${calculatedStatus})`);
+      }
+      
+      if (batch.available_tickets === null || batch.available_tickets === undefined) {
+        problems.push("available_tickets é null ou undefined");
+      }
+      
+      if (batch.available_tickets < 0) {
+        problems.push("available_tickets é negativo");
+      }
+      
+      if (batch.total_tickets === null || batch.total_tickets === undefined) {
+        problems.push("total_tickets é null ou undefined");
+      }
+      
+      if (batch.total_tickets < 0) {
+        problems.push("total_tickets é negativo");
+      }
+      
+      if (batch.available_tickets > batch.total_tickets) {
+        problems.push("available_tickets é maior que total_tickets");
+      }
+      
+      if (problems.length === 0) {
+        console.log("✅ Nenhum problema encontrado!");
+      } else {
+        problems.forEach((problem, index) => {
+          console.log(`- Problema ${index + 1}: ${problem}`);
+        });
+      }
+      
+      console.groupEnd();
+    }
+    
+    console.log("\n📊 DIAGNÓSTICO COMPLETO");
+    console.log("Para corrigir problemas, utilize as funções de correção disponíveis.");
+    
+  } catch (err) {
+    console.error("❌ Erro durante análise detalhada:", err);
+  }
+};
+
 // Mensagem para instruir o desenvolvedor
 console.log(`
 🔧 Ferramentas de diagnóstico de lotes disponíveis no console:
@@ -200,6 +330,7 @@ console.log(`
 - window.fixBatchStatus("batch-id") - Corrigir o status de um lote específico
 - window.fixAllBatchesForEvent("event-id") - Corrigir todos os lotes de um evento
 - window.fixAvailableTickets("event-id") - Forçar available_tickets = total_tickets para todos os lotes de um evento
+- window.logBatchDetails("event-id") - Gerar log detalhado de todos os lotes de um evento
 `);
 
 export {};

@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface BatchDebugToolsProps {
   eventId: string;
@@ -8,31 +9,75 @@ interface BatchDebugToolsProps {
 
 export const BatchDebugTools: React.FC<BatchDebugToolsProps> = ({ eventId }) => {
   const runBatchDebugger = () => {
-    if (eventId && window.diagnoseBatches) {
+    if (!eventId) {
+      toast.error("ID do evento não encontrado");
+      return;
+    }
+    
+    if (window.diagnoseBatches) {
+      toast.info("Executando diagnóstico de lotes...");
       window.diagnoseBatches(eventId);
+      toast.success("Diagnóstico concluído! Verifique o console do navegador.");
     } else {
       console.error('Ferramenta de diagnóstico não encontrada.');
+      toast.error('Ferramenta de diagnóstico não encontrada. Verifique a importação do script.');
     }
   };
 
   const fixAllBatches = () => {
-    if (eventId && window.fixAllBatchesForEvent) {
-      window.fixAllBatchesForEvent(eventId);
+    if (!eventId) {
+      toast.error("ID do evento não encontrado");
+      return;
+    }
+    
+    if (window.fixAllBatchesForEvent) {
+      if (confirm("Tem certeza que deseja corrigir o status de todos os lotes? Esta ação atualizará o status com base na disponibilidade de ingressos.")) {
+        toast.info("Corrigindo status de lotes...");
+        window.fixAllBatchesForEvent(eventId);
+        toast.success("Status dos lotes foram corrigidos! Recarregue a página para ver as atualizações.");
+      }
     } else {
       console.error('Ferramenta de correção não encontrada.');
+      toast.error('Ferramenta de correção não encontrada.');
     }
   };
 
   const fixAvailableTickets = () => {
-    if (eventId && window.fixAvailableTickets) {
-      window.fixAvailableTickets(eventId);
+    if (!eventId) {
+      toast.error("ID do evento não encontrado");
+      return;
+    }
+    
+    if (window.fixAvailableTickets) {
+      if (confirm("Tem certeza que deseja corrigir a disponibilidade de ingressos? Esta ação definirá available_tickets = total_tickets para todos os lotes.")) {
+        toast.info("Corrigindo disponibilidade de ingressos...");
+        window.fixAvailableTickets(eventId);
+        toast.success("Disponibilidade de ingressos corrigida! Recarregue a página para ver as atualizações.");
+      }
     } else {
       console.error('Ferramenta de correção de available_tickets não encontrada.');
+      toast.error('Ferramenta de correção não encontrada.');
+    }
+  };
+
+  const logBatchDetails = () => {
+    if (!eventId) {
+      toast.error("ID do evento não encontrado");
+      return;
+    }
+    
+    if (window.logBatchDetails) {
+      toast.info("Analisando detalhes dos lotes...");
+      window.logBatchDetails(eventId);
+      toast.success("Análise concluída! Verifique o console do navegador.");
+    } else {
+      console.error('Ferramenta de log detalhado não encontrada.');
+      toast.error('Ferramenta de log detalhado não encontrada.');
     }
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-2">
       <Button variant="outline" onClick={runBatchDebugger}>
         Diagnosticar Lotes
       </Button>
@@ -41,6 +86,9 @@ export const BatchDebugTools: React.FC<BatchDebugToolsProps> = ({ eventId }) => 
       </Button>
       <Button variant="destructive" onClick={fixAllBatches}>
         Corrigir Status
+      </Button>
+      <Button variant="outline" className="bg-purple-50" onClick={logBatchDetails}>
+        Log Detalhado
       </Button>
     </div>
   );

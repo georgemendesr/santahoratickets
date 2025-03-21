@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
@@ -32,9 +32,14 @@ export const BatchStatusBadge = ({
   }
 
   // Log para diagnóstico
-  console.log("BatchStatusBadge props:", { 
-    status, isVisible, startDate, endDate, availableTickets, totalTickets 
-  });
+  console.group("BatchStatusBadge props:");
+  console.log("status:", status);
+  console.log("isVisible:", isVisible);
+  console.log("startDate:", startDate);
+  console.log("endDate:", endDate);
+  console.log("availableTickets:", availableTickets);
+  console.log("totalTickets:", totalTickets);
+  console.groupEnd();
   
   // Criar um objeto de lote com as propriedades necessárias para cálculo
   const batchData = {
@@ -56,7 +61,19 @@ export const BatchStatusBadge = ({
   
   // Usar a função de cálculo de status
   const currentStatus = computeBatchStatus(batchData as any);
-  console.log("Status calculado:", currentStatus);
+  console.log("Status calculado no badge:", currentStatus);
+  
+  // Efeito para logar sempre que o status calculado mudar
+  useEffect(() => {
+    console.log("UseEffect: Status recalculado no badge:", {
+      propsStatus: status,
+      calculatedStatus: currentStatus,
+      isVisible,
+      availableTickets,
+      startDate,
+      endDate
+    });
+  }, [currentStatus, status, isVisible, availableTickets, startDate, endDate]);
   
   // Map status to badge variant and label
   const getBadgeProps = (status: BatchStatus) => {

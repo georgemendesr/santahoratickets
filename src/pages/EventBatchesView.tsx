@@ -81,6 +81,24 @@ const EventBatchesView = () => {
     return <EventLoadingState message="Evento não encontrado" />;
   }
 
+  // Helper function to determine badge variant based on status
+  const getBadgeVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
+    if (status === 'active') return 'default';
+    if (status === 'sold_out') return 'destructive';
+    if (status === 'upcoming') return 'outline';
+    if (status === 'ended') return 'secondary';
+    return 'secondary'; // default fallback
+  };
+
+  // Helper function to get display name for status
+  const getStatusDisplayName = (status: string): string => {
+    if (status === 'active') return 'Ativo';
+    if (status === 'sold_out') return 'Esgotado';
+    if (status === 'upcoming') return 'Em breve';
+    if (status === 'ended') return 'Encerrado';
+    return status;
+  };
+
   return (
     <EventPageLayout
       title={`Detalhes de Lotes: ${event.title}`}
@@ -155,19 +173,8 @@ const EventBatchesView = () => {
                         <Badge variant={batch.is_visible ? "default" : "secondary"}>
                           {batch.is_visible ? "Visível" : "Oculto"}
                         </Badge>
-                        <Badge 
-                          variant={
-                            batch.status === 'active' ? 'default' : 
-                            batch.status === 'sold_out' ? 'destructive' : 
-                            batch.status === 'upcoming' ? 'outline' : 
-                            'secondary'
-                          }
-                        >
-                          {batch.status === 'active' ? 'Ativo' : 
-                           batch.status === 'sold_out' ? 'Esgotado' :
-                           batch.status === 'upcoming' ? 'Em breve' :
-                           batch.status === 'ended' ? 'Encerrado' : 
-                           batch.status}
+                        <Badge variant={getBadgeVariant(batch.status)}>
+                          {getStatusDisplayName(batch.status)}
                         </Badge>
                       </div>
                     </div>

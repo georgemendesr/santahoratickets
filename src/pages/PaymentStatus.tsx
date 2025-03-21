@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { PixQRCode } from "@/components/payment/PixQRCode";
 import { PaymentStatusInfo, getStatusInfo } from "@/components/payment/PaymentStatusInfo";
 import { usePaymentPolling } from "@/hooks/payment/usePaymentPolling";
@@ -18,7 +18,13 @@ const PaymentStatus = () => {
   const eventId = reference?.split("|")[0];
   const preferenceId = reference?.split("|")[1];
 
-  const { qrCode, qrCodeBase64, isLoading, error } = usePaymentPolling({
+  const { 
+    qrCode, 
+    qrCodeBase64, 
+    isLoading, 
+    error,
+    refreshPixData 
+  } = usePaymentPolling({
     preferenceId,
     payment_id,
     reference,
@@ -68,18 +74,24 @@ const PaymentStatus = () => {
               />
             </CardHeader>
             <CardContent className="space-y-6">
-              {displayStatus === "pending" && !isLoading && qrCode && (
-                <PixQRCode
-                  qrCode={qrCode}
-                  qrCodeBase64={qrCodeBase64 || ""}
-                />
-              )}
-
-              {isLoading && (
-                <div className="flex flex-col items-center py-8 space-y-4">
-                  <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-center text-muted-foreground">Gerando código PIX...</p>
-                </div>
+              {displayStatus === "pending" && (
+                <>
+                  {isLoading ? (
+                    <div className="flex flex-col items-center py-8 space-y-4">
+                      <Loader2 className="w-16 h-16 text-primary animate-spin" />
+                      <p className="text-center text-muted-foreground">Gerando código PIX...</p>
+                    </div>
+                  ) : (
+                    qrCode && (
+                      <PixQRCode
+                        qrCode={qrCode}
+                        qrCodeBase64={qrCodeBase64 || ""}
+                        onRefresh={refreshPixData}
+                        error={error}
+                      />
+                    )
+                  )}
+                </>
               )}
 
               {payment_id && (

@@ -25,7 +25,8 @@ export const usePaymentPolling = ({
     currentStatus,
     isLoading,
     error,
-    setCurrentStatus
+    setCurrentStatus,
+    refreshPixData
   } = usePixData({ preferenceId });
 
   // Configurar monitoramento de status de pagamento
@@ -51,7 +52,7 @@ export const usePaymentPolling = ({
       qrCode: qrCode ? "QR code present" : "No QR code",
       qrCodeBase64: qrCodeBase64 ? "QR base64 present" : "No QR base64",
       isLoading,
-      error,
+      error: error || "No error",
       paymentId: payment_id,
       pollingActive: isPolling
     });
@@ -61,6 +62,7 @@ export const usePaymentPolling = ({
     qrCode,
     qrCodeBase64,
     isLoading,
-    error
+    error,
+    refreshPixData
   };
 };

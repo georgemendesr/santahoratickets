@@ -70,9 +70,31 @@ serve(async (req) => {
     
     try {
       // Gerar QR code base64
-      const qrCodeBase64 = await qrcode.toDataURL(qrCode)
+      const qrCodeBase64Promise = qrcode.toDataURL(qrCode, {
+        errorCorrectionLevel: 'H',
+        margin: 1,
+        scale: 8
+      });
+      
+      // Adicionando um timeout de 5 segundos para a geração
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Timeout gerando QR code")), 5000)
+      );
+      
+      // Corrida entre a geração e o timeout
+      const qrCodeBase64 = await Promise.race([
+        qrCodeBase64Promise,
+        timeoutPromise
+      ]);
+      
       // Remover o prefixo data:image/png;base64, do base64
-      const base64Clean = qrCodeBase64.replace(/^data:image\/png;base64,/, '')
+      const base64Clean = typeof qrCodeBase64 === 'string' 
+        ? qrCodeBase64.replace(/^data:image\/png;base64,/, '')
+        : null;
+
+      if (!base64Clean) {
+        throw new Error("Falha ao gerar QR code base64");
+      }
 
       // Atualizar a preferência com os dados do PIX
       const { error: updateError } = await supabaseClient
@@ -86,7 +108,7 @@ serve(async (req) => {
 
       if (updateError) {
         console.error("Erro ao atualizar preferência com QR code:", updateError)
-        throw new Error(`Erro ao gerar QR code: ${updateError.message}`)
+        throw new Error(`Erro ao atualizar QR code: ${updateError.message}`)
       }
 
       // Por fim, retorne os dados ao cliente

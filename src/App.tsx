@@ -1,8 +1,10 @@
-
 import React, { Suspense, lazy } from "react";
 import { createBrowserRouter, RouterProvider, Navigate, useParams } from "react-router-dom";
 import { FeedbackProvider } from "./context/FeedbackContext";
 import { routes } from "./routes";
+
+// Importar ferramentas de diagnóstico
+import "@/utils/batchDebugger";
 
 // Loading fallback
 const LoadingFallback = () => (

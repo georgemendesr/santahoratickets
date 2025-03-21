@@ -1,0 +1,154 @@
+
+import { supabase } from "@/integrations/supabase/client";
+import { getBatchDebugInfo } from "./batchStatusUtils";
+
+// Ferramenta de diagnóstico para executar no console do navegador
+window.diagnoseBatches = async (eventId: string) => {
+  console.log(`🔍 Diagnóstico de lotes para o evento: ${eventId}`);
+  
+  try {
+    const { data, error } = await supabase
+      .from('batches')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('order_number', { ascending: true });
+      
+    if (error) {
+      console.error('❌ Erro ao buscar lotes:', error);
+      return;
+    }
+    
+    if (!data || data.length === 0) {
+      console.log('ℹ️ Nenhum lote encontrado para este evento.');
+      return;
+    }
+    
+    console.log(`✅ Encontrados ${data.length} lotes`);
+    
+    // Verificar cada lote
+    data.forEach(batch => {
+      const debugInfo = getBatchDebugInfo(batch);
+      
+      console.group(`🎫 Lote: ${batch.title} (${batch.id})`);
+      console.log('Status calculado:', debugInfo.computedStatus);
+      console.log('Status na DB:', batch.status || 'não definido');
+      console.log('Ingressos:', `${batch.available_tickets}/${batch.total_tickets}`);
+      console.log('Visível:', batch.is_visible ? 'Sim' : 'Não');
+      console.log('Período:', `${new Date(batch.start_date).toLocaleString()} - ${batch.end_date ? new Date(batch.end_date).toLocaleString() : 'indefinido'}`);
+      console.log('Informações completas:', debugInfo);
+      console.groupEnd();
+    });
+    
+    console.log('📊 Diagnóstico concluído. Para corrigir problemas de status, execute a função fixBatchStatus()');
+    
+  } catch (err) {
+    console.error('❌ Erro durante o diagnóstico:', err);
+  }
+};
+
+// Função para corrigir status de lotes
+window.fixBatchStatus = async (batchId: string) => {
+  try {
+    // Primeiro buscar o lote
+    const { data: batch, error: fetchError } = await supabase
+      .from('batches')
+      .select('*')
+      .eq('id', batchId)
+      .single();
+      
+    if (fetchError || !batch) {
+      console.error('❌ Erro ao buscar o lote:', fetchError);
+      return;
+    }
+    
+    const debugInfo = getBatchDebugInfo(batch);
+    const correctStatus = debugInfo.computedStatus;
+    
+    console.log(`🔧 Corrigindo lote ${batch.title}`);
+    console.log(`Status atual: ${batch.status}, Status correto: ${correctStatus}`);
+    
+    // Atualizar o status
+    const { error: updateError } = await supabase
+      .from('batches')
+      .update({ status: correctStatus })
+      .eq('id', batchId);
+      
+    if (updateError) {
+      console.error('❌ Erro ao atualizar status:', updateError);
+      return;
+    }
+    
+    console.log(`✅ Status atualizado com sucesso para: ${correctStatus}`);
+    
+  } catch (err) {
+    console.error('❌ Erro ao corrigir status:', err);
+  }
+};
+
+// Corrigir todos os lotes de um evento
+window.fixAllBatchesForEvent = async (eventId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('batches')
+      .select('*')
+      .eq('event_id', eventId);
+      
+    if (error) {
+      console.error('❌ Erro ao buscar lotes:', error);
+      return;
+    }
+    
+    if (!data || data.length === 0) {
+      console.log('ℹ️ Nenhum lote encontrado para este evento.');
+      return;
+    }
+    
+    console.log(`🔧 Corrigindo ${data.length} lotes...`);
+    
+    let correctedCount = 0;
+    
+    for (const batch of data) {
+      const debugInfo = getBatchDebugInfo(batch);
+      const correctStatus = debugInfo.computedStatus;
+      
+      if (batch.status !== correctStatus) {
+        console.log(`Lote ${batch.title}: ${batch.status} -> ${correctStatus}`);
+        
+        const { error: updateError } = await supabase
+          .from('batches')
+          .update({ status: correctStatus })
+          .eq('id', batch.id);
+          
+        if (updateError) {
+          console.error(`Erro ao atualizar lote ${batch.id}:`, updateError);
+        } else {
+          correctedCount++;
+        }
+      }
+    }
+    
+    console.log(`✅ Concluído! ${correctedCount} lotes corrigidos.`);
+    
+  } catch (err) {
+    console.error('❌ Erro ao corrigir lotes:', err);
+  }
+};
+
+// Adicionar as funções ao objeto window para uso no console
+declare global {
+  interface Window {
+    diagnoseBatches: (eventId: string) => Promise<void>;
+    fixBatchStatus: (batchId: string) => Promise<void>;
+    fixAllBatchesForEvent: (eventId: string) => Promise<void>;
+  }
+}
+
+// Mensagem para instruir o desenvolvedor
+console.log(`
+🔧 Ferramentas de diagnóstico de lotes disponíveis no console:
+- window.diagnoseBatches("event-id") - Diagnosticar todos os lotes de um evento
+- window.fixBatchStatus("batch-id") - Corrigir o status de um lote específico
+- window.fixAllBatchesForEvent("event-id") - Corrigir todos os lotes de um evento
+`);
+
+export {};

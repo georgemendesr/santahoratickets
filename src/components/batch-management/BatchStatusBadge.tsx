@@ -4,9 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import { computeBatchStatus, BatchStatus } from "@/utils/batchStatusUtils";
 
 interface BatchStatusBadgeProps {
-  status: string | null;
+  status?: string | null;
   isVisible?: boolean | null;
   startDate: string;
   endDate?: string | null;
@@ -24,35 +25,22 @@ export const BatchStatusBadge = ({
   availableTickets,
   totalTickets,
 }: BatchStatusBadgeProps) => {
-  const now = new Date();
-  const start = new Date(startDate);
-  const end = endDate ? new Date(endDate) : null;
-  
-  // Determine actual status
-  const getStatus = () => {
-    // Se não está visível, status é "hidden"
-    if (!isVisible) return "hidden";
-    
-    // Verificar datas (prioridade alta)
-    if (start > now) return "upcoming";
-    if (end && end < now) return "ended";
-    
-    // Verificar ingressos disponíveis
-    if (availableTickets !== undefined && totalTickets !== undefined) {
-      if (availableTickets <= 0) return "sold_out";
-    } else if (status === "sold_out") {
-      return "sold_out";
-    }
-    
-    // Se tudo estiver ok, está ativo
-    return "active";
+  // Criar um objeto de lote com as propriedades necessárias para cálculo
+  const batchData = {
+    status: status as string,
+    is_visible: isVisible,
+    start_date: startDate,
+    end_date: endDate,
+    available_tickets: availableTickets ?? 0,
+    total_tickets: totalTickets ?? 0
   };
   
-  const currentStatus = getStatus();
+  // Usar a função de cálculo de status
+  const currentStatus = computeBatchStatus(batchData as any);
   
   // Map status to badge variant and label
-  const getBadgeProps = () => {
-    switch (currentStatus) {
+  const getBadgeProps = (status: BatchStatus) => {
+    switch (status) {
       case "active":
         return { 
           variant: "active" as const, 
@@ -86,7 +74,7 @@ export const BatchStatusBadge = ({
     }
   };
   
-  const { variant, label } = getBadgeProps();
+  const { variant, label } = getBadgeProps(currentStatus);
   
   // Format dates for tooltip
   const formatDateLocale = (date: Date) => {
@@ -95,6 +83,9 @@ export const BatchStatusBadge = ({
   
   const tooltipContent = () => {
     if (!showDetails) return null;
+    
+    const start = new Date(startDate);
+    const end = endDate ? new Date(endDate) : null;
     
     return (
       <>

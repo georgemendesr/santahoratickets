@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -7,48 +7,50 @@ import { DashboardHeader } from "@/components/admin/dashboard/DashboardHeader";
 import { MetricsCards } from "@/components/admin/dashboard/MetricsCards";
 import { DashboardCharts } from "@/components/admin/dashboard/DashboardCharts";
 import { ActionCards } from "@/components/admin/dashboard/ActionCards";
+import { useToast } from "@/hooks/use-toast";
 
 const Admin = () => {
-  const { data: dashboardData, isLoading, error } = useQuery({
-    queryKey: ["admin-dashboard"],
+  const { toast } = useToast();
+  
+  // Use a simpler query without complex error handling that might be causing issues
+  const { data: events = [], isLoading } = useQuery({
+    queryKey: ["admin-dashboard-events"],
     queryFn: async () => {
-      try {
-        const { data: events, error } = await supabase
-          .from("events")
-          .select("*")
-          .order("date", { ascending: false })
-          .limit(5);
-          
-        if (error) throw error;
+      console.log("Fetching admin dashboard data...");
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .order("date", { ascending: false })
+        .limit(5);
         
-        return events || [];
-      } catch (error) {
+      if (error) {
         console.error("Error fetching dashboard data:", error);
+        toast({
+          title: "Erro ao carregar dados",
+          description: error.message,
+          variant: "destructive",
+        });
         return [];
       }
+      
+      console.log("Dashboard data fetched:", data);
+      return data || [];
     },
   });
 
-  const totalRevenue = dashboardData?.reduce((acc, event) => acc + (event?.gross_revenue || 0), 0) || 0;
-  const totalTickets = dashboardData?.reduce((acc, event) => acc + (event?.approved_tickets || 0), 0) || 0;
-  const eventsCount = dashboardData?.length || 0;
+  // Simple calculations for metrics
+  const totalRevenue = events.reduce((acc, event) => acc + (event?.gross_revenue || 0), 0);
+  const totalTickets = events.reduce((acc, event) => acc + (event?.approved_tickets || 0), 0);
+  const eventsCount = events.length;
   const averageTicket = totalTickets ? totalRevenue / totalTickets : 0;
-  
+
+  // Simple loading state display
   if (isLoading) {
     return (
       <AdminLayout>
-        <div className="container mx-auto max-w-7xl p-4">
-          <p className="text-center">Carregando dados do dashboard...</p>
-        </div>
-      </AdminLayout>
-    );
-  }
-  
-  if (error) {
-    return (
-      <AdminLayout>
-        <div className="container mx-auto max-w-7xl p-4">
-          <p className="text-center text-red-500">Erro ao carregar dados do dashboard.</p>
+        <div className="flex items-center justify-center h-64">
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
+          <span className="ml-3">Carregando dados...</span>
         </div>
       </AdminLayout>
     );
@@ -66,7 +68,13 @@ const Admin = () => {
           averageTicket={averageTicket}
         />
 
-        <DashboardCharts events={dashboardData || []} />
+        {events.length > 0 ? (
+          <DashboardCharts events={events} />
+        ) : (
+          <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 text-amber-800 mb-8">
+            <p className="text-center">Nenhum evento encontrado. Crie seu primeiro evento para visualizar as estatísticas.</p>
+          </div>
+        )}
 
         <ActionCards />
       </div>

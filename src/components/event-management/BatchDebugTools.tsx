@@ -77,19 +77,25 @@ export const BatchDebugTools: React.FC<BatchDebugToolsProps> = ({ eventId }) => 
   };
 
   return (
-    <div className="flex flex-wrap gap-2">
-      <Button variant="outline" onClick={runBatchDebugger}>
-        Diagnosticar Lotes
-      </Button>
-      <Button variant="outline" className="bg-blue-50" onClick={fixAvailableTickets}>
-        Corrigir Disponibilidade
-      </Button>
-      <Button variant="destructive" onClick={fixAllBatches}>
-        Corrigir Status
-      </Button>
-      <Button variant="outline" className="bg-purple-50" onClick={logBatchDetails}>
-        Log Detalhado
-      </Button>
+    <div className="space-y-2 mt-4">
+      <h3 className="text-lg font-medium">Ferramentas de Diagnóstico:</h3>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" onClick={runBatchDebugger}>
+          Diagnosticar Lotes
+        </Button>
+        <Button variant="outline" className="bg-blue-50" onClick={fixAvailableTickets}>
+          Corrigir Disponibilidade
+        </Button>
+        <Button variant="destructive" onClick={fixAllBatches}>
+          Corrigir Status
+        </Button>
+        <Button variant="outline" className="bg-purple-50" onClick={logBatchDetails}>
+          Log Detalhado
+        </Button>
+      </div>
+      <p className="text-sm text-muted-foreground mt-2">
+        Para ver os resultados, abra o Console do navegador (pressione F12 e clique na aba "Console").
+      </p>
     </div>
   );
 };

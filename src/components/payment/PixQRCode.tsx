@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
 
 interface PixQRCodeProps {
   qrCode: string;
@@ -9,16 +10,28 @@ interface PixQRCodeProps {
 }
 
 export const PixQRCode = ({ qrCode, qrCodeBase64 }: PixQRCodeProps) => {
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (qrCodeBase64) {
+      setQrCodeUrl(`data:image/png;base64,${qrCodeBase64}`);
+    }
+  }, [qrCodeBase64]);
+
   return (
     <div className="flex flex-col items-center space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
       <p className="font-medium text-center">Escaneie o QR Code para pagar com PIX</p>
       
-      {qrCodeBase64 ? (
+      {qrCodeUrl ? (
         <div className="bg-white p-3 rounded-lg border border-gray-200">
           <img 
-            src={`data:image/png;base64,${qrCodeBase64}`}
+            src={qrCodeUrl}
             alt="QR Code PIX"
             className="w-48 h-48"
+            onError={() => {
+              console.error("Erro ao carregar QR code");
+              setQrCodeUrl(null);
+            }}
           />
         </div>
       ) : (

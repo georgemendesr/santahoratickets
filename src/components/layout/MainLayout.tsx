@@ -1,3 +1,4 @@
+
 import { MainHeader } from "./MainHeader";
 import { MainFooter } from "./MainFooter";
 import { LogoHeader } from "./LogoHeader";
@@ -31,6 +32,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       
       <MainHeader />
       
+      {/* Navegação de abas apenas para usuários normais, não para admins */}
       {!loading && session && !isAdmin && (
         <div className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-sm border-b">
           <div className="container mx-auto px-4">
@@ -56,24 +58,6 @@ export function MainLayout({ children }: MainLayoutProps) {
                   className="data-[state=active]:bg-primary/10"
                 >
                   Recompensas
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-        </div>
-      )}
-
-      {!loading && session && isAdmin && (
-        <div className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-sm border-b">
-          <div className="container mx-auto px-4">
-            <Tabs value={currentTab} className="w-full">
-              <TabsList className="w-full justify-start">
-                <TabsTrigger 
-                  value="/admin" 
-                  onClick={() => navigate("/admin")}
-                  className="data-[state=active]:bg-primary/10"
-                >
-                  Admin
                 </TabsTrigger>
               </TabsList>
             </Tabs>

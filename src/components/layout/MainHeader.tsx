@@ -41,26 +41,16 @@ export function MainHeader() {
               </NavigationMenuItem>
             )}
 
-            {/* Links administrativos - visíveis apenas para administradores */}
+            {/* Link único para administração */}
             {isAdmin && (
-              <>
-                <NavigationMenuItem>
-                  <Link to="/admin">
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                      <Settings className="h-4 w-4 mr-2" />
-                      Dashboard
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Link to="/admin/eventos">
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                      <CalendarDays className="h-4 w-4 mr-2" />
-                      Eventos
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-              </>
+              <NavigationMenuItem>
+                <Link to="/admin">
+                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Administração
+                  </NavigationMenuLink>
+                </Link>
+              </NavigationMenuItem>
             )}
           </NavigationMenuList>
         </NavigationMenu>

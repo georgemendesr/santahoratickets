@@ -32,9 +32,12 @@ export function PIXForm({ amount, onSubmit, isSubmitting }: PIXFormProps) {
 
         <div className="flex justify-center py-4">
           <img 
-            src="https://www.mercadopago.com/org-img/MP3/API/logos/pix.gif" 
+            src="/pix-logo.png" 
             alt="PIX" 
             className="h-12"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "https://www.mercadopago.com/org-img/MP3/API/logos/pix.gif";
+            }}
           />
         </div>
 
@@ -53,9 +56,12 @@ export function PIXForm({ amount, onSubmit, isSubmitting }: PIXFormProps) {
 
         <div className="flex justify-center mt-4">
           <img 
-            src="https://www.mercadopago.com/org-img/MP3/API/logos/powered_by_mercadopago.gif" 
+            src="/mercadopago-logo.png" 
             alt="Powered by MercadoPago" 
             className="h-8"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "https://www.mercadopago.com/org-img/MP3/API/logos/powered_by_mercadopago.gif";
+            }}
           />
         </div>
       </div>

@@ -39,9 +39,10 @@ const PaymentStatus = () => {
       qrCode: qrCode ? "QR code present" : "No QR code",
       qrCodeBase64: qrCodeBase64 ? "QR base64 present" : "No QR base64",
       isLoading,
-      error
+      error,
+      paymentId: payment_id
     });
-  }, [qrCode, qrCodeBase64, isLoading, error]);
+  }, [qrCode, qrCodeBase64, isLoading, error, payment_id]);
 
   // Determinar o status apropriado para exibição
   const displayStatus = status || (error ? "error" : "pending");
@@ -75,18 +76,10 @@ const PaymentStatus = () => {
               />
             </CardHeader>
             <CardContent className="space-y-6">
-              {displayStatus === "pending" && !isLoading && qrCodeBase64 && qrCode && (
+              {displayStatus === "pending" && !isLoading && qrCode && (
                 <PixQRCode
                   qrCode={qrCode}
-                  qrCodeBase64={qrCodeBase64}
-                />
-              )}
-              
-              {/* Fallback para quando temos código PIX mas não temos QR Code */}
-              {displayStatus === "pending" && !isLoading && qrCode && !qrCodeBase64 && (
-                <PixQRCode
-                  qrCode={qrCode}
-                  qrCodeBase64=""
+                  qrCodeBase64={qrCodeBase64 || ""}
                 />
               )}
 
@@ -115,6 +108,6 @@ const PaymentStatus = () => {
       </div>
     </CheckoutLayout>
   );
-};
+}
 
 export default PaymentStatus;

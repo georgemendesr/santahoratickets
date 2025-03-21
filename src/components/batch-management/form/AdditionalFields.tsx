@@ -22,55 +22,57 @@ export const AdditionalFields: React.FC<AdditionalFieldsProps> = ({
   maxPurchase,
   setMaxPurchase,
   batchGroup,
-  setBatchGroup
+  setBatchGroup,
 }) => {
   return (
-    <>
+    <div className="space-y-4">
       <div>
-        <Label htmlFor="description">Descrição (opcional)</Label>
+        <Label htmlFor="description">Descrição do lote</Label>
         <Textarea
           id="description"
-          placeholder="Informação adicional. Ex: Esse ingresso dá direito a um copo"
+          placeholder="Descreva detalhes adicionais sobre este lote..."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          className="h-24"
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="minPurchase">Qtd. mínima permitida por compra</Label>
+          <Label htmlFor="minPurchase">Mínimo por compra</Label>
           <Input
             id="minPurchase"
             type="number"
-            min="1"
             value={minPurchase}
             onChange={(e) => setMinPurchase(e.target.value)}
-            required
+            min="1"
           />
         </div>
         <div>
-          <Label htmlFor="maxPurchase">Qtd. máxima permitida por compra</Label>
+          <Label htmlFor="maxPurchase">Máximo por compra</Label>
           <Input
             id="maxPurchase"
             type="number"
             value={maxPurchase}
             onChange={(e) => setMaxPurchase(e.target.value)}
+            min={minPurchase || "1"}
+            placeholder="Ilimitado se não definido"
           />
         </div>
       </div>
 
       <div>
-        <Label htmlFor="batchGroup">Grupo (opcional)</Label>
+        <Label htmlFor="batchGroup">Grupo de lote (opcional)</Label>
         <Input
           id="batchGroup"
-          placeholder="Agrupar exibição dos tipos de ingressos"
+          placeholder="Agrupar lotes similares (ex: VIP, Regular, etc.)"
           value={batchGroup}
           onChange={(e) => setBatchGroup(e.target.value)}
         />
-        <p className="text-sm text-muted-foreground mt-1">
-          Recomendado quando existem grande variação de tipos.
+        <p className="text-xs text-muted-foreground mt-1">
+          Lotes no mesmo grupo serão exibidos juntos na página de compra
         </p>
       </div>
-    </>
+    </div>
   );
 };

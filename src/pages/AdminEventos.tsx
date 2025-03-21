@@ -190,7 +190,14 @@ const AdminEventos = () => {
                         <TableCell>
                           <Badge variant={status.variant}>{status.label}</Badge>
                         </TableCell>
-                        <TableCell className="font-medium">{event.title}</TableCell>
+                        <TableCell>
+                          <button
+                            onClick={() => handleEditEvent(event.id)}
+                            className="font-medium hover:underline text-left w-full"
+                          >
+                            {event.title}
+                          </button>
+                        </TableCell>
                         <TableCell>
                           {format(new Date(event.date), "dd 'de' MMMM 'de' yyyy", { locale: pt })}
                         </TableCell>
@@ -199,13 +206,22 @@ const AdminEventos = () => {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <span className="font-medium">{event.approved_tickets || 0}</span>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  className="font-medium"
+                                  onClick={() => handleManageBatches(event.id)}
+                                >
+                                  <Ticket className="h-3 w-3 mr-1" />
+                                  <span>{event.approved_tickets || 0}</span>
+                                </Button>
                               </TooltipTrigger>
                               <TooltipContent>
                                 <div className="text-xs space-y-1">
                                   <div>Aprovados: {event.approved_tickets || 0}</div>
                                   <div>Pendentes: {event.pending_tickets || 0}</div>
                                   <div>Reembolsados: {event.refunded_tickets || 0}</div>
+                                  <div className="pt-1 text-primary">Clique para gerenciar lotes</div>
                                 </div>
                               </TooltipContent>
                             </Tooltip>

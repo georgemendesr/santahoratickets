@@ -21,8 +21,10 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tag, Edit, Trash2 } from "lucide-react";
+import { Tag, Edit, Trash2, Copy, Check, X } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 interface BatchListProps {
   eventId: string;
@@ -31,6 +33,8 @@ interface BatchListProps {
 
 export function BatchList({ eventId, onEditBatch }: BatchListProps) {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isToggling, setIsToggling] = useState<string | null>(null);
+  const [isDuplicating, setIsDuplicating] = useState<string | null>(null);
 
   const { data: batches, isLoading, refetch } = useQuery({
     queryKey: ['batches', eventId],
@@ -65,6 +69,7 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
   const getBatchStatus = (batch: Batch) => {
     if (batch.status === 'sold_out') return 'Esgotado';
     if (batch.status === 'ended') return 'Encerrado';
+    if (!batch.is_visible) return 'Desativado';
     
     const now = new Date();
     const startDate = new Date(batch.start_date);
@@ -81,6 +86,7 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
       case 'Aguardando': return 'bg-blue-100 text-blue-800';
       case 'Encerrado': return 'bg-gray-100 text-gray-800';
       case 'Esgotado': return 'bg-red-100 text-red-800';
+      case 'Desativado': return 'bg-yellow-100 text-yellow-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -101,11 +107,80 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
       if (error) throw error;
       
       refetch();
+      toast.success("Lote excluído com sucesso");
     } catch (error) {
       console.error('Erro ao excluir lote:', error);
-      alert('Não foi possível excluir o lote.');
+      toast.error('Não foi possível excluir o lote.');
     } finally {
       setIsDeleting(null);
+    }
+  };
+
+  const toggleBatchVisibility = async (batch: Batch) => {
+    setIsToggling(batch.id);
+    
+    try {
+      const newVisibility = !batch.is_visible;
+      
+      const { error } = await supabase
+        .from('batches')
+        .update({ is_visible: newVisibility })
+        .eq('id', batch.id);
+        
+      if (error) throw error;
+      
+      refetch();
+      toast.success(`Lote ${newVisibility ? 'ativado' : 'desativado'} com sucesso`);
+    } catch (error) {
+      console.error('Erro ao alterar visibilidade do lote:', error);
+      toast.error('Não foi possível alterar a visibilidade do lote.');
+    } finally {
+      setIsToggling(null);
+    }
+  };
+
+  const duplicateBatch = async (batch: Batch) => {
+    setIsDuplicating(batch.id);
+    
+    try {
+      // Get current max order number
+      const { data: maxOrderData, error: maxOrderError } = await supabase
+        .from('batches')
+        .select('order_number')
+        .eq('event_id', eventId)
+        .order('order_number', { ascending: false })
+        .limit(1);
+        
+      if (maxOrderError) throw maxOrderError;
+      
+      const nextOrderNumber = maxOrderData && maxOrderData.length > 0 
+        ? maxOrderData[0].order_number + 1 
+        : 1;
+      
+      // Clone the batch with new order number
+      const newBatch = {
+        ...batch,
+        id: undefined, // Remove ID to let Supabase generate a new one
+        title: `${batch.title} (Cópia)`,
+        order_number: nextOrderNumber,
+        created_at: undefined,
+        updated_at: undefined
+      };
+      
+      // Insert the new batch
+      const { error: insertError } = await supabase
+        .from('batches')
+        .insert([newBatch]);
+        
+      if (insertError) throw insertError;
+      
+      refetch();
+      toast.success("Lote duplicado com sucesso");
+    } catch (error) {
+      console.error('Erro ao duplicar lote:', error);
+      toast.error('Não foi possível duplicar o lote.');
+    } finally {
+      setIsDuplicating(null);
     }
   };
 
@@ -154,6 +229,7 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
               <TableHead>Início</TableHead>
               <TableHead>Fim</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Ativo</TableHead>
               <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -165,7 +241,14 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
               return (
                 <TableRow key={batch.id}>
                   <TableCell>{batch.order_number}</TableCell>
-                  <TableCell className="font-medium">{batch.title}</TableCell>
+                  <TableCell>
+                    <button 
+                      className="font-medium hover:underline text-left"
+                      onClick={() => onEditBatch(batch.id)}
+                    >
+                      {batch.title}
+                    </button>
+                  </TableCell>
                   <TableCell>R$ {batch.price.toFixed(2)}</TableCell>
                   <TableCell>
                     {batch.available_tickets} / {batch.total_tickets}
@@ -194,13 +277,34 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
                     </Badge>
                   </TableCell>
                   <TableCell>
+                    <Switch 
+                      checked={batch.is_visible} 
+                      disabled={isToggling === batch.id}
+                      onCheckedChange={() => toggleBatchVisibility(batch)}
+                    />
+                  </TableCell>
+                  <TableCell>
                     <div className="flex space-x-2">
                       <Button 
                         variant="outline" 
                         size="icon"
                         onClick={() => onEditBatch(batch.id)}
+                        title="Editar lote"
                       >
                         <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => duplicateBatch(batch)}
+                        disabled={isDuplicating === batch.id}
+                        title="Duplicar lote"
+                      >
+                        {isDuplicating === batch.id ? (
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-t-transparent border-blue-500"></span>
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
                       </Button>
                       <Button 
                         variant="outline" 
@@ -208,6 +312,7 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
                         className="text-red-600 hover:text-red-700"
                         onClick={() => handleDeleteBatch(batch.id)}
                         disabled={isDeleting === batch.id}
+                        title="Excluir lote"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

@@ -9,7 +9,7 @@ interface BatchFormHeaderProps {
   setPrice: (value: string) => void;
   totalTickets: string; 
   setTotalTickets: (value: string) => void;
-  isEditing?: boolean; // Add isEditing prop
+  isEditing?: boolean;
 }
 
 export const BatchFormHeader: React.FC<BatchFormHeaderProps> = ({

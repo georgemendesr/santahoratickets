@@ -21,6 +21,24 @@ export const usePaymentPolling = ({
   // Estado para controlar se o QR code foi carregado
   const [qrCodeLoaded, setQrCodeLoaded] = useState<boolean>(false);
   
+  // Verificar o cache do browser por dados PIX já carregados
+  useEffect(() => {
+    try {
+      const cachedPixData = localStorage.getItem('pixPaymentData');
+      if (cachedPixData && preferenceId) {
+        const parsedData = JSON.parse(cachedPixData);
+        if (parsedData.preferenceId === preferenceId && 
+            parsedData.qrCode && 
+            Date.now() - parsedData.timestamp < 1000 * 60 * 10) { // Válido por 10 minutos
+          console.log("Usando dados PIX em cache");
+          // Os dados serão processados pelo usePixData abaixo
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao ler cache PIX:", error);
+    }
+  }, [preferenceId]);
+  
   // Obter dados do PIX com revalidação automática
   const {
     qrCode,
@@ -32,6 +50,22 @@ export const usePaymentPolling = ({
     refreshPixData
   } = usePixData({ preferenceId });
 
+  // Salvar dados no cache do browser quando disponíveis
+  useEffect(() => {
+    if (qrCode && preferenceId) {
+      try {
+        localStorage.setItem('pixPaymentData', JSON.stringify({
+          preferenceId,
+          qrCode,
+          qrCodeBase64,
+          timestamp: Date.now()
+        }));
+      } catch (error) {
+        console.error("Erro ao salvar cache PIX:", error);
+      }
+    }
+  }, [qrCode, qrCodeBase64, preferenceId]);
+
   // Callback otimizado para atualizar o QR code
   const handleRefreshPixData = useCallback(() => {
     setQrCodeLoaded(false);
@@ -40,11 +74,25 @@ export const usePaymentPolling = ({
 
   // Notificar quando o QR code for carregado com sucesso
   useEffect(() => {
-    if (qrCodeBase64 && !qrCodeLoaded) {
+    if (qrCode && !qrCodeLoaded) {
       setQrCodeLoaded(true);
-      console.log("QR code base64 carregado com sucesso");
+      console.log("QR code carregado com sucesso");
     }
-  }, [qrCodeBase64, qrCodeLoaded]);
+  }, [qrCode, qrCodeLoaded]);
+
+  // Limpar cache ao desmontar para casos de problema
+  useEffect(() => {
+    return () => {
+      // Manter o cache para reutilização, limpar apenas em caso específico
+      if (error) {
+        try {
+          localStorage.removeItem('pixPaymentData');
+        } catch (e) {
+          console.error("Erro ao limpar cache PIX:", e);
+        }
+      }
+    };
+  }, [error]);
 
   // Configurar monitoramento de status de pagamento
   const { isPolling } = usePaymentStatus({

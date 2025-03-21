@@ -65,36 +65,55 @@ serve(async (req) => {
 
     console.log("Gerando QR Code PIX para a preferência:", preferenceId)
 
-    // Gerar um código PIX estático para teste
-    const qrCode = "00020126330014BR.GOV.BCB.PIX0111test@test.com5204000053039865406123.455802BR5913Bora Pagodear6008Sao Paulo62070503***6304E2CA"
+    // IMPORTANTE: Gerar um código PIX real aqui (integração com gateway)
+    // Usando código de exemplo para testes
+    const pixKey = "12345678900" // CPF como chave PIX
+    const merchantName = "Bora Pagodear"
+    const city = "Sao Paulo"
+    const amount = preference.total_amount
+    const txid = preferenceId.replace(/-/g, '').substring(0, 25)
+
+    // Gerar um código PIX estático (BRCode)
+    // Esta é uma versão simplificada. Numa integração real, use a biblioteca
+    // específica do gateway de pagamento ou uma biblioteca de PIX completa
+    const qrCode = `00020126330014BR.GOV.BCB.PIX0111${pixKey}0221Pagamento de Ingresso52040000530398654${String(amount).padStart(2, '0')}5802BR5913${merchantName}6008${city}6304${txid}`
     
     try {
-      // Gerar QR code base64
-      const qrCodeBase64Promise = qrcode.toDataURL(qrCode, {
-        errorCorrectionLevel: 'H',
-        margin: 1,
-        scale: 8
-      });
+      // Gerar QR code base64 com tratamento de erros aprimorado
+      let qrCodeBase64 = null;
       
-      // Adicionando um timeout de 5 segundos para a geração
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Timeout gerando QR code")), 5000)
-      );
-      
-      // Corrida entre a geração e o timeout
-      const qrCodeBase64 = await Promise.race([
-        qrCodeBase64Promise,
-        timeoutPromise
-      ]);
+      try {
+        // Tenta gerar o QR code com maior nível de correção de erros
+        qrCodeBase64 = await qrcode.toDataURL(qrCode, {
+          errorCorrectionLevel: 'H',
+          margin: 1,
+          scale: 8,
+          width: 300,
+          color: {
+            dark: '#000000',
+            light: '#ffffff'
+          }
+        });
+      } catch (qrError) {
+        console.error("Erro na primeira tentativa de gerar QR code:", qrError);
+        
+        // Segunda tentativa com configurações mais simples
+        try {
+          qrCodeBase64 = await qrcode.toDataURL(qrCode, {
+            errorCorrectionLevel: 'M',
+            margin: 1,
+            scale: 4
+          });
+        } catch (retryError) {
+          console.error("Erro também na segunda tentativa:", retryError);
+          // Continuar, mesmo sem o QR code base64
+        }
+      }
       
       // Remover o prefixo data:image/png;base64, do base64
       const base64Clean = typeof qrCodeBase64 === 'string' 
         ? qrCodeBase64.replace(/^data:image\/png;base64,/, '')
         : null;
-
-      if (!base64Clean) {
-        throw new Error("Falha ao gerar QR code base64");
-      }
 
       // Atualizar a preferência com os dados do PIX
       const { error: updateError } = await supabaseClient
@@ -102,7 +121,8 @@ serve(async (req) => {
         .update({
           qr_code: qrCode,
           qr_code_base64: base64Clean,
-          last_attempt_at: new Date().toISOString()
+          last_attempt_at: new Date().toISOString(),
+          attempts: (preference.attempts || 0) + 1
         })
         .eq('id', preferenceId)
 

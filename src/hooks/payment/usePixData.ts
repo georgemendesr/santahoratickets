@@ -15,6 +15,7 @@ export const usePixData = ({ preferenceId }: UsePixDataProps) => {
   const [error, setError] = useState<string | null>(null);
   const [attempts, setAttempts] = useState(0);
   const [lastAttemptTime, setLastAttemptTime] = useState(0);
+  const [retryTimeoutId, setRetryTimeoutId] = useState<number | null>(null);
 
   // Função para regenerar o pagamento PIX com limitação de taxa
   const regeneratePixPayment = useCallback(async (prefId: string) => {
@@ -35,6 +36,7 @@ export const usePixData = ({ preferenceId }: UsePixDataProps) => {
     
     setLastAttemptTime(now);
     setAttempts(prev => prev + 1);
+    setError(null);
     
     try {
       console.log(`Tentativa ${attempts + 1} de regenerar pagamento PIX:`, prefId);
@@ -80,6 +82,15 @@ export const usePixData = ({ preferenceId }: UsePixDataProps) => {
       console.error("Erro ao tentar regenerar pagamento PIX:", error);
       setError("Erro ao gerar código PIX. Você pode tentar novamente ou usar outro método de pagamento.");
       setIsLoading(false);
+      
+      // Tentar novamente automaticamente após um tempo
+      if (attempts < 3) {
+        const timeoutId = window.setTimeout(() => {
+          console.log("Tentando novamente automaticamente...");
+          regeneratePixPayment(prefId);
+        }, 3000);
+        setRetryTimeoutId(timeoutId);
+      }
     }
   }, [attempts, lastAttemptTime]);
 
@@ -143,18 +154,33 @@ export const usePixData = ({ preferenceId }: UsePixDataProps) => {
       console.error("Erro ao buscar dados do PIX:", error);
       setError("Erro ao carregar dados do pagamento");
       setIsLoading(false);
+      
+      // Tentar novamente automaticamente após um tempo
+      const timeoutId = window.setTimeout(() => {
+        console.log("Tentando buscar dados novamente...");
+        fetchPixData();
+      }, 3000);
+      setRetryTimeoutId(timeoutId);
     }
   }, [preferenceId, regeneratePixPayment]);
 
   // Efeito para carregar dados iniciais
   useEffect(() => {
     fetchPixData();
+    
+    return () => {
+      // Limpar qualquer timeout ao desmontar
+      if (retryTimeoutId) {
+        clearTimeout(retryTimeoutId);
+      }
+    };
   }, [fetchPixData]);
 
   // Função para forçar atualização
   const refreshPixData = () => {
     setIsLoading(true);
     setError(null);
+    setAttempts(0);
     fetchPixData();
   };
 

@@ -95,44 +95,55 @@ const PaymentStatus = () => {
                       <Loader2 className="w-16 h-16 text-primary animate-spin" />
                       <p className="text-center text-muted-foreground">Gerando código PIX...</p>
                     </div>
-                  ) : error ? (
+                  ) : (
                     <div>
-                      <div className="flex flex-col items-center py-4 space-y-3 mb-4">
-                        <div className="text-amber-500 bg-amber-50 p-3 rounded-full">
-                          <RefreshCw className="w-8 h-8" />
+                      {error && (
+                        <div className="flex flex-col items-center py-4 space-y-3 mb-4">
+                          <div className="text-amber-500 bg-amber-50 p-3 rounded-full">
+                            <RefreshCw className="w-8 h-8" />
+                          </div>
+                          <p className="text-center font-medium">Houve um problema ao gerar o QR code</p>
+                          <p className="text-center text-sm text-muted-foreground max-w-xs mx-auto">
+                            Você pode tentar novamente ou usar o código PIX para pagamento
+                          </p>
+                          <Button 
+                            variant="outline"
+                            onClick={refreshPixData}
+                            className="mt-2"
+                          >
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Tentar Novamente
+                          </Button>
                         </div>
-                        <p className="text-center font-medium">Houve um problema ao gerar o QR code</p>
-                        <p className="text-center text-sm text-muted-foreground max-w-xs mx-auto">
-                          Você pode tentar novamente ou usar o código PIX para pagamento
-                        </p>
-                        <Button 
-                          variant="outline"
-                          onClick={refreshPixData}
-                          className="mt-2"
-                        >
-                          <RefreshCw className="mr-2 h-4 w-4" />
-                          Tentar Novamente
-                        </Button>
-                      </div>
-                      {/* Mesmo com erro, ainda mostramos o código PIX se disponível */}
+                      )}
+                      
+                      {/* Mostrar o componente PixQRCode mesmo se houver erro, desde que tenhamos pelo menos o código */}
                       {qrCode && (
                         <PixQRCode
                           qrCode={qrCode}
-                          qrCodeBase64={qrCodeBase64 || ""}
+                          qrCodeBase64={qrCodeBase64}
                           onRefresh={refreshPixData}
                           error={error}
                         />
                       )}
+                      
+                      {/* Adicionar botão de emergência caso nada tenha funcionado */}
+                      {!qrCode && error && (
+                        <div className="flex flex-col items-center mt-6">
+                          <Button 
+                            variant="destructive"
+                            onClick={() => {
+                              // Forçar uma nova geração completa
+                              localStorage.removeItem("pixPaymentData");
+                              navigate(`/payment-status?status=pending&payment_id=${payment_id}&external_reference=${reference}`);
+                              window.location.reload();
+                            }}
+                          >
+                            Reiniciar Processo de Pagamento
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    qrCode && (
-                      <PixQRCode
-                        qrCode={qrCode}
-                        qrCodeBase64={qrCodeBase64 || ""}
-                        onRefresh={refreshPixData}
-                        error={error}
-                      />
-                    )
                   )}
                 </>
               )}

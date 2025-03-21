@@ -4,6 +4,7 @@ declare global {
     diagnoseBatches?: (eventId: string) => void;
     fixBatchStatus?: (batchId: string) => void;
     fixAllBatchesForEvent?: (eventId: string) => void;
+    fixAvailableTickets?: (eventId: string) => void;
   }
 }
 

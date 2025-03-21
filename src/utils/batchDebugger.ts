@@ -146,12 +146,60 @@ window.fixAllBatchesForEvent = async (eventId: string) => {
   }
 };
 
+// Adicionar função para forçar available_tickets = total_tickets
+window.fixAvailableTickets = async (eventId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('batches')
+      .select('*')
+      .eq('event_id', eventId);
+      
+    if (error) {
+      console.error('❌ Erro ao buscar lotes:', error);
+      return;
+    }
+    
+    if (!data || data.length === 0) {
+      console.log('ℹ️ Nenhum lote encontrado para este evento.');
+      return;
+    }
+    
+    console.log(`🔧 Corrigindo available_tickets para ${data.length} lotes...`);
+    
+    let correctedCount = 0;
+    
+    for (const batch of data) {
+      console.log(`Lote ${batch.title}: available_tickets=${batch.available_tickets}, total_tickets=${batch.total_tickets}`);
+      
+      const { error: updateError } = await supabase
+        .from('batches')
+        .update({ 
+          available_tickets: batch.total_tickets,
+          status: 'active' 
+        })
+        .eq('id', batch.id);
+        
+      if (updateError) {
+        console.error(`Erro ao atualizar lote ${batch.id}:`, updateError);
+      } else {
+        correctedCount++;
+      }
+    }
+    
+    console.log(`✅ Concluído! Disponibilidade de ingressos corrigida para ${correctedCount} lotes.`);
+    
+  } catch (err) {
+    console.error('❌ Erro ao corrigir available_tickets:', err);
+  }
+};
+
 // Mensagem para instruir o desenvolvedor
 console.log(`
 🔧 Ferramentas de diagnóstico de lotes disponíveis no console:
 - window.diagnoseBatches("event-id") - Diagnosticar todos os lotes de um evento
 - window.fixBatchStatus("batch-id") - Corrigir o status de um lote específico
 - window.fixAllBatchesForEvent("event-id") - Corrigir todos os lotes de um evento
+- window.fixAvailableTickets("event-id") - Forçar available_tickets = total_tickets para todos os lotes de um evento
 `);
 
 export {};

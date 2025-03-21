@@ -23,13 +23,24 @@ export const BatchDebugTools: React.FC<BatchDebugToolsProps> = ({ eventId }) => 
     }
   };
 
+  const fixAvailableTickets = () => {
+    if (eventId && window.fixAvailableTickets) {
+      window.fixAvailableTickets(eventId);
+    } else {
+      console.error('Ferramenta de correção de available_tickets não encontrada.');
+    }
+  };
+
   return (
     <div className="flex gap-2">
       <Button variant="outline" onClick={runBatchDebugger}>
         Diagnosticar Lotes
       </Button>
+      <Button variant="outline" className="bg-blue-50" onClick={fixAvailableTickets}>
+        Corrigir Disponibilidade
+      </Button>
       <Button variant="destructive" onClick={fixAllBatches}>
-        Corrigir Todos os Lotes
+        Corrigir Status
       </Button>
     </div>
   );

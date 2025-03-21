@@ -37,7 +37,7 @@ export interface Batch {
   total_tickets: number;
   start_date: string;
   end_date?: string;
-  status: 'active' | 'ended' | 'sold_out';
+  status: 'active' | 'ended' | 'sold_out' | 'upcoming' | 'hidden' | string;
   created_at?: string;
   order_number: number;
   visibility: 'public' | 'guest_only' | 'internal_pdv';

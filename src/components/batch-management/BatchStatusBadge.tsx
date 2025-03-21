@@ -25,18 +25,38 @@ export const BatchStatusBadge = ({
   availableTickets,
   totalTickets,
 }: BatchStatusBadgeProps) => {
+  // Validação de entrada
+  if (!startDate) {
+    console.error("BatchStatusBadge: startDate não fornecida", { status, isVisible, startDate, endDate });
+    return <Badge variant="outline">Status inválido</Badge>;
+  }
+
+  // Log para diagnóstico
+  console.log("BatchStatusBadge props:", { 
+    status, isVisible, startDate, endDate, availableTickets, totalTickets 
+  });
+  
   // Criar um objeto de lote com as propriedades necessárias para cálculo
   const batchData = {
+    id: "badge-component", // ID fictício para logs
+    title: "badge-component", // Título fictício para logs
     status: status as string,
-    is_visible: isVisible,
+    is_visible: isVisible === null ? true : isVisible,
     start_date: startDate,
     end_date: endDate,
     available_tickets: availableTickets ?? 0,
-    total_tickets: totalTickets ?? 0
+    total_tickets: totalTickets ?? 0,
+    // Campos obrigatórios na interface mas não usados para o cálculo
+    event_id: "",
+    price: 0,
+    order_number: 0,
+    visibility: "public" as const,
+    min_purchase: 1
   };
   
   // Usar a função de cálculo de status
   const currentStatus = computeBatchStatus(batchData as any);
+  console.log("Status calculado:", currentStatus);
   
   // Map status to badge variant and label
   const getBadgeProps = (status: BatchStatus) => {
@@ -78,14 +98,42 @@ export const BatchStatusBadge = ({
   
   // Format dates for tooltip
   const formatDateLocale = (date: Date) => {
-    return format(date, "dd/MM/yyyy 'às' HH:mm", { locale: pt });
+    try {
+      return format(date, "dd/MM/yyyy 'às' HH:mm", { locale: pt });
+    } catch (e) {
+      console.error("Erro ao formatar data:", e, date);
+      return "Data inválida";
+    }
   };
   
   const tooltipContent = () => {
     if (!showDetails) return null;
     
-    const start = new Date(startDate);
-    const end = endDate ? new Date(endDate) : null;
+    let start;
+    try {
+      start = new Date(startDate);
+      if (isNaN(start.getTime())) {
+        console.error("Data de início inválida:", startDate);
+        start = new Date();
+      }
+    } catch (e) {
+      console.error("Erro ao converter data de início:", e);
+      start = new Date();
+    }
+    
+    let end = null;
+    if (endDate) {
+      try {
+        end = new Date(endDate);
+        if (isNaN(end.getTime())) {
+          console.error("Data de término inválida:", endDate);
+          end = null;
+        }
+      } catch (e) {
+        console.error("Erro ao converter data de término:", e);
+        end = null;
+      }
+    }
     
     return (
       <>

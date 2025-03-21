@@ -32,15 +32,17 @@ export const getStatusDisplayName = (status: string): string => {
   if (status === 'sold_out') return 'Esgotado';
   if (status === 'upcoming') return 'Em breve';
   if (status === 'ended') return 'Encerrado';
+  if (status === 'hidden') return 'Oculto';
   return status;
 };
 
 export const BatchCard: React.FC<BatchCardProps> = ({ batch }) => {
   const debugInfo = getBatchDebugInfo(batch);
   const statusMismatch = debugInfo.computedStatus !== batch.status;
+  const availabilityMismatch = batch.available_tickets !== batch.total_tickets && batch.status === 'active';
   
   return (
-    <Card key={batch.id} className={statusMismatch ? "border-yellow-500" : ""}>
+    <Card key={batch.id} className={statusMismatch || availabilityMismatch ? "border-yellow-500" : ""}>
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
@@ -49,6 +51,11 @@ export const BatchCard: React.FC<BatchCardProps> = ({ batch }) => {
               {statusMismatch && (
                 <Badge variant="outline" className="ml-2 bg-yellow-100">
                   Status inconsistente
+                </Badge>
+              )}
+              {availabilityMismatch && (
+                <Badge variant="outline" className="ml-2 bg-blue-100">
+                  Available ≠ Total
                 </Badge>
               )}
             </CardTitle>
@@ -101,13 +108,12 @@ export const BatchCard: React.FC<BatchCardProps> = ({ batch }) => {
               <p>Visível: {batch.is_visible ? 'Sim' : 'Não'}</p>
               <p>Ingressos disponíveis: {batch.available_tickets}</p>
               <p>Total de ingressos: {batch.total_tickets}</p>
-              {statusMismatch && (
-                <div className="mt-2 p-2 bg-yellow-100 rounded">
-                  <p className="font-bold">⚠️ Status inconsistente detectado</p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                {statusMismatch && (
                   <Button 
                     size="sm" 
                     variant="outline" 
-                    className="mt-2"
+                    className="bg-yellow-100 hover:bg-yellow-200"
                     onClick={() => {
                       if (window.fixBatchStatus) {
                         window.fixBatchStatus(batch.id);
@@ -118,8 +124,25 @@ export const BatchCard: React.FC<BatchCardProps> = ({ batch }) => {
                   >
                     Corrigir Status
                   </Button>
-                </div>
-              )}
+                )}
+                
+                {availabilityMismatch && (
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="bg-blue-100 hover:bg-blue-200"
+                    onClick={() => {
+                      if (window.fixAvailableTickets) {
+                        window.fixAvailableTickets(batch.event_id);
+                      } else {
+                        console.error('Ferramenta de correção não encontrada.');
+                      }
+                    }}
+                  >
+                    Corrigir Disponibilidade
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>

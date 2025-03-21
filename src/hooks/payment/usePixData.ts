@@ -1,56 +1,21 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface UsePaymentPollingProps {
+interface UsePixDataProps {
   preferenceId: string | undefined | null;
-  payment_id: string | null;
-  reference: string | null;
-  status: string | null;
-  navigate: (path: string) => void;
 }
 
-export const usePaymentPolling = ({
-  preferenceId,
-  payment_id,
-  reference,
-  status: initialStatus,
-  navigate
-}: UsePaymentPollingProps) => {
+export const usePixData = ({ preferenceId }: UsePixDataProps) => {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [qrCodeBase64, setQrCodeBase64] = useState<string | null>(null);
-  const [currentStatus, setCurrentStatus] = useState(initialStatus);
-  const [isPolling, setIsPolling] = useState(true);
+  const [currentStatus, setCurrentStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [attempts, setAttempts] = useState(0);
 
-  const handleStatusChange = useCallback((newStatus: string) => {
-    console.log("Mudança de status detectada:", newStatus, "Status atual:", currentStatus);
-    
-    if (newStatus === currentStatus) {
-      console.log("Status já está atualizado, ignorando");
-      return;
-    }
-
-    setCurrentStatus(newStatus);
-    
-    if (newStatus === "approved") {
-      toast.success("Pagamento aprovado!");
-      setIsPolling(false);
-      window.location.href = `/payment-status?status=approved&payment_id=${payment_id}&external_reference=${reference}`;
-    } else if (newStatus === "rejected") {
-      toast.error("Pagamento rejeitado");
-      setIsPolling(false);
-      window.location.href = `/payment-status?status=rejected&payment_id=${payment_id}&external_reference=${reference}`;
-    }
-  }, [payment_id, reference, currentStatus]);
-
   useEffect(() => {
-    let channel: any;
-    let pollingInterval: NodeJS.Timeout;
-
     const fetchPixData = async () => {
       if (!preferenceId) {
         setIsLoading(false);
@@ -92,8 +57,8 @@ export const usePaymentPolling = ({
             setQrCodeBase64(preference.qr_code_base64);
           }
 
-          if (preference.status !== "pending" && preference.status !== currentStatus) {
-            handleStatusChange(preference.status);
+          if (preference.status) {
+            setCurrentStatus(preference.status);
           }
           
           // Se tiver o código PIX mas não tiver o QR Code, vamos considerar
@@ -164,86 +129,41 @@ export const usePaymentPolling = ({
       }
     };
 
-    const setupRealtimeSubscription = () => {
-      console.log("Configurando inscrição em tempo real para:", preferenceId);
-      
-      channel = supabase
-        .channel('payment_status_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'payment_preferences',
-            filter: `id=eq.${preferenceId}`
-          },
-          (payload) => {
-            console.log("Atualização em tempo real recebida:", payload);
-            const newStatus = payload.new.status;
-            
-            if (newStatus !== "pending") {
-              handleStatusChange(newStatus);
-            }
-            
-            // Atualizar QR Code se estiver disponível
-            if (payload.new.qr_code) {
-              setQrCode(payload.new.qr_code);
-            }
-            
-            if (payload.new.qr_code_base64) {
-              setQrCodeBase64(payload.new.qr_code_base64);
-              setIsLoading(false);
-              setError(null);
-            }
-          }
-        )
-        .subscribe((status) => {
-          console.log("Status da inscrição:", status);
-        });
-    };
+    fetchPixData();
 
-    // Executa apenas se estiver em polling
-    if (isPolling) {
-      fetchPixData();
-      setupRealtimeSubscription();
-
-      // Configurar polling manual como backup
-      pollingInterval = setInterval(() => {
-        if (isPolling && attempts < 5) {
-          console.log("Executando polling manual...");
-          fetchPixData();
-        } else if (attempts >= 5) {
-          // Se após 5 tentativas ainda não tiver o QR code completo, mas tiver o código PIX
-          // continuamos exibindo o formulário PIX mesmo sem QR code
-          if (!qrCodeBase64 && qrCode) {
-            console.log("Não foi possível gerar o QR Code após várias tentativas, mas o código PIX está disponível.");
-            setIsLoading(false);
-          } 
-          // Se nem o código PIX estiver disponível, mostramos erro
-          else if (!qrCode) {
-            setError("Não foi possível gerar o código PIX após várias tentativas. Por favor, tente novamente.");
-            setIsLoading(false);
-          }
-          
-          setIsPolling(false);
-          clearInterval(pollingInterval);
+    // Configurar polling manual como backup para casos onde não temos dados completos
+    const pollingInterval = setInterval(() => {
+      if (attempts < 5 && (!qrCodeBase64 || !qrCode)) {
+        console.log("Executando polling manual para dados do PIX...");
+        fetchPixData();
+      } else if (attempts >= 5) {
+        // Se após 5 tentativas ainda não tiver o QR code completo, mas tiver o código PIX
+        // continuamos exibindo o formulário PIX mesmo sem QR code
+        if (!qrCodeBase64 && qrCode) {
+          console.log("Não foi possível gerar o QR Code após várias tentativas, mas o código PIX está disponível.");
+          setIsLoading(false);
+        } 
+        // Se nem o código PIX estiver disponível, mostramos erro
+        else if (!qrCode) {
+          setError("Não foi possível gerar o código PIX após várias tentativas. Por favor, tente novamente.");
+          setIsLoading(false);
         }
-      }, 5000); // A cada 5 segundos
-    }
+        
+        clearInterval(pollingInterval);
+      }
+    }, 5000); // A cada 5 segundos
 
     return () => {
-      if (channel) {
-        console.log("Limpando inscrição de tempo real");
-        supabase.removeChannel(channel);
-      }
       clearInterval(pollingInterval);
     };
-  }, [preferenceId, handleStatusChange, currentStatus, isPolling, attempts, qrCode, qrCodeBase64]);
+  }, [preferenceId, attempts, qrCode, qrCodeBase64]);
 
   return {
     qrCode,
     qrCodeBase64,
+    currentStatus,
     isLoading,
-    error
+    error,
+    setCurrentStatus
   };
 };

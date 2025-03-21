@@ -11,37 +11,46 @@ interface PixQRCodeProps {
 
 export const PixQRCode = ({ qrCode, qrCodeBase64 }: PixQRCodeProps) => {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [showImageError, setShowImageError] = useState(false);
 
   useEffect(() => {
     if (qrCodeBase64) {
       setQrCodeUrl(`data:image/png;base64,${qrCodeBase64}`);
+      setShowImageError(false);
     }
   }, [qrCodeBase64]);
+
+  const handleImageError = () => {
+    console.error("Erro ao carregar QR code");
+    setShowImageError(true);
+    setQrCodeUrl(null);
+  };
 
   return (
     <div className="flex flex-col items-center space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
       <p className="font-medium text-center">Escaneie o QR Code para pagar com PIX</p>
       
-      {qrCodeUrl ? (
+      {qrCodeUrl && !showImageError ? (
         <div className="bg-white p-3 rounded-lg border border-gray-200">
           <img 
             src={qrCodeUrl}
             alt="QR Code PIX"
             className="w-48 h-48"
-            onError={() => {
-              console.error("Erro ao carregar QR code");
-              setQrCodeUrl(null);
-            }}
+            onError={handleImageError}
           />
         </div>
       ) : (
         <div className="w-48 h-48 flex items-center justify-center bg-gray-100 rounded-lg">
-          <p className="text-sm text-gray-500">QR Code não disponível</p>
+          <p className="text-sm text-gray-500">
+            {qrCode ? "QR Code não disponível, mas você pode usar o código PIX abaixo" : "QR Code não disponível"}
+          </p>
         </div>
       )}
       
       <div className="w-full">
-        <p className="text-sm text-center mb-2">Ou copie o código PIX:</p>
+        <p className="text-sm text-center mb-2">
+          {qrCodeUrl && !showImageError ? "Ou copie o código PIX:" : "Copie o código PIX:"}
+        </p>
         <div className="relative">
           <input
             type="text"

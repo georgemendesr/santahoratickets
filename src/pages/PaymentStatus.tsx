@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { PixQRCode } from "@/components/payment/PixQRCode";
 import { PaymentStatusInfo, getStatusInfo } from "@/components/payment/PaymentStatusInfo";
-import { usePaymentPolling } from "@/hooks/usePaymentPolling";
+import { usePaymentPolling } from "@/hooks/payment/usePaymentPolling";
 import { CheckoutLayout } from "@/components/checkout/CheckoutLayout";
 
 const PaymentStatus = () => {
@@ -32,17 +32,6 @@ const PaymentStatus = () => {
       navigate("/");
     }
   }, [status, preferenceId, payment_id, navigate]);
-
-  // Para debugging
-  useEffect(() => {
-    console.log("PaymentStatus rendering with:", {
-      qrCode: qrCode ? "QR code present" : "No QR code",
-      qrCodeBase64: qrCodeBase64 ? "QR base64 present" : "No QR base64",
-      isLoading,
-      error,
-      paymentId: payment_id
-    });
-  }, [qrCode, qrCodeBase64, isLoading, error, payment_id]);
 
   // Determinar o status apropriado para exibição
   const displayStatus = status || (error ? "error" : "pending");

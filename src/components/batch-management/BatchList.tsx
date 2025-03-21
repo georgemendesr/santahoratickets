@@ -61,16 +61,52 @@ export function BatchList({ eventId, onEditBatch, readOnly = false }: BatchListP
     );
   }
 
+  // Wrapper functions to adapt the function signatures
+  const handleResetBatch = (batchId: string) => {
+    const batch = batches.find(b => b.id === batchId);
+    if (batch) {
+      resetBatchStatus(batch);
+    }
+  };
+
+  const handleFixTickets = (batchId: string) => {
+    const batch = batches.find(b => b.id === batchId);
+    if (batch) {
+      fixAvailableTickets(batch);
+    }
+  };
+
+  const handleToggleVisibility = (batchId: string) => {
+    const batch = batches.find(b => b.id === batchId);
+    if (batch) {
+      toggleBatchVisibility(batch);
+    }
+  };
+
+  const handleDuplicate = (batchId: string) => {
+    const batch = batches.find(b => b.id === batchId);
+    if (batch) {
+      duplicateBatch(batch);
+    }
+  };
+
+  const handleDelete = (batchId: string) => {
+    const batch = batches.find(b => b.id === batchId);
+    if (batch) {
+      handleDeleteBatch(batch);
+    }
+  };
+
   return (
     <BatchListTable
       batches={batches}
       onEditBatch={onEditBatch}
       readOnly={readOnly}
-      onReset={!readOnly ? resetBatchStatus : undefined}
-      onFixAvailability={!readOnly ? fixAvailableTickets : undefined}
-      onToggleVisibility={!readOnly ? toggleBatchVisibility : undefined}
-      onDuplicate={!readOnly ? duplicateBatch : undefined}
-      onDelete={!readOnly ? handleDeleteBatch : undefined}
+      onReset={!readOnly ? handleResetBatch : undefined}
+      onFixAvailability={!readOnly ? handleFixTickets : undefined}
+      onToggleVisibility={!readOnly ? handleToggleVisibility : undefined}
+      onDuplicate={!readOnly ? handleDuplicate : undefined}
+      onDelete={!readOnly ? handleDelete : undefined}
       isResetting={isResetting}
       isFixingAvailability={isFixingAvailability}
       isToggling={isToggling}

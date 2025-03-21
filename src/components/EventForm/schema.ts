@@ -7,6 +7,8 @@ export const eventFormSchema = z.object({
   date: z.string().min(1, "A data é obrigatória"),
   time: z.string().min(1, "O horário é obrigatório"),
   location: z.string().default("Santa Hora"),
+  status: z.enum(["published", "draft", "ended"]).optional(),
+  is_featured: z.boolean().optional(),
 });
 
 export type EventFormData = z.infer<typeof eventFormSchema>;
@@ -18,4 +20,5 @@ export interface EventFormProps {
   submitText?: string;
   showImageField?: boolean;
   imageFieldHelperText?: string;
+  showAdvancedFields?: boolean;
 }

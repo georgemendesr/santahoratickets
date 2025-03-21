@@ -28,7 +28,8 @@ import {
   Eye, 
   Calendar,
   BarChart4,
-  ChevronRight
+  ChevronRight,
+  Copy
 } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -36,6 +37,8 @@ import { type Event } from "@/types";
 import { useNavigation } from "@/hooks/useNavigation";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
 
 const AdminEventos = () => {
   const [filter, setFilter] = useState("todos");
@@ -96,6 +99,28 @@ const AdminEventos = () => {
 
   const handleViewAnalytics = (eventId: string) => {
     navigateTo(`/admin/analytics?event_id=${eventId}`);
+  };
+
+  const handleDuplicateEvent = (eventId: string) => {
+    navigateTo(`/eventos/${eventId}/duplicate`);
+  };
+
+  const toggleEventStatus = async (event: Event) => {
+    const newStatus = event.status === 'published' ? 'draft' : 'published';
+    
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({ status: newStatus })
+        .eq('id', event.id);
+        
+      if (error) throw error;
+      
+      toast.success(`Evento ${newStatus === 'published' ? 'publicado' : 'arquivado'} com sucesso`);
+    } catch (error) {
+      console.error('Erro ao alterar status do evento:', error);
+      toast.error('Erro ao alterar status do evento');
+    }
   };
 
   return (
@@ -173,7 +198,7 @@ const AdminEventos = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Status</TableHead>
+                    <TableHead className="w-28">Status</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Local</TableHead>
@@ -188,7 +213,23 @@ const AdminEventos = () => {
                     return (
                       <TableRow key={event.id} className="group">
                         <TableCell>
-                          <Badge variant={status.variant}>{status.label}</Badge>
+                          <div className="flex items-center gap-2">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Switch 
+                                    checked={event.status === 'published'} 
+                                    onCheckedChange={() => toggleEventStatus(event)}
+                                    size="sm"
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {event.status === 'published' ? 'Arquivar evento' : 'Publicar evento'}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            <Badge variant={status.variant}>{status.label}</Badge>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <button
@@ -268,6 +309,14 @@ const AdminEventos = () => {
                               title="Estatísticas"
                             >
                               <BarChart4 className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleDuplicateEvent(event.id)}
+                              title="Duplicar evento"
+                            >
+                              <Copy className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"

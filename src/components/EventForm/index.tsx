@@ -18,6 +18,7 @@ export const EventForm = ({
   submitText = "Criar Evento",
   showImageField = true,
   imageFieldHelperText,
+  showAdvancedFields = false,
 }: EventFormProps) => {
   const form = useForm({
     resolver: zodResolver(eventFormSchema),
@@ -27,13 +28,15 @@ export const EventForm = ({
       date: "",
       time: "",
       location: "Santa Hora",
+      status: "published",
+      is_featured: false,
     },
   });
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <BasicInfoFields form={form} />
+        <BasicInfoFields form={form} showAdvancedFields={showAdvancedFields} />
         <DateTimeFields form={form} />
         <LocationField form={form} />
         

@@ -14,7 +14,15 @@ export function CheckoutLayout({ children, onBackClick }: CheckoutLayoutProps) {
   
   return (
     <MainLayout>
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto py-8">
+        <div className="text-center mb-8">
+          <img 
+            src="/lovable-uploads/0791f14f-3770-44d6-8ff3-1e714a1d1243.png"
+            alt="Bora Pagodear"
+            className="h-16 mx-auto"
+          />
+        </div>
+        
         <Button
           variant="ghost"
           onClick={onBackClick || goBack}

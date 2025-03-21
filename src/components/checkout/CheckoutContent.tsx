@@ -6,6 +6,8 @@ import { CustomerForm } from "./CustomerForm";
 import { CreditCardForm } from "./credit-card/CreditCardForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PIXForm } from "./payment/PIXForm";
+import { ParticipantsForm } from "./ParticipantsForm";
+import { useState } from "react";
 
 interface CheckoutContentProps {
   event: Event;
@@ -47,14 +49,25 @@ export function CheckoutContent({
   onSubmitProfile,
   onSubmitPayment,
 }: CheckoutContentProps) {
+  const [participants, setParticipants] = useState<Array<{name: string, cpf: string}>>([]);
+
+  const handleParticipantChange = (index: number, field: 'name' | 'cpf', value: string) => {
+    const updatedParticipants = [...participants];
+    updatedParticipants[index] = {
+      ...updatedParticipants[index],
+      [field]: value
+    };
+    setParticipants(updatedParticipants);
+  };
+
   return (
     <Card className="glass-card shadow-2xl">
-      <CardHeader className="border-b border-border/50 pb-6">
+      <CardHeader className="border-b border-border/50 pb-6 bg-gradient-to-r from-purple-500/10 to-amber-500/10">
         <CardTitle className="text-2xl md:text-3xl font-medium tracking-tight">
           Finalizar Compra - {event.title}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6 md:p-8">
         <div className="space-y-8 py-4">
           <OrderSummary 
             event={event}
@@ -63,18 +76,28 @@ export function CheckoutContent({
           />
 
           {!showPaymentForm ? (
-            <CustomerForm
-              name={name}
-              cpf={cpf}
-              phone={phone}
-              email={email}
-              isLoading={isLoading}
-              onNameChange={onNameChange}
-              onCpfChange={onCpfChange}
-              onPhoneChange={onPhoneChange}
-              onEmailChange={onEmailChange}
-              onSubmit={onSubmitProfile}
-            />
+            <div className="space-y-8">
+              <CustomerForm
+                name={name}
+                cpf={cpf}
+                phone={phone}
+                email={email}
+                isLoading={isLoading}
+                onNameChange={onNameChange}
+                onCpfChange={onCpfChange}
+                onPhoneChange={onPhoneChange}
+                onEmailChange={onEmailChange}
+                onSubmit={onSubmitProfile}
+              />
+              
+              {quantity > 1 && (
+                <ParticipantsForm
+                  quantity={quantity - 1}
+                  participants={participants}
+                  onChange={handleParticipantChange}
+                />
+              )}
+            </div>
           ) : (
             <div className="pt-6 border-t border-border/50">
               <Tabs defaultValue="credit_card" className="w-full">

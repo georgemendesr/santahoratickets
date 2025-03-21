@@ -8,7 +8,6 @@ import {
   BarChart3, 
   Gift, 
   ArrowUpRight, 
-  LayoutDashboard, 
   Settings,
   Ticket,
   Share2
@@ -32,14 +31,7 @@ export function AdminSidebar() {
       
       <nav className="py-4">
         <div className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase">Principal</div>
-        <ul className="mb-6 space-y-1">
-          <MenuItem 
-            icon={<LayoutDashboard className="h-5 w-5" />} 
-            label="Dashboard" 
-            to={ROUTES.ADMIN.DASHBOARD} 
-            isActive={isActive(ROUTES.ADMIN.DASHBOARD)} 
-          />
-          
+        <ul className="mb-6 space-y-1">          
           <MenuItem 
             icon={<CalendarDays className="h-5 w-5" />} 
             label="Eventos" 

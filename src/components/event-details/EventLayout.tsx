@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { EventHeader } from "./EventHeader";
 
 interface EventLayoutProps {
   children: React.ReactNode;
@@ -9,16 +10,19 @@ interface EventLayoutProps {
 
 export function EventLayout({ children, onBack }: EventLayoutProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary">
-      <div className="container mx-auto px-4 py-8">
-        <Button
-          variant="ghost"
+    <div className="min-h-screen bg-gradient-to-b from-background to-secondary pt-8 pb-16">
+      <div className="container px-4">
+        <EventHeader />
+        
+        <Button 
+          variant="ghost" 
           onClick={onBack}
-          className="mb-4"
+          className="mb-6 group hover:bg-white/50"
         >
-          <ArrowLeft className="mr-2 h-4 w-4" />
+          <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
           Voltar
         </Button>
+        
         {children}
       </div>
     </div>

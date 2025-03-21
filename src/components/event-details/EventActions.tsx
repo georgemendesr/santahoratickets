@@ -10,7 +10,9 @@ interface EventActionsProps {
   onPurchase: () => void;
   onShare: () => void;
   onEdit: () => void;
-  soldOut?: boolean; // Nova propriedade
+  soldOut?: boolean;
+  hasSelectedQuantity?: boolean;
+  selectedQuantity?: number;
 }
 
 export function EventActions({ 
@@ -19,8 +21,17 @@ export function EventActions({
   onPurchase, 
   onShare, 
   onEdit,
-  soldOut = false
+  soldOut = false,
+  hasSelectedQuantity = false,
+  selectedQuantity = 0
 }: EventActionsProps) {
+  // Determine o texto do botão baseado no estado
+  const getPurchaseButtonText = () => {
+    if (soldOut) return "Ingressos Esgotados";
+    if (hasSelectedQuantity) return `Comprar ${selectedQuantity} Pulseira${selectedQuantity > 1 ? 's' : ''}`;
+    return "Comprar Pulseira";
+  };
+  
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -28,9 +39,9 @@ export function EventActions({
           className="w-full" 
           size="lg"
           onClick={onPurchase}
-          disabled={soldOut} // Desabilitar o botão se estiver esgotado
+          disabled={soldOut || !hasSelectedQuantity} // Desabilitar se esgotado ou nenhuma quantidade selecionada
         >
-          {soldOut ? "Ingressos Esgotados" : "Comprar Pulseira"}
+          {getPurchaseButtonText()}
         </Button>
         
         <div className="flex gap-2">

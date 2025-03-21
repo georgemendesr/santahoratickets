@@ -11,9 +11,10 @@ import { computeBatchStatus } from "@/utils/batchStatusUtils";
 
 interface BatchesTableProps {
   batches: Batch[];
+  onQuantityChange?: (quantities: Record<string, number>) => void;
 }
 
-export function BatchesTable({ batches }: BatchesTableProps) {
+export function BatchesTable({ batches, onQuantityChange }: BatchesTableProps) {
   const [selectedQuantities, setSelectedQuantities] = useState<Record<string, number>>({});
   const [now, setNow] = useState(new Date());
 
@@ -25,6 +26,13 @@ export function BatchesTable({ batches }: BatchesTableProps) {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Notificar componente pai quando as quantidades mudarem
+  useEffect(() => {
+    if (onQuantityChange) {
+      onQuantityChange(selectedQuantities);
+    }
+  }, [selectedQuantities, onQuantityChange]);
 
   const handleIncrement = (batchId: string) => {
     setSelectedQuantities(prev => ({

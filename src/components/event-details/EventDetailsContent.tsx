@@ -9,6 +9,7 @@ import { LoyaltyCard } from "./LoyaltyCard";
 import { ReferralCard } from "./ReferralCard";
 import { EventImage } from "./EventImage";
 import { computeBatchStatus } from "@/utils/batchStatusUtils";
+import { useState, useMemo } from "react";
 
 interface EventDetailsContentProps {
   event: Event;
@@ -18,7 +19,7 @@ interface EventDetailsContentProps {
   referrer: { name: string } | null;
   referralCode: string | null;
   onShare: () => void;
-  onPurchase: () => void;
+  onPurchase: (selectedBatchId: string, quantity: number) => void;
   onEdit: () => void;
 }
 
@@ -33,8 +34,10 @@ export function EventDetailsContent({
   onPurchase,
   onEdit
 }: EventDetailsContentProps) {
-  // Função para verificar se todos os lotes estão esgotados
-  const areAllBatchesSoldOut = () => {
+  const [selectedQuantities, setSelectedQuantities] = useState<Record<string, number>>({});
+  
+  // Memorize the calculation to avoid recalculating on every render
+  const areAllBatchesSoldOut = useMemo(() => {
     // Se não houver lotes, consideramos como esgotado
     if (!batches || batches.length === 0) return true;
     
@@ -46,6 +49,24 @@ export function EventDetailsContent({
     return visibleBatches.every(batch => 
       computeBatchStatus(batch) === 'sold_out'
     );
+  }, [batches]);
+
+  // Encontrar o primeiro lote selecionado e sua quantidade
+  const selectedBatchInfo = useMemo(() => {
+    const entries = Object.entries(selectedQuantities);
+    const selectedEntry = entries.find(([_, quantity]) => quantity > 0);
+    
+    if (!selectedEntry) return { batchId: null, quantity: 0 };
+    
+    const [batchId, quantity] = selectedEntry;
+    return { batchId, quantity };
+  }, [selectedQuantities]);
+
+  const handlePurchase = () => {
+    const { batchId, quantity } = selectedBatchInfo;
+    if (batchId && quantity > 0) {
+      onPurchase(batchId, quantity);
+    }
   };
 
   const getLowStockAlert = (availableTickets: number) => {
@@ -56,7 +77,7 @@ export function EventDetailsContent({
         </p>
       );
     }
-    if (areAllBatchesSoldOut()) {
+    if (areAllBatchesSoldOut) {
       return (
         <p className="text-sm text-red-600 font-medium">
           Ingressos esgotados
@@ -65,6 +86,9 @@ export function EventDetailsContent({
     }
     return null;
   };
+
+  // Verificar se há alguma quantidade selecionada
+  const hasSelectedQuantity = selectedBatchInfo.quantity > 0;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -86,22 +110,27 @@ export function EventDetailsContent({
             <EventInfo 
               event={event} 
               getLowStockAlert={getLowStockAlert} 
-              soldOut={areAllBatchesSoldOut()}
+              soldOut={areAllBatchesSoldOut}
             />
           </CardContent>
         </Card>
 
-        <BatchesTable batches={batches} />
+        <BatchesTable 
+          batches={batches} 
+          onQuantityChange={setSelectedQuantities}
+        />
 
         <Card>
           <CardContent className="p-6">
             <EventActions
               event={event}
               isAdmin={isAdmin}
-              onPurchase={onPurchase}
+              onPurchase={handlePurchase}
               onShare={onShare}
               onEdit={onEdit}
-              soldOut={areAllBatchesSoldOut()}
+              soldOut={areAllBatchesSoldOut}
+              hasSelectedQuantity={hasSelectedQuantity}
+              selectedQuantity={selectedBatchInfo.quantity}
             />
           </CardContent>
         </Card>

@@ -63,7 +63,7 @@ const EventDetails = () => {
     createReferralMutation.mutate();
   };
 
-  const handlePurchase = () => {
+  const handlePurchase = (batchId: string, quantity: number) => {
     if (!event?.id) {
       toast.error("Evento não encontrado");
       return;
@@ -75,7 +75,8 @@ const EventDetails = () => {
       return;
     }
     
-    navigateTo(`/checkout/${event.id}`);
+    // Redirecionar para checkout com batchId e quantidade selecionada
+    navigateTo(`/checkout/${event.id}/finish?batch=${batchId}&quantity=${quantity}`);
   };
 
   const handleProfileSubmit = (e: React.FormEvent) => {

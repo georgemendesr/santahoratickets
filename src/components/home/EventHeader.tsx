@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Event } from "@/types";
@@ -15,7 +14,6 @@ export function EventHeader() {
     queryKey: ["featured-event"],
     queryFn: async () => {
       try {
-        // Buscar o próximo evento (com data futura)
         const today = new Date().toISOString().split('T')[0];
         
         const { data, error } = await supabase
@@ -30,7 +28,6 @@ export function EventHeader() {
         if (error) throw error;
         
         if (data) {
-          // Buscar informação do lote ativo
           const { data: batchData, error: batchError } = await supabase
             .from("batches")
             .select("*")
@@ -40,7 +37,6 @@ export function EventHeader() {
             
           if (batchError) throw batchError;
           
-          // Filtrar lotes ativos
           const activeBatches = batchData.filter(batch => {
             const now = new Date();
             const startDate = new Date(batch.start_date);
@@ -68,7 +64,6 @@ export function EventHeader() {
     },
   });
 
-  // Verificar se a imagem existe e formar a URL correta
   const imageUrl = event?.image 
     ? (event.image.startsWith("http") 
         ? event.image 
@@ -107,11 +102,6 @@ export function EventHeader() {
 
         <div className="relative z-20 container mx-auto px-4 text-center">
           <div className="max-w-2xl mx-auto text-white">
-            <img 
-              src="/lovable-uploads/84e088a9-3b7b-41d9-9ef3-dd2894f717cf.png" 
-              alt="Logo Santa Hora" 
-              className="h-48 mx-auto filter drop-shadow-2xl mb-8"
-            />
             <h2 className="text-3xl font-bold mb-4">Nenhum evento disponível no momento</h2>
             <p className="text-xl mb-8">Fique ligado! Em breve teremos novidades incríveis para você.</p>
           </div>
@@ -120,7 +110,6 @@ export function EventHeader() {
     );
   }
 
-  // Determinar informações de lote para exibição
   let batchInfo = {
     name: "Esgotado",
     class: "bg-red-500 text-white"
@@ -133,13 +122,11 @@ export function EventHeader() {
     };
   }
   
-  // Verificar se o evento já aconteceu
   const eventDate = new Date(event.date);
   const isPastEvent = eventDate < new Date();
 
   return (
     <div className="relative min-h-[90vh] flex items-center justify-center py-16">
-      {/* Background com overlay mais escuro */}
       <div className="absolute inset-0">
         <div className="relative h-full w-full">
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/30 z-10" />
@@ -151,7 +138,6 @@ export function EventHeader() {
         </div>
       </div>
 
-      {/* Conteúdo centralizado */}
       <div className="relative z-20 container mx-auto px-4">
         <div className="max-w-5xl mx-auto rounded-2xl overflow-hidden backdrop-blur-md bg-white/10 shadow-2xl">
           <div className="p-6 md:p-10 text-white">
@@ -201,7 +187,6 @@ export function EventHeader() {
         </div>
       </div>
 
-      {/* Elementos atmosféricos */}
       <div className="absolute inset-0 pointer-events-none z-10">
         <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />

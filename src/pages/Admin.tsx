@@ -1,8 +1,5 @@
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { useRole } from "@/hooks/useRole";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -12,19 +9,21 @@ import { DashboardCharts } from "@/components/admin/dashboard/DashboardCharts";
 import { ActionCards } from "@/components/admin/dashboard/ActionCards";
 
 const Admin = () => {
-  const { session } = useAuth();
-  const { isAdmin } = useRole(session);
-
-  const { data: dashboardData } = useQuery({
+  const { data: dashboardData, isLoading } = useQuery({
     queryKey: ["admin-dashboard"],
     queryFn: async () => {
-      const { data: events } = await supabase
+      const { data: events, error } = await supabase
         .from("events")
         .select("*")
         .order("date", { ascending: false })
         .limit(5);
-
-      return events;
+        
+      if (error) {
+        console.error("Error fetching dashboard data:", error);
+        return [];
+      }
+      
+      return events || [];
     },
   });
 

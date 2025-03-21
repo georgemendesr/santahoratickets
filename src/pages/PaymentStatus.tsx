@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -34,7 +33,6 @@ const PaymentStatus = () => {
     navigate
   });
 
-  // Determinar o status apropriado para exibição
   const displayStatus = status || (error ? "error" : "pending");
   const statusInfo = getStatusInfo({ 
     status: displayStatus, 
@@ -43,7 +41,6 @@ const PaymentStatus = () => {
     errorMessage: error
   });
 
-  // Tentar refrescar automaticamente o QR code se houver erro
   useEffect(() => {
     if (error && displayStatus === "pending" && preferenceId) {
       const timer = setTimeout(() => {
@@ -99,7 +96,6 @@ const PaymentStatus = () => {
                     </div>
                   ) : (
                     <div>
-                      {/* Se temos o código, não mostrar a mensagem de erro quando usamos o fallback */}
                       {error && !qrCode && (
                         <div className="flex flex-col items-center py-4 space-y-3 mb-4">
                           <div className="text-amber-500 bg-amber-50 p-3 rounded-full">
@@ -120,7 +116,6 @@ const PaymentStatus = () => {
                         </div>
                       )}
                       
-                      {/* Mostrar o componente PixQRCode sempre que tivermos o código PIX, mesmo se for fallback */}
                       {qrCode && (
                         <>
                           <div className="bg-emerald-50 p-3 rounded-md border border-emerald-200 mb-4">
@@ -142,13 +137,11 @@ const PaymentStatus = () => {
                         </>
                       )}
                       
-                      {/* Adicionar botão de emergência caso nada tenha funcionado */}
                       {!qrCode && error && (
                         <div className="flex flex-col items-center mt-6">
                           <Button 
                             variant="destructive"
                             onClick={() => {
-                              // Forçar uma nova geração completa
                               localStorage.removeItem("pixPaymentData");
                               navigate(`/payment-status?status=pending&payment_id=${payment_id}&external_reference=${reference}`);
                               window.location.reload();

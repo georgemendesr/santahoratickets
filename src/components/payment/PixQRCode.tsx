@@ -73,6 +73,7 @@ export const PixQRCode = ({ qrCode, qrCodeBase64, onRefresh, error }: PixQRCodeP
       <PixPaymentInfo 
         beneficiaryName={beneficiaryName}
         hasPixCode={hasValidCode}
+        pixCode={validPixCode}
       />
     </div>
   );

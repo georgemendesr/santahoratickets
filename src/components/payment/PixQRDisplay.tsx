@@ -1,6 +1,5 @@
 
 import { AlertTriangle } from "lucide-react";
-import { useEffect, useState } from "react";
 
 interface PixQRDisplayProps {
   qrCodeUrl: string | null;

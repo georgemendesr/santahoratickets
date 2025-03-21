@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { MainHeader } from '@/components/layout/MainHeader';
@@ -13,23 +13,46 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps) {
-  const { isAdmin, loading, checkAuth, session } = useAuthStore();
+  const { session, isAdmin, loading, checkAuth } = useAuthStore();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [initialized, setInitialized] = useState(false);
   
-  // Always ensure auth is checked on mount
+  // Verificar autenticação ao montar
   useEffect(() => {
-    console.log("Admin layout mounting, checking auth...");
-    checkAuth();
-  }, [checkAuth]);
-  
-  // Handle auth state changes
-  useEffect(() => {
-    console.log("Auth state in AdminLayout:", { loading, isAdmin, hasSession: !!session });
+    console.log("AdminLayout inicializando, verificando autenticação...");
     
-    // Only redirect when loading is complete AND user is not admin (if required)
+    const init = async () => {
+      try {
+        await checkAuth();
+        setInitialized(true);
+      } catch (error) {
+        console.error("Erro ao verificar autenticação:", error);
+        toast({
+          title: "Erro de autenticação",
+          description: "Não foi possível verificar suas permissões",
+          variant: "destructive",
+        });
+        setInitialized(true);
+      }
+    };
+    
+    init();
+  }, [checkAuth, toast]);
+  
+  // Gerenciar estado de autenticação
+  useEffect(() => {
+    if (!initialized) return;
+    
+    console.log("Estado de autenticação:", { 
+      loading, 
+      isAdmin, 
+      hasSession: !!session,
+      initialized
+    });
+    
     if (!loading && requiresAdmin && !isAdmin) {
-      console.log("User not authorized, redirecting to home");
+      console.log("Usuário não autorizado, redirecionando para home");
       toast({
         title: "Acesso restrito",
         description: "Você não tem permissão para acessar esta página",
@@ -37,19 +60,21 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
       });
       navigate('/');
     }
-  }, [loading, isAdmin, requiresAdmin, navigate, toast, session]);
+  }, [loading, isAdmin, requiresAdmin, navigate, toast, session, initialized]);
   
-  // Simple loading display
-  if (loading) {
+  // Estado de carregamento
+  if (loading || !initialized) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-amber-500"></div>
-        <span className="ml-3">Verificando permissões...</span>
+        <div className="flex flex-col items-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-amber-500"></div>
+          <span className="mt-4 text-gray-600">Verificando permissões...</span>
+        </div>
       </div>
     );
   }
   
-  // If user is not authorized and we're still on this page (before redirect takes effect)
+  // Se usuário não está autorizado
   if (requiresAdmin && !isAdmin) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -61,7 +86,7 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
     );
   }
   
-  // Normal admin layout rendering
+  // Layout administrativo normal
   return (
     <div className="flex min-h-screen w-full">
       <AdminSidebar />

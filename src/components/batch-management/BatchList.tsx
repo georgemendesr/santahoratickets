@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Batch } from "@/types/event.types";
@@ -66,6 +67,7 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
   };
 
   const getBatchStatus = (batch: Batch) => {
+    // Se o status estiver explicitamente definido, use-o
     if (batch.status === 'sold_out') return 'Esgotado';
     if (batch.status === 'ended') return 'Encerrado';
     if (!batch.is_visible) return 'Desativado';
@@ -135,6 +137,33 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
       toast.error('Não foi possível alterar a visibilidade do lote.');
     } finally {
       setIsToggling(null);
+    }
+  };
+
+  const resetBatchStatus = async (batch: Batch) => {
+    if (!confirm(`Tem certeza que deseja reativar este lote? Isto irá definir o status como 'ativo' novamente.`)) {
+      return;
+    }
+    
+    try {
+      // Se não houver ingressos disponíveis, garantir que pelo menos 1 esteja disponível
+      const availableTickets = batch.available_tickets <= 0 ? 1 : batch.available_tickets;
+      
+      const { error } = await supabase
+        .from('batches')
+        .update({ 
+          status: 'active',
+          available_tickets: availableTickets
+        })
+        .eq('id', batch.id);
+        
+      if (error) throw error;
+      
+      refetch();
+      toast.success("Lote reativado com sucesso");
+    } catch (error) {
+      console.error('Erro ao reativar lote:', error);
+      toast.error('Não foi possível reativar o lote.');
     }
   };
 
@@ -268,9 +297,22 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge className={statusClass}>
-                      {status}
-                    </Badge>
+                    <div className="flex items-center space-x-2">
+                      <Badge className={statusClass}>
+                        {status}
+                      </Badge>
+                      {(batch.status === 'sold_out' || batch.status === 'ended') && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => resetBatchStatus(batch)}
+                          title="Reativar lote"
+                          className="h-5 w-5"
+                        >
+                          <Check className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Switch 
@@ -322,4 +364,4 @@ export function BatchList({ eventId, onEditBatch }: BatchListProps) {
       </CardContent>
     </Card>
   );
-}
+};

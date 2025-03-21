@@ -18,7 +18,7 @@ interface BatchFormData {
   minPurchase: string;
   maxPurchase: string;
   batchGroup: string;
-  status?: string; // Add status property
+  status?: string;
 }
 
 interface UseBatchFormProps {
@@ -93,7 +93,7 @@ export const useBatchForm = ({ eventId, orderNumber, batchId, onSuccess }: UseBa
             minPurchase: batch.min_purchase.toString(),
             maxPurchase: batch.max_purchase ? batch.max_purchase.toString() : "",
             batchGroup: batch.batch_group || "",
-            status: batch.status || "active" // Include status in formData
+            status: batch.status || "active"
           });
         }
       } catch (error) {
@@ -175,7 +175,7 @@ export const useBatchForm = ({ eventId, orderNumber, batchId, onSuccess }: UseBa
         title: formData.title,
         price: parseFloat(formData.price),
         total_tickets: parseInt(formData.totalTickets),
-        available_tickets: batchId ? undefined : parseInt(formData.totalTickets), // Não atualiza available_tickets na edição
+        available_tickets: batchId ? undefined : parseInt(formData.totalTickets), // Não atualiza available_tickets na edição inicial
         start_date: `${formData.startDate}T${formData.startTime}:00Z`,
         end_date: formData.endDate ? `${formData.endDate}T${formData.endTime || "23:59"}:00Z` : null,
         visibility: formData.visibility,
@@ -186,10 +186,44 @@ export const useBatchForm = ({ eventId, orderNumber, batchId, onSuccess }: UseBa
         batch_group: formData.batchGroup || null,
         event_id: eventId,
         order_number: batchId ? undefined : orderNumber, // Não atualiza order_number na edição
-        status: 'active'
+        status: formData.status || 'active'
       };
 
       console.log(batchId ? "Atualizando lote:" : "Enviando dados do lote:", batchData);
+
+      // Se estiver editando, precisamos verificar se a quantidade total mudou
+      if (batchId) {
+        const { data: currentBatch, error: fetchError } = await supabase
+          .from('batches')
+          .select('total_tickets, available_tickets')
+          .eq('id', batchId)
+          .single();
+          
+        if (fetchError) throw fetchError;
+        
+        if (currentBatch) {
+          const oldTotal = currentBatch.total_tickets;
+          const newTotal = parseInt(formData.totalTickets);
+          
+          // Se a quantidade total mudou, ajustar a quantidade disponível
+          if (oldTotal !== newTotal) {
+            const sold = oldTotal - currentBatch.available_tickets;
+            const newAvailable = Math.max(0, newTotal - sold);
+            
+            // Atualizar quantidade disponível
+            batchData.available_tickets = newAvailable;
+            
+            // Se não há ingressos disponíveis, definir status como esgotado
+            if (newAvailable <= 0 && batchData.status === 'active') {
+              batchData.status = 'sold_out';
+            }
+            // Se estava esgotado mas agora tem ingressos, voltar para ativo
+            else if (newAvailable > 0 && currentBatch.available_tickets <= 0) {
+              batchData.status = 'active';
+            }
+          }
+        }
+      }
 
       let operation;
       if (batchId) {
@@ -238,6 +272,6 @@ export const useBatchForm = ({ eventId, orderNumber, batchId, onSuccess }: UseBa
     isLoading,
     updateFormField,
     handleSubmit,
-    isEditing: !!batchId // Add isEditing property to the return object
+    isEditing: !!batchId
   };
 };

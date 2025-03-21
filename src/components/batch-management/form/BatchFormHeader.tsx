@@ -54,13 +54,7 @@ export const BatchFormHeader: React.FC<BatchFormHeaderProps> = ({
             value={totalTickets}
             onChange={(e) => setTotalTickets(e.target.value)}
             required
-            disabled={isEditing}
           />
-          {isEditing && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Não é possível alterar a quantidade após a criação do lote.
-            </p>
-          )}
         </div>
       </div>
     </div>

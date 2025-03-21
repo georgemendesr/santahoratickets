@@ -141,8 +141,8 @@ export const BatchForm = ({ eventId, orderNumber, batchId, onCancel, onSuccess }
               <InfoIcon className="h-4 w-4" />
               <AlertTitle>Edição de lote</AlertTitle>
               <AlertDescription>
-                Algumas propriedades como quantidade total de ingressos não podem ser alteradas 
-                após a criação do lote por questões de integridade.
+                Ao alterar a quantidade total de ingressos, a quantidade disponível será ajustada automaticamente
+                com base no número já vendido.
               </AlertDescription>
             </Alert>
           )}

@@ -1,4 +1,5 @@
-import { Facebook, Instagram, Share2, Twitter } from "lucide-react";
+
+import { Instagram, Share2, MessageCircle } from "lucide-react";
 import { Button } from "../ui/button";
 
 interface ShareButtonsProps {
@@ -13,8 +14,7 @@ export function ShareButtons({ url, title, variant, event }: ShareButtonsProps) 
   const encodedTitle = encodeURIComponent(title);
 
   const shareLinks = {
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-    twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
+    whatsapp: `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`,
     instagram: `https://www.instagram.com/?url=${encodedUrl}`,
   };
 
@@ -24,29 +24,31 @@ export function ShareButtons({ url, title, variant, event }: ShareButtonsProps) 
         title: title,
         url: url,
       }).catch(err => console.error("Error sharing:", err));
+    } else {
+      window.open(shareLinks.whatsapp, '_blank');
     }
   };
 
   return (
     <div className="flex space-x-2 mt-4">
       <a 
-        href={shareLinks.facebook} 
+        href={shareLinks.whatsapp} 
         target="_blank" 
         rel="noopener noreferrer"
-        className="text-blue-600 hover:text-blue-800"
+        className="text-green-600 hover:text-green-800"
       >
         <Button variant="outline" size="icon">
-          <Facebook size={18} />
+          <MessageCircle size={18} />
         </Button>
       </a>
       <a 
-        href={shareLinks.twitter} 
+        href={shareLinks.instagram} 
         target="_blank" 
         rel="noopener noreferrer"
-        className="text-blue-400 hover:text-blue-600"
+        className="text-pink-600 hover:text-pink-800"
       >
         <Button variant="outline" size="icon">
-          <Twitter size={18} />
+          <Instagram size={18} />
         </Button>
       </a>
       <Button variant="outline" size="icon" onClick={handleShare}>

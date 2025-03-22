@@ -25,18 +25,32 @@ function validateInput(data: any) {
 // Função para obter dados do evento com tratamento de erros
 async function getEventData(supabase, eventId) {
   try {
+    console.log("Buscando dados do evento:", eventId);
+    
     const { data: event, error } = await supabase
       .from('events')
       .select('title, price, id, creator_id')
       .eq('id', eventId)
       .single();
     
-    if (error) throw error;
-    if (!event) throw new Error(`Evento não encontrado com ID: ${eventId}`);
+    if (error) {
+      console.error("Erro SQL ao buscar evento:", error);
+      throw error;
+    }
     
+    if (!event) {
+      console.error("Evento não encontrado:", eventId);
+      throw new Error(`Evento não encontrado com ID: ${eventId}`);
+    }
+    
+    console.log("Dados do evento recuperados com sucesso:", event);
     return event;
   } catch (error) {
-    console.error("Erro ao buscar dados do evento:", error);
+    console.error("Erro detalhado ao buscar dados do evento:", {
+      message: error.message,
+      code: error.code,
+      details: error.details
+    });
     throw new Error(`Erro ao buscar dados do evento: ${error.message}`);
   }
 }
@@ -44,6 +58,7 @@ async function getEventData(supabase, eventId) {
 // Função para obter dados de preferência existente
 async function getExistingPreference(supabase, preferenceId) {
   try {
+    console.log("Buscando preferência:", preferenceId);
     const { data: preference, error } = await supabase
       .from('payment_preferences')
       .select('*')
@@ -53,10 +68,65 @@ async function getExistingPreference(supabase, preferenceId) {
     if (error) throw error;
     if (!preference) throw new Error(`Preferência não encontrada: ${preferenceId}`);
     
+    console.log("Preferência encontrada:", {
+      id: preference.id,
+      event_id: preference.event_id,
+      status: preference.status
+    });
+    
     return preference;
   } catch (error) {
     console.error("Erro ao buscar preferência:", error);
     throw new Error(`Erro ao buscar preferência: ${error.message}`);
+  }
+}
+
+// Função para testar geração básica de PIX (dados mínimos garantidos)
+async function testBasicPixGeneration() {
+  try {
+    console.log("INICIANDO TESTE BÁSICO PIX");
+    
+    // Dados mínimos garantidos conforme documentação do Mercado Pago
+    const minimalRequest = {
+      transaction_amount: 1.00,
+      description: "Teste básico PIX",
+      payment_method_id: "pix",
+      payer: {
+        email: "test_user_24634007@testuser.com"
+      }
+    };
+    
+    console.log("Requisição mínima de teste:", JSON.stringify(minimalRequest));
+    
+    const response = await fetch("https://api.mercadopago.com/v1/payments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${mercadoPagoAccessToken}`
+      },
+      body: JSON.stringify(minimalRequest),
+    });
+    
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      console.error("Erro no teste básico:", responseData);
+      throw new Error(`Erro na API do Mercado Pago: ${responseData.message || 'Erro desconhecido'}`);
+    }
+    
+    console.log("TESTE BÁSICO BEM-SUCEDIDO:", JSON.stringify(responseData));
+    
+    // Verificar se os campos esperados existem
+    if (responseData.point_of_interaction?.transaction_data?.qr_code) {
+      console.log("QR CODE GERADO COM SUCESSO");
+    } else {
+      console.log("RESPOSTA SEM QR CODE:", JSON.stringify(responseData));
+    }
+    
+    return responseData;
+  } catch (error) {
+    console.error("ERRO NO TESTE BÁSICO:", JSON.stringify(error.response?.data || error.message));
+    throw error;
   }
 }
 
@@ -82,9 +152,10 @@ async function createPixData(event, preference) {
       payer: payer
     };
     
-    console.log("Dados para criar pagamento PIX:", JSON.stringify(paymentData));
+    console.log("DADOS DE PAGAMENTO:", JSON.stringify(paymentData));
     
     // Chamar a API do Mercado Pago
+    console.log("REQUISIÇÃO AO MERCADO PAGO:", JSON.stringify(paymentData));
     const response = await fetch("https://api.mercadopago.com/v1/payments", {
       method: "POST",
       headers: {
@@ -94,14 +165,19 @@ async function createPixData(event, preference) {
       body: JSON.stringify(paymentData),
     });
     
+    const mpResponse = await response.json();
+    
     // Verificar resposta
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Erro na resposta do Mercado Pago:", errorData);
-      throw new Error(`Erro na resposta do Mercado Pago: ${errorData.message || 'Erro desconhecido'}`);
+      console.error("ERRO COMPLETO:", JSON.stringify({
+        message: mpResponse.message,
+        response: mpResponse,
+        status: response.status
+      }));
+      throw new Error(`Erro na resposta do Mercado Pago: ${mpResponse.message || 'Erro desconhecido'}`);
     }
     
-    const mpResponse = await response.json();
+    console.log("RESPOSTA DO MERCADO PAGO:", JSON.stringify(mpResponse));
     console.log("Resposta do Mercado Pago (resumo):", {
       id: mpResponse.id,
       status: mpResponse.status,
@@ -115,6 +191,11 @@ async function createPixData(event, preference) {
       payment_id: mpResponse.id
     };
   } catch (error) {
+    console.error("ERRO COMPLETO:", JSON.stringify({
+      message: error.message,
+      response: error.response?.data,
+      stack: error.stack
+    }));
     console.error("Erro ao criar dados PIX:", error);
     throw new Error(`Erro ao criar dados PIX: ${error.message}`);
   }
@@ -191,6 +272,27 @@ serve(async (req) => {
     validateInput(reqData);
     
     console.log("Dados da requisição:", reqData);
+    
+    // Verificar se é um pedido de teste básico
+    if (reqData.testOnly) {
+      console.log("Executando apenas teste básico de geração PIX");
+      const testResult = await testBasicPixGeneration();
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: "Teste básico executado com sucesso",
+          data: testResult
+        }),
+        { 
+          headers: { 
+            ...corsHeaders, 
+            "Content-Type": "application/json" 
+          },
+          status: 200
+        }
+      );
+    }
     
     let preference;
     let event;

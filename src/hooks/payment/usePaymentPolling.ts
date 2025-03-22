@@ -1,15 +1,16 @@
 
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { usePixData } from "./usePixData";
 import { usePaymentStatus } from "./usePaymentStatus";
-import { toast } from "sonner";
 
 interface UsePaymentPollingProps {
-  preferenceId: string | undefined | null;
-  payment_id: string | null;
-  reference: string | null;
-  status: string | null;
-  navigate: (path: string) => void;
+  preferenceId?: string | null;
+  payment_id?: string | null;
+  reference?: string | null;
+  status?: string | null;
+  navigate?: ReturnType<typeof useNavigate>;
+  useTestCredentials?: boolean;
 }
 
 export const usePaymentPolling = ({
@@ -17,44 +18,15 @@ export const usePaymentPolling = ({
   payment_id,
   reference,
   status: initialStatus,
-  navigate
+  navigate,
+  useTestCredentials = false
 }: UsePaymentPollingProps) => {
-  // Estado para controlar se o QR code foi carregado
-  const [qrCodeLoaded, setQrCodeLoaded] = useState<boolean>(false);
-  const [fallbackQrUsed, setFallbackQrUsed] = useState<boolean>(false);
-  const [retryCount, setRetryCount] = useState<number>(0);
-  const [manualRetry, setManualRetry] = useState<boolean>(false);
-  
-  // Verificação de cache com validação
-  useEffect(() => {
-    try {
-      console.log("Verificando cache local de pagamento");
-      const cachedPixData = localStorage.getItem('pixPaymentData');
-      
-      if (cachedPixData) {
-        const parsedData = JSON.parse(cachedPixData);
-        
-        if (preferenceId && parsedData.preferenceId === preferenceId) {
-          const dataAge = Date.now() - parsedData.timestamp;
-          
-          if (dataAge > 1000 * 60 * 30) {  // 30 minutos
-            console.log("Dados de cache expirados", { idade: dataAge / 1000 / 60 + " minutos" });
-            localStorage.removeItem('pixPaymentData');
-          } else {
-            console.log("Usando dados PIX do cache", { idade: dataAge / 1000 / 60 + " minutos" });
-            if (parsedData.usingFallback) {
-              setFallbackQrUsed(true);
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Falha ao processar cache:", error);
-      localStorage.removeItem('pixPaymentData');
-    }
-  }, [preferenceId]);
-  
-  // Obter dados do PIX com revalidação automática
+  const [qrCodeLoaded, setQrCodeLoaded] = useState(false);
+  const [fallbackQrUsed, setFallbackQrUsed] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [qrErrorCount, setQrErrorCount] = useState(0);
+
+  // Usar hook de PixData para obter dados do PIX
   const {
     qrCode,
     qrCodeBase64,
@@ -62,104 +34,16 @@ export const usePaymentPolling = ({
     isLoading,
     error,
     setCurrentStatus,
-    refreshPixData
-  } = usePixData({ 
+    refreshPixData,
+    environment,
+    toggleEnvironment
+  } = usePixData({
     preferenceId,
-    forceRefresh: manualRetry 
+    forceRefresh: false,
+    useTestCredentials
   });
 
-  // Reset manual retry flag after refresh
-  useEffect(() => {
-    if (manualRetry && !isLoading) {
-      setManualRetry(false);
-    }
-  }, [isLoading, manualRetry]);
-
-  // Salvar dados válidos no cache
-  useEffect(() => {
-    if (qrCode && preferenceId) {
-      try {
-        console.log("Salvando código PIX no cache");
-        localStorage.setItem('pixPaymentData', JSON.stringify({
-          preferenceId,
-          qrCode,
-          qrCodeBase64,
-          usingFallback: !qrCodeBase64 && qrCode,
-          timestamp: Date.now()
-        }));
-        
-        // Se temos o código PIX mas não o QR Code base64, estamos usando fallback
-        if (!qrCodeBase64 && qrCode && !fallbackQrUsed) {
-          setFallbackQrUsed(true);
-        }
-      } catch (error) {
-        console.error("Falha ao salvar cache:", error);
-      }
-    }
-  }, [qrCode, qrCodeBase64, preferenceId, fallbackQrUsed]);
-
-  // Retry automaticamente se não conseguir carregar o QR code
-  useEffect(() => {
-    if (error && !qrCode && retryCount < 3 && !isLoading) {
-      // Se o erro for relacionado à coluna 'organizer_name', não tentar novamente automaticamente,
-      // pois é um erro no servidor que não será resolvido com retries
-      if (error.includes("organizer_name")) {
-        console.log("Erro relacionado à coluna 'organizer_name' detectado, não tentando novamente automaticamente");
-        return;
-      }
-      
-      const timer = setTimeout(() => {
-        console.log(`Tentativa ${retryCount + 1} de 3 para carregar o QR code...`);
-        setRetryCount(prev => prev + 1);
-        refreshPixData();
-        toast.info("Tentando gerar o QR code novamente...");
-      }, 2000 * (retryCount + 1)); // Backoff exponencial
-      
-      return () => clearTimeout(timer);
-    }
-  }, [error, qrCode, retryCount, isLoading, refreshPixData]);
-
-  // Callback otimizado para atualizar o QR code
-  const handleRefreshPixData = useCallback(() => {
-    console.log("Solicitando atualização completa dos dados PIX");
-    setQrCodeLoaded(false);
-    setFallbackQrUsed(false);
-    setRetryCount(0);
-    setManualRetry(true);
-    refreshPixData();
-    
-    // Feedback para o usuário
-    toast.info("Tentando gerar QR code novamente...");
-  }, [refreshPixData]);
-
-  // Notificar quando o QR code for carregado com sucesso
-  useEffect(() => {
-    if (qrCode && !qrCodeLoaded) {
-      console.log("QR code carregado com sucesso");
-      setQrCodeLoaded(true);
-      toast.success("Código de pagamento gerado com sucesso");
-      
-      if (!qrCodeBase64) {
-        toast.warning("QR code disponível apenas como texto. Use a opção Copia e Cola.");
-      }
-    }
-  }, [qrCode, qrCodeBase64, qrCodeLoaded]);
-
-  // Limpeza de dados em caso de problemas
-  useEffect(() => {
-    return () => {
-      if (error) {
-        console.log("Limpando cache devido a erros");
-        try {
-          localStorage.removeItem('pixPaymentData');
-        } catch (e) {
-          console.error("Falha ao limpar cache:", e);
-        }
-      }
-    };
-  }, [error]);
-
-  // Configurar monitoramento de status de pagamento
+  // Usar hook de status para verificar alterações de status
   const { isPolling } = usePaymentStatus({
     preferenceId,
     payment_id,
@@ -169,44 +53,31 @@ export const usePaymentPolling = ({
     setCurrentStatus
   });
 
-  // Redirecionar para home se não houver status ou preferenceId
+  // Efeito para detectar carregamento do QR code
   useEffect(() => {
-    if ((!initialStatus && !preferenceId) || (!initialStatus && !payment_id)) {
-      console.log("Dados insuficientes, redirecionando para home");
-      toast.error("Dados de pagamento incompletos");
-      navigate("/");
+    if (qrCode || qrCodeBase64) {
+      setQrCodeLoaded(true);
     }
-  }, [initialStatus, preferenceId, payment_id, navigate]);
+  }, [qrCode, qrCodeBase64]);
 
-  // Log do estado atual
-  useEffect(() => {
-    console.log("Estado atual do sistema de pagamento:", {
-      qrCode: qrCode ? "Presente" : "Ausente",
-      qrCodeBase64: qrCodeBase64 ? "Presente" : "Ausente",
-      isLoading,
-      error: error || "Nenhum",
-      paymentId: payment_id,
-      pollingActive: isPolling,
-      qrCodeLoaded,
-      fallbackQrUsed,
-      retryCount,
-      manualRetry
-    });
-  }, [qrCode, qrCodeBase64, isLoading, error, payment_id, isPolling, qrCodeLoaded, fallbackQrUsed, retryCount, manualRetry]);
+  // Função para tentar novamente com reinicialização de contadores
+  const handleManualRefresh = useCallback(() => {
+    setRetryCount(prev => prev + 1);
+    setQrErrorCount(0);
+    refreshPixData();
+  }, [refreshPixData]);
 
-  // Determinar o erro a mostrar para o usuário
-  const userFacingError = fallbackQrUsed 
-    ? null  // Não mostrar erro se temos pelo menos o QR code via fallback
-    : error;
-
+  // Retornar dados e funções para o componente
   return {
     qrCode,
     qrCodeBase64,
     isLoading,
-    error: userFacingError,
-    refreshPixData: handleRefreshPixData,
+    error,
+    refreshPixData: handleManualRefresh,
     qrCodeLoaded,
     fallbackQrUsed,
-    retryCount
+    retryCount,
+    environment,
+    toggleEnvironment
   };
 };

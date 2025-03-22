@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 
 interface UsePixDataCoreProps {
@@ -18,7 +17,7 @@ export const usePixDataCore = ({ useTestCredentials = false }: UsePixDataCorePro
   const [lastAttemptTime, setLastAttemptTime] = useState(0);
   const [retryTimeoutId, setRetryTimeoutId] = useState<number | null>(null);
   const [environment, setEnvironment] = useState<"test" | "production">(useTestCredentials ? "test" : "production");
-
+  
   // Função para alternar entre ambiente de teste e produção
   const toggleEnvironment = useCallback(() => {
     const newTestMode = environment === "production";

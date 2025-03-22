@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ClipboardCopy, RefreshCw, Flask } from "lucide-react";
+import { ClipboardCopy, RefreshCw, Beaker } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,7 @@ const TestCredentialsCard = () => {
 
   const testCredentials = {
     publicKey: "TEST-235bbcdb-d3a5-4b8a-affc-2cc6473be7eb",
-    accessToken: "APP_USR-1217057600984731-021621-77ecfa5c3d1443fc1ff44c763e928eba-106423283"
+    accessToken: "TEST-1217057600984731-021621-11acd6ad8a3e1496fa519421793bfe42-106423283"
   };
 
   const handleCopyToClipboard = (text: string, label: string) => {
@@ -69,7 +69,7 @@ const TestCredentialsCard = () => {
     <Card className="border-amber-200 bg-amber-50">
       <CardHeader className="pb-3">
         <CardTitle className="text-amber-800 flex items-center gap-2">
-          <Flask className="h-5 w-5" />
+          <Beaker className="h-5 w-5" />
           Credenciais de Teste do Mercado Pago
         </CardTitle>
         <CardDescription className="text-amber-700">
@@ -127,7 +127,7 @@ const TestCredentialsCard = () => {
               </>
             ) : (
               <>
-                <Flask className="h-4 w-4 mr-2" />
+                <Beaker className="h-4 w-4 mr-2" />
                 Testar Geração de PIX
               </>
             )}

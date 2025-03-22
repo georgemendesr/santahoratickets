@@ -1,4 +1,3 @@
-
 import { corsHeaders } from "../_shared/cors.ts";
 
 // Função para testar geração básica de PIX (dados mínimos garantidos)
@@ -12,10 +11,7 @@ export async function testBasicPixGeneration(
     console.log("Ambiente:", isTestEnvironment ? "TESTE" : "PRODUÇÃO");
     
     // Usar token correto com base no ambiente
-    // Para o ambiente de teste, sempre usamos a credencial fixa fornecida
-    const accessToken = isTestEnvironment ? 
-      "APP_USR-1217057600984731-021621-77ecfa5c3d1443fc1ff44c763e928eba-106423283" : 
-      mercadoPagoAccessToken;
+    const accessToken = isTestEnvironment ? mercadoPagoTestAccessToken : mercadoPagoAccessToken;
     
     if (!accessToken) {
       throw new Error(`Token de acesso ${isTestEnvironment ? "de teste" : "de produção"} não configurado`);
@@ -83,10 +79,9 @@ export async function createPixData(
   isTestEnvironment: boolean = false
 ) {
   try {
-    // Usar token correto com base no ambiente
-    // Para o ambiente de teste, sempre usamos a credencial fixa fornecida
+    // Usar token corrigido para o ambiente de teste
     const accessToken = isTestEnvironment ? 
-      "APP_USR-1217057600984731-021621-77ecfa5c3d1443fc1ff44c763e928eba-106423283" : 
+      (mercadoPagoTestAccessToken || "TEST-1217057600984731-021621-11acd6ad8a3e1496fa519421793bfe42-106423283") : 
       mercadoPagoAccessToken;
     
     if (!accessToken) {

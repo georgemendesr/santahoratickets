@@ -140,8 +140,7 @@ async function createPixData(event, preference) {
     // Gerar dados para o pagamento PIX
     const externalReference = `${event.id}|${preference.id}`;
     
-    // AQUI ESTÁ A CORREÇÃO - Linha 393 aproximadamente
-    // Usar um valor fixo para o nome do beneficiário em vez de event.organizer_name
+    // CORREÇÃO: Usar um valor fixo para o nome do beneficiário em vez de event.organizer_name
     const organizerName = "Santa Hora"; // Valor fixo para o beneficiário
     
     console.log("Gerando QR Code PIX para:", {
@@ -152,36 +151,40 @@ async function createPixData(event, preference) {
       amount: preference.total_amount
     });
     
-    // Detalhes do pagador - valores fixos para teste
-    const payer = {
-      email: "test_user_24634007@testuser.com",
-      first_name: "Test",
-      last_name: "User"
-    };
-    
-    // Dados para a API do Mercado Pago
-    const paymentData = {
+    // SIMPLIFIQUE A REQUISIÇÃO - conforme recomendado
+    // Usar apenas os campos essenciais para o Mercado Pago
+    const pixRequestBody = {
       transaction_amount: preference.total_amount,
-      description: `Ingresso para ${event.title}`,
+      description: `Pagamento para Santa Hora`,
       payment_method_id: "pix",
-      external_reference: externalReference,
-      payer: payer
+      payer: {
+        email: "cliente@email.com"
+      }
     };
     
-    console.log("DADOS DE PAGAMENTO:", JSON.stringify(paymentData));
+    // ADICIONE LOGS DE DIAGNÓSTICO - conforme recomendado
+    console.log("Enviando requisição para Mercado Pago:", 
+                JSON.stringify({...pixRequestBody, access_token: "[REDACTED]"}));
     
     // Chamar a API do Mercado Pago
-    console.log("REQUISIÇÃO AO MERCADO PAGO:", JSON.stringify(paymentData));
     const response = await fetch("https://api.mercadopago.com/v1/payments", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${mercadoPagoAccessToken}`
       },
-      body: JSON.stringify(paymentData),
+      body: JSON.stringify(pixRequestBody),
     });
     
     const mpResponse = await response.json();
+    
+    // Log detalhado da resposta para diagnóstico
+    console.log("Resposta completa da API:", JSON.stringify({
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries([...response.headers]),
+      body: mpResponse
+    }));
     
     // Verificar resposta
     if (!response.ok) {

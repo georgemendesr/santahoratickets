@@ -6,9 +6,10 @@ import { toast } from "sonner";
 interface UsePixDataProps {
   preferenceId: string | undefined | null;
   forceRefresh?: boolean;
+  useTestCredentials?: boolean;
 }
 
-export const usePixData = ({ preferenceId, forceRefresh = false }: UsePixDataProps) => {
+export const usePixData = ({ preferenceId, forceRefresh = false, useTestCredentials = false }: UsePixDataProps) => {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [qrCodeBase64, setQrCodeBase64] = useState<string | null>(null);
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
@@ -17,6 +18,7 @@ export const usePixData = ({ preferenceId, forceRefresh = false }: UsePixDataPro
   const [attempts, setAttempts] = useState(0);
   const [lastAttemptTime, setLastAttemptTime] = useState(0);
   const [retryTimeoutId, setRetryTimeoutId] = useState<number | null>(null);
+  const [environment, setEnvironment] = useState<"test" | "production">(useTestCredentials ? "test" : "production");
 
   // Função para regenerar o pagamento PIX com limitação de taxa
   const regeneratePixPayment = useCallback(async (prefId: string) => {
@@ -42,12 +44,14 @@ export const usePixData = ({ preferenceId, forceRefresh = false }: UsePixDataPro
     
     try {
       console.log(`Tentativa ${attempts + 1} de regenerar pagamento PIX:`, prefId);
+      console.log("Modo de ambiente:", useTestCredentials ? "TESTE" : "PRODUÇÃO");
       
       // Chamar o edge function para regenerar o pagamento PIX
       const { data, error: invokeError } = await supabase.functions.invoke("create-payment", {
         body: {
           preferenceId: prefId,
-          regenerate: true
+          regenerate: true,
+          useTestCredentials // Passar flag para API
         }
       });
 
@@ -64,6 +68,11 @@ export const usePixData = ({ preferenceId, forceRefresh = false }: UsePixDataPro
       
       if (data.error) {
         throw new Error(data.message || "Erro no servidor ao processar pagamento");
+      }
+      
+      // Atualizar o ambiente
+      if (data.environment) {
+        setEnvironment(data.environment);
       }
       
       if (data && data.data) {
@@ -122,7 +131,7 @@ export const usePixData = ({ preferenceId, forceRefresh = false }: UsePixDataPro
         setRetryTimeoutId(timeoutId);
       }
     }
-  }, [attempts, lastAttemptTime, forceRefresh]);
+  }, [attempts, lastAttemptTime, forceRefresh, useTestCredentials]);
 
   // Função para buscar dados do PIX
   const fetchPixData = useCallback(async () => {
@@ -132,6 +141,7 @@ export const usePixData = ({ preferenceId, forceRefresh = false }: UsePixDataPro
     }
 
     console.log("Buscando dados do PIX para preferenceId:", preferenceId);
+    console.log("Modo de ambiente:", useTestCredentials ? "TESTE" : "PRODUÇÃO");
     
     try {
       // Forçar regeneração se solicitado
@@ -212,7 +222,7 @@ export const usePixData = ({ preferenceId, forceRefresh = false }: UsePixDataPro
         setRetryTimeoutId(timeoutId);
       }
     }
-  }, [preferenceId, regeneratePixPayment, forceRefresh]);
+  }, [preferenceId, regeneratePixPayment, forceRefresh, useTestCredentials]);
 
   // Efeito para carregar dados iniciais
   useEffect(() => {
@@ -234,13 +244,29 @@ export const usePixData = ({ preferenceId, forceRefresh = false }: UsePixDataPro
     fetchPixData();
   }, [fetchPixData]);
 
+  // Função para alternar entre ambiente de teste e produção
+  const toggleEnvironment = useCallback(() => {
+    const newTestMode = !useTestCredentials;
+    console.log(`Alternando para modo ${newTestMode ? "TESTE" : "PRODUÇÃO"}`);
+    setEnvironment(newTestMode ? "test" : "production");
+    setAttempts(0);
+    setIsLoading(true);
+    setError(null);
+    // Forçar regeneração com novas credenciais
+    if (preferenceId) {
+      regeneratePixPayment(preferenceId);
+    }
+  }, [useTestCredentials, preferenceId, regeneratePixPayment]);
+
   return {
     qrCode,
     qrCodeBase64,
     currentStatus,
     isLoading,
     error,
+    environment,
     setCurrentStatus,
-    refreshPixData
+    refreshPixData,
+    toggleEnvironment
   };
 };

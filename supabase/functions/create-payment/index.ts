@@ -6,6 +6,7 @@ import { corsHeaders } from "../_shared/cors.ts";
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
 const mercadoPagoAccessToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN") || '';
+const mercadoPagoTestAccessToken = Deno.env.get("MERCADO_PAGO_TEST_ACCESS_TOKEN") || '';
 
 // Função auxiliar para validar dados de entrada
 function validateInput(data: any) {
@@ -86,14 +87,22 @@ async function getExistingPreference(supabase, preferenceId) {
 }
 
 // Função para testar geração básica de PIX (dados mínimos garantidos)
-async function testBasicPixGeneration() {
+async function testBasicPixGeneration(isTestEnvironment: boolean = false) {
   try {
     console.log("INICIANDO TESTE BÁSICO PIX");
+    console.log("Ambiente:", isTestEnvironment ? "TESTE" : "PRODUÇÃO");
+    
+    // Usar token correto com base no ambiente
+    const accessToken = isTestEnvironment ? mercadoPagoTestAccessToken : mercadoPagoAccessToken;
+    
+    if (!accessToken) {
+      throw new Error(`Token de acesso ${isTestEnvironment ? "de teste" : "de produção"} não configurado`);
+    }
     
     // Dados mínimos garantidos conforme documentação do Mercado Pago
     const minimalRequest = {
       transaction_amount: 1.00,
-      description: "Teste básico PIX",
+      description: `Teste básico PIX (${isTestEnvironment ? "ambiente de teste" : "ambiente de produção"})`,
       payment_method_id: "pix",
       payer: {
         email: "test_user_24634007@testuser.com"
@@ -101,17 +110,26 @@ async function testBasicPixGeneration() {
     };
     
     console.log("Requisição mínima de teste:", JSON.stringify(minimalRequest));
+    console.log("Usando token que começa com:", accessToken.substring(0, 10) + "...");
     
     const response = await fetch("https://api.mercadopago.com/v1/payments", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${mercadoPagoAccessToken}`
+        "Authorization": `Bearer ${accessToken}`
       },
       body: JSON.stringify(minimalRequest),
     });
     
     const responseData = await response.json();
+    
+    // Log detalhado para diagnóstico
+    console.log("Resposta do teste básico:", JSON.stringify({
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries([...response.headers]),
+      body: responseData
+    }));
     
     if (!response.ok) {
       console.error("Erro no teste básico:", responseData);
@@ -135,8 +153,18 @@ async function testBasicPixGeneration() {
 }
 
 // Função para criar dados PIX usando Mercado Pago
-async function createPixData(event, preference) {
+async function createPixData(event, preference, isTestEnvironment: boolean = false) {
   try {
+    // Usar token correto com base no ambiente
+    const accessToken = isTestEnvironment ? mercadoPagoTestAccessToken : mercadoPagoAccessToken;
+    
+    if (!accessToken) {
+      throw new Error(`Token de acesso ${isTestEnvironment ? "de teste" : "de produção"} não configurado`);
+    }
+    
+    console.log("Ambiente de pagamento:", isTestEnvironment ? "TESTE" : "PRODUÇÃO");
+    console.log("Usando token que começa com:", accessToken.substring(0, 10) + "...");
+    
     // Gerar dados para o pagamento PIX
     const externalReference = `${event.id}|${preference.id}`;
     
@@ -171,7 +199,7 @@ async function createPixData(event, preference) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${mercadoPagoAccessToken}`
+        "Authorization": `Bearer ${accessToken}`
       },
       body: JSON.stringify(pixRequestBody),
     });
@@ -292,15 +320,20 @@ serve(async (req) => {
     
     console.log("Dados da requisição:", reqData);
     
+    // Verificar se estamos usando ambiente de teste
+    const isTestEnvironment = reqData.useTestCredentials === true;
+    console.log("Usando credenciais de:", isTestEnvironment ? "TESTE" : "PRODUÇÃO");
+    
     // Verificar se é um pedido de teste básico
     if (reqData.testOnly) {
       console.log("Executando apenas teste básico de geração PIX");
-      const testResult = await testBasicPixGeneration();
+      const testResult = await testBasicPixGeneration(isTestEnvironment);
       
       return new Response(
         JSON.stringify({ 
           success: true, 
           message: "Teste básico executado com sucesso",
+          environment: isTestEnvironment ? "test" : "production",
           data: testResult
         }),
         { 
@@ -335,7 +368,7 @@ serve(async (req) => {
     }
     
     // Criar dados PIX usando Mercado Pago
-    const pixData = await createPixData(event, preference);
+    const pixData = await createPixData(event, preference, isTestEnvironment);
     
     // Atualizar a preferência com dados do PIX
     await updatePaymentPreference(supabase, preference, pixData);
@@ -344,6 +377,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
+        environment: isTestEnvironment ? "test" : "production",
         data: pixData.data,
         status: pixData.status 
       }),

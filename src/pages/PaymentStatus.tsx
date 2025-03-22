@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ const PaymentStatus = () => {
   const reference = searchParams.get("external_reference");
   const eventId = reference?.split("|")[0];
   const preferenceId = reference?.split("|")[1];
+  const [useTestMode, setUseTestMode] = useState(false);
 
   const { 
     qrCode, 
@@ -27,14 +28,35 @@ const PaymentStatus = () => {
     refreshPixData,
     qrCodeLoaded,
     fallbackQrUsed,
-    retryCount
+    retryCount,
+    environment,
+    toggleEnvironment
   } = usePaymentPolling({
     preferenceId,
     payment_id,
     reference,
     status,
-    navigate
+    navigate,
+    useTestCredentials: useTestMode
   });
+
+  // Efeito para atualizar state local quando o ambiente mudar
+  useEffect(() => {
+    if (environment) {
+      setUseTestMode(environment === "test");
+    }
+  }, [environment]);
+
+  // Função para alternar manualmente o modo de teste
+  const handleToggleTestMode = () => {
+    const newMode = !useTestMode;
+    setUseTestMode(newMode);
+    
+    if (toggleEnvironment) {
+      toggleEnvironment();
+      toast.info(`Alterado para ambiente ${newMode ? "de teste" : "de produção"}`);
+    }
+  };
 
   const displayStatus = status || (error ? "error" : "pending");
   const statusInfo = getStatusInfo({ 
@@ -83,7 +105,9 @@ const PaymentStatus = () => {
     error,
     qrCodeLoaded,
     fallbackQrUsed,
-    retryCount
+    retryCount,
+    environment,
+    useTestMode
   });
 
   return (
@@ -129,14 +153,23 @@ const PaymentStatus = () => {
                               ? "Erro ao processar dados do evento. Nossa equipe foi notificada."
                               : "Você pode tentar novamente ou usar o código PIX para pagamento"}
                           </p>
-                          <Button 
-                            variant="outline"
-                            onClick={refreshPixData}
-                            className="mt-2"
-                          >
-                            <RefreshCw className="mr-2 h-4 w-4" />
-                            Tentar Novamente
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline"
+                              onClick={refreshPixData}
+                            >
+                              <RefreshCw className="mr-2 h-4 w-4" />
+                              Tentar Novamente
+                            </Button>
+                            
+                            <Button 
+                              variant={useTestMode ? "outline" : "default"}
+                              onClick={handleToggleTestMode}
+                              className={useTestMode ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100" : ""}
+                            >
+                              {useTestMode ? "Usar Produção" : "Usar Teste"}
+                            </Button>
+                          </div>
                         </div>
                       )}
                       
@@ -152,6 +185,8 @@ const PaymentStatus = () => {
                             qrCodeBase64={qrCodeBase64}
                             onRefresh={refreshPixData}
                             error={fallbackQrUsed ? null : error}
+                            environment={environment}
+                            onToggleEnvironment={handleToggleTestMode}
                           />
                           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
                             <p className="text-sm text-blue-700 font-medium text-center">

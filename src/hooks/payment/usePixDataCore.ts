@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 
 interface UsePixDataCoreProps {
@@ -59,6 +60,20 @@ export const usePixDataCore = ({ useTestCredentials = false }: UsePixDataCorePro
     }
   }, [retryTimeoutId]);
 
+  // Configurações de mercado pago para o ambiente correto
+  const getMercadoPagoConfig = useCallback(() => {
+    if (environment === "test") {
+      return {
+        publicKey: "TEST-235bbcdb-d3a5-4b8a-affc-2cc6473be7eb",
+        accessToken: "APP_USR-1217057600984731-021621-77ecfa5c3d1443fc1ff44c763e928eba-106423283"
+      };
+    }
+    return {
+      publicKey: import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY,
+      accessToken: null // Token de acesso só deve ser usado no backend
+    };
+  }, [environment]);
+
   return {
     // Estado
     qrCode,
@@ -86,6 +101,7 @@ export const usePixDataCore = ({ useTestCredentials = false }: UsePixDataCorePro
     toggleEnvironment,
     resetForRetry,
     updatePixInfo,
-    cleanupTimeout
+    cleanupTimeout,
+    getMercadoPagoConfig
   };
 };

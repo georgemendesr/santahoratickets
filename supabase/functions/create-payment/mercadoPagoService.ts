@@ -12,7 +12,10 @@ export async function testBasicPixGeneration(
     console.log("Ambiente:", isTestEnvironment ? "TESTE" : "PRODUÇÃO");
     
     // Usar token correto com base no ambiente
-    const accessToken = isTestEnvironment ? mercadoPagoTestAccessToken : mercadoPagoAccessToken;
+    // Para o ambiente de teste, sempre usamos a credencial fixa fornecida
+    const accessToken = isTestEnvironment ? 
+      "APP_USR-1217057600984731-021621-77ecfa5c3d1443fc1ff44c763e928eba-106423283" : 
+      mercadoPagoAccessToken;
     
     if (!accessToken) {
       throw new Error(`Token de acesso ${isTestEnvironment ? "de teste" : "de produção"} não configurado`);
@@ -81,7 +84,10 @@ export async function createPixData(
 ) {
   try {
     // Usar token correto com base no ambiente
-    const accessToken = isTestEnvironment ? mercadoPagoTestAccessToken : mercadoPagoAccessToken;
+    // Para o ambiente de teste, sempre usamos a credencial fixa fornecida
+    const accessToken = isTestEnvironment ? 
+      "APP_USR-1217057600984731-021621-77ecfa5c3d1443fc1ff44c763e928eba-106423283" : 
+      mercadoPagoAccessToken;
     
     if (!accessToken) {
       throw new Error(`Token de acesso ${isTestEnvironment ? "de teste" : "de produção"} não configurado`);

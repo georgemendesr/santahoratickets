@@ -22,7 +22,8 @@ import {
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
 const mercadoPagoAccessToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN") || '';
-const mercadoPagoTestAccessToken = Deno.env.get("MERCADO_PAGO_TEST_ACCESS_TOKEN") || '';
+// Usamos o token fixo de teste quando solicitado pelo frontend
+const mercadoPagoTestAccessToken = "APP_USR-1217057600984731-021621-77ecfa5c3d1443fc1ff44c763e928eba-106423283";
 
 serve(async (req) => {
   // Gerenciar CORS e preflight

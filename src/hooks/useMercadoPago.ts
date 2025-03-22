@@ -18,7 +18,7 @@ interface InstallmentOption {
   total_amount: number;
 }
 
-export function useMercadoPago(amount: number, cardNumber: string) {
+export function useMercadoPago(amount: number, cardNumber: string, useTestMode = false) {
   const [isLoading, setIsLoading] = useState(true);
   const [availableInstallments, setAvailableInstallments] = useState<InstallmentOption[]>([]);
   const [paymentMethodId, setPaymentMethodId] = useState("");
@@ -28,7 +28,13 @@ export function useMercadoPago(amount: number, cardNumber: string) {
     script.src = "https://sdk.mercadopago.com/js/v2";
     script.async = true;
     script.onload = () => {
-      const mp = new window.MercadoPago(import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY);
+      // Escolher a chave pública correta baseada no modo
+      const publicKey = useTestMode 
+        ? "TEST-235bbcdb-d3a5-4b8a-affc-2cc6473be7eb" 
+        : import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY;
+        
+      console.log(`Inicializando MercadoPago com chave ${useTestMode ? 'de TESTE' : 'PADRÃO'}`);
+      const mp = new window.MercadoPago(publicKey);
       setIsLoading(false);
 
       // Buscar opções de parcelamento
@@ -55,7 +61,7 @@ export function useMercadoPago(amount: number, cardNumber: string) {
     return () => {
       document.body.removeChild(script);
     };
-  }, [amount, cardNumber]);
+  }, [amount, cardNumber, useTestMode]);
 
   return {
     isLoading,

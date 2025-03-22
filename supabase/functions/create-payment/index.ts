@@ -136,6 +136,17 @@ async function createPixData(event, preference) {
     // Gerar dados para o pagamento PIX
     const externalReference = `${event.id}|${preference.id}`;
     
+    // Usar um valor padrão para o nome do beneficiário, já que organizer_name não existe
+    const beneficiaryName = "Santa Hora";
+    
+    console.log("Gerando QR Code PIX para:", {
+      eventId: event.id,
+      eventTitle: event.title,
+      beneficiaryName: beneficiaryName,
+      preferenceId: preference.id,
+      amount: preference.total_amount
+    });
+    
     // Detalhes do pagador - valores fixos para teste
     const payer = {
       email: "test_user_24634007@testuser.com",

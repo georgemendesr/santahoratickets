@@ -27,9 +27,10 @@ async function getEventData(supabase, eventId) {
   try {
     console.log("Buscando dados do evento:", eventId);
     
+    // CORREÇÃO: Removendo creator_id da consulta que não existe na tabela events
     const { data: event, error } = await supabase
       .from('events')
-      .select('title, price, id, creator_id')
+      .select('title, price, id')  // Removido creator_id
       .eq('id', eventId)
       .single();
     
@@ -42,6 +43,9 @@ async function getEventData(supabase, eventId) {
       console.error("Evento não encontrado:", eventId);
       throw new Error(`Evento não encontrado com ID: ${eventId}`);
     }
+    
+    // Adicionando um campo virtual creator_id para manter compatibilidade com código existente
+    event.creator_id = null; // Valor padrão para manter compatibilidade
     
     console.log("Dados do evento recuperados com sucesso:", event);
     return event;

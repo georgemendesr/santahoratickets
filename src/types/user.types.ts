@@ -8,6 +8,7 @@ export interface UserProfile {
   name: string | null;
   phone: string | null;
   email: string | null;
+  referral_code?: string | null;
 }
 
 export type UserRole = 'admin' | 'user';

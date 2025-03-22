@@ -51,9 +51,51 @@ export const useReferrals = (userId?: string) => {
     }
   };
 
+  // Adicionando a função useGetReferrer que faltava
+  const useGetReferrer = (code: string | null) => {
+    const [data, setData] = useState<{ name: string } | null>(null);
+    const [loading, setLoading] = useState(false);
+
+    useState(() => {
+      if (!code) return;
+      
+      const fetchReferrer = async () => {
+        setLoading(true);
+        try {
+          const { data: referralData, error: referralError } = await supabase
+            .from('referrals')
+            .select('referrer_id')
+            .eq('code', code)
+            .single();
+            
+          if (referralError || !referralData) return;
+          
+          const { data: userData, error: userError } = await supabase
+            .from('user_profiles')
+            .select('name')
+            .eq('id', referralData.referrer_id)
+            .single();
+            
+          if (userError || !userData) return;
+          
+          setData(userData);
+        } catch (error) {
+          console.error('Error fetching referrer:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchReferrer();
+    }, [code]);
+    
+    return { data, loading };
+  };
+
   return {
     referralCode,
     loadingReferral,
-    createReferral
+    createReferral,
+    useGetReferrer
   };
 };

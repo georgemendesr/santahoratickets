@@ -30,15 +30,20 @@ const EventDetails = () => {
   const [phone, setPhone] = useState("");
   const [isPendingProfileUpdate, setIsPendingProfileUpdate] = useState(false);
   
-  const { data: referrer } = useReferrals().useGetReferrer(referralCode);
-  const { profile } = useProfile();
+  // Removido a propriedade useGetReferrer que não existe no hook useReferrals
+  const [referrer, setReferrer] = useState<{ name: string } | null>(null);
+  const { profile } = useProfile(session?.user?.id);
 
-  const { event, batches, isLoading, error } = useEventDetails(id as string);
+  const { event, batches, isLoading } = useEventDetails(id as string);
+  
+  const handleGoBack = () => {
+    navigate(-1);
+  };
   
   useEffect(() => {
     if (event) {
       // Criar URL para compartilhamento
-      const userReferralCode = profile?.referral_code;
+      const userReferralCode = profile?.referral_code ?? null;
       const baseUrl = window.location.origin;
       const eventUrl = `${baseUrl}/event/${event.id}`;
       
@@ -148,7 +153,7 @@ const EventDetails = () => {
 
   if (isLoading) {
     return (
-      <EventLayout>
+      <EventLayout onBack={handleGoBack}>
         <div className="flex justify-center items-center min-h-[60vh]">
           <p>Carregando detalhes do evento...</p>
         </div>
@@ -156,9 +161,9 @@ const EventDetails = () => {
     );
   }
 
-  if (error || !event) {
+  if (!event) {
     return (
-      <EventLayout>
+      <EventLayout onBack={handleGoBack}>
         <div className="flex justify-center items-center min-h-[60vh]">
           <p className="text-red-500">Evento não encontrado ou ocorreu um erro ao carregá-lo.</p>
         </div>
@@ -167,8 +172,8 @@ const EventDetails = () => {
   }
 
   return (
-    <EventLayout>
-      <EventHeader title={event.title} />
+    <EventLayout onBack={handleGoBack}>
+      <EventHeader event={event} />
       
       <EventDetailsContent
         event={event}
@@ -176,7 +181,7 @@ const EventDetails = () => {
         isAdmin={isAdmin}
         profile={profile}
         referrer={referrer}
-        referralCode={profile?.referral_code}
+        referralCode={profile?.referral_code ?? null}
         onShare={handleShare}
         onPurchase={handlePurchase}
         onEdit={handleEdit}

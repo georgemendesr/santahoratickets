@@ -1,138 +1,191 @@
 
-import { useParams, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { EventLayout } from "@/components/event-details/EventLayout";
+import { EventHeader } from "@/components/event-details/EventHeader";
+import { EventDetailsContent } from "@/components/event-details/EventDetailsContent";
+import { ProfileDialog } from "@/components/event-details/ProfileDialog";
+import { useEventDetails } from "@/hooks/useEventDetails";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
+import { supabase } from "@/integrations/supabase/client";
+import { useReferrals } from "@/hooks/useReferrals";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { ProfileDialog } from "@/components/event-details/ProfileDialog";
-import { EventLayout } from "@/components/event-details/EventLayout";
-import { EventDetailsContent } from "@/components/event-details/EventDetailsContent";
-import { useEventDetails } from "@/hooks/useEventDetails";
-import { normalizeEventUrl } from "@/utils/navigation";
-import { useEffect } from "react";
-import { useNavigation } from "@/hooks/useNavigation";
 
 const EventDetails = () => {
-  const { eventId } = useParams<{ eventId: string }>();
-  const location = useLocation();
-  const { goBack, navigateTo } = useNavigation();
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const { isAdmin } = useRole();
   const { session } = useAuth();
-  const { isAdmin } = useRole(session);
+  const referralCode = searchParams.get('ref');
   
-  // Normaliza a URL se necessário (verificando apenas uma vez ao carregar)
+  const [shareUrl, setShareUrl] = useState("");
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  
+  // Profile state
+  const [cpf, setCpf] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [phone, setPhone] = useState("");
+  const [isPendingProfileUpdate, setIsPendingProfileUpdate] = useState(false);
+  
+  const { data: referrer } = useReferrals().useGetReferrer(referralCode);
+  const { profile } = useProfile();
+
+  const { event, batches, isLoading, error } = useEventDetails(id as string);
+  
   useEffect(() => {
-    const currentPath = location.pathname;
-    const normalizedPath = normalizeEventUrl(currentPath);
-    
-    if (normalizedPath !== currentPath) {
-      navigateTo(normalizedPath);
+    if (event) {
+      // Criar URL para compartilhamento
+      const userReferralCode = profile?.referral_code;
+      const baseUrl = window.location.origin;
+      const eventUrl = `${baseUrl}/event/${event.id}`;
+      
+      setShareUrl(userReferralCode ? `${eventUrl}?ref=${userReferralCode}` : eventUrl);
     }
-  }, [location.pathname, navigateTo]);
+  }, [event, profile]);
   
-  const {
-    event,
-    batches,
-    profile,
-    referrer,
-    referralCode,
-    showProfileDialog,
-    setShowProfileDialog,
-    cpf,
-    setCpf,
-    birthDate,
-    setBirthDate,
-    phone,
-    setPhone,
-    createProfileMutation,
-    createReferralMutation,
-    isLoading
-  } = useEventDetails(eventId);
-
   const handleShare = async () => {
-    if (!session) {
-      toast.error("Faça login para compartilhar o evento");
-      navigateTo('/auth');
-      return;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: event?.title,
+          text: `Confira este evento: ${event?.title}`,
+          url: shareUrl,
+        });
+      } catch (error) {
+        console.error("Erro ao compartilhar:", error);
+        // Fallback para copiar link
+        await copyToClipboard();
+      }
+    } else {
+      // Fallback para navegadores que não suportam a API Share
+      await copyToClipboard();
     }
-
-    if (!profile) {
-      setShowProfileDialog(true);
-      return;
-    }
-
-    createReferralMutation.mutate();
   };
-
-  const handlePurchase = (batchId: string, quantity: number) => {
-    if (!event?.id) {
-      toast.error("Evento não encontrado");
-      return;
+  
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Link copiado para a área de transferência!");
+    } catch (error) {
+      console.error("Erro ao copiar link:", error);
+      toast.error("Erro ao copiar link");
     }
-
-    if (!session) {
-      toast.error("Faça login para comprar ingressos");
-      navigateTo('/auth');
+  };
+  
+  const checkProfileCompletion = async () => {
+    if (!session?.user) return false;
+    
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('cpf, birth_date, phone')
+      .eq('id', session.user.id)
+      .single();
+      
+    if (error) return false;
+    
+    return !!(data?.cpf && data?.phone);
+  };
+  
+  const handlePurchase = async (selectedBatchId: string, quantity: number) => {
+    if (!session?.user) {
+      // Redirecionar para autenticação
+      navigate(`/auth?redirect=/checkout/${id}?batch=${selectedBatchId}&quantity=${quantity}`);
       return;
     }
     
-    // Redirecionar para checkout com batchId e quantidade selecionada
-    navigateTo(`/checkout/${event.id}/finish?batch=${batchId}&quantity=${quantity}`);
+    // Verificar se o perfil está completo
+    const isProfileComplete = await checkProfileCompletion();
+    
+    if (!isProfileComplete) {
+      // Abrir modal para completar perfil
+      setProfileDialogOpen(true);
+      return;
+    }
+    
+    // Perfil completo, prosseguir para checkout
+    navigate(`/checkout/${id}?batch=${selectedBatchId}&quantity=${quantity}`);
   };
-
-  const handleProfileSubmit = (e: React.FormEvent) => {
+  
+  const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    createProfileMutation.mutate();
+    
+    if (!session?.user) return;
+    
+    try {
+      setIsPendingProfileUpdate(true);
+      
+      const { error } = await supabase
+        .from('user_profiles')
+        .upsert({
+          id: session.user.id,
+          cpf,
+          birth_date: birthDate,
+          phone
+        });
+        
+      if (error) throw error;
+      
+      setProfileDialogOpen(false);
+      toast.success("Perfil atualizado com sucesso!");
+      
+      // Continuar para checkout
+      navigate(`/checkout/${id}`);
+      
+    } catch (error) {
+      console.error("Erro ao atualizar perfil:", error);
+      toast.error("Erro ao atualizar perfil");
+    } finally {
+      setIsPendingProfileUpdate(false);
+    }
   };
-
+  
   const handleEdit = () => {
-    if (!event?.id) return;
-    navigateTo(`/eventos/${event.id}/edit`);
+    navigate(`/admin/events/edit/${id}`);
   };
 
   if (isLoading) {
     return (
-      <EventLayout onBack={goBack} event={undefined}>
-        <div className="flex justify-center items-center h-64">
-          <p className="text-lg">Carregando informações do evento...</p>
+      <EventLayout>
+        <div className="flex justify-center items-center min-h-[60vh]">
+          <p>Carregando detalhes do evento...</p>
         </div>
       </EventLayout>
     );
   }
 
-  if (!event) {
+  if (error || !event) {
     return (
-      <EventLayout onBack={goBack} event={undefined}>
-        <div className="flex flex-col justify-center items-center h-64">
-          <p className="text-lg text-red-500">Evento não encontrado</p>
-          <Button 
-            variant="outline" 
-            className="mt-4"
-            onClick={() => navigateTo('/')}
-          >
-            Voltar para a página inicial
-          </Button>
+      <EventLayout>
+        <div className="flex justify-center items-center min-h-[60vh]">
+          <p className="text-red-500">Evento não encontrado ou ocorreu um erro ao carregá-lo.</p>
         </div>
       </EventLayout>
     );
   }
 
   return (
-    <EventLayout onBack={goBack} event={event}>
+    <EventLayout>
+      <EventHeader title={event.title} />
+      
       <EventDetailsContent
         event={event}
-        batches={batches || []}
+        batches={batches}
         isAdmin={isAdmin}
         profile={profile}
         referrer={referrer}
-        referralCode={referralCode}
+        referralCode={profile?.referral_code}
         onShare={handleShare}
         onPurchase={handlePurchase}
         onEdit={handleEdit}
+        isLoggedIn={!!session?.user}
       />
-
+      
       <ProfileDialog
-        open={showProfileDialog}
-        onOpenChange={setShowProfileDialog}
+        open={profileDialogOpen}
+        onOpenChange={setProfileDialogOpen}
         cpf={cpf}
         birthDate={birthDate}
         phone={phone}
@@ -140,10 +193,10 @@ const EventDetails = () => {
         onBirthDateChange={setBirthDate}
         onPhoneChange={setPhone}
         onSubmit={handleProfileSubmit}
-        isPending={createProfileMutation.isPending}
+        isPending={isPendingProfileUpdate}
       />
     </EventLayout>
   );
-}
+};
 
 export default EventDetails;

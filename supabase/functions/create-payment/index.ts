@@ -10,10 +10,12 @@ import {
   getEventData, 
   getExistingPreference, 
   updatePaymentPreference, 
-  createPaymentPreference 
+  createPaymentPreference,
+  createGuestPaymentPreference
 } from "./supabaseService.ts";
 import { 
   validateInput, 
+  validateGuestInput,
   createSuccessResponse, 
   createErrorResponse, 
   createTestResponse 
@@ -35,10 +37,8 @@ serve(async (req) => {
     // Inicializar client supabase
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
-    // Extrair e validar dados da requisição
+    // Extrair dados da requisição
     const reqData = await req.json();
-    validateInput(reqData);
-    
     console.log("Dados da requisição:", reqData);
     
     // Verificar se estamos usando ambiente de teste
@@ -71,9 +71,19 @@ serve(async (req) => {
       
       event = await getEventData(supabase, preference.event_id);
     } 
-    // Fluxo para novo pagamento
+    // Fluxo para checkout como convidado
+    else if (reqData.isGuestCheckout) {
+      console.log("Modo de checkout como convidado");
+      validateGuestInput(reqData);
+      
+      event = await getEventData(supabase, reqData.eventId);
+      preference = await createGuestPaymentPreference(supabase, reqData, event);
+    }
+    // Fluxo para novo pagamento com usuário logado
     else {
-      console.log("Modo de criação de novo pagamento");
+      console.log("Modo de criação de novo pagamento com usuário autenticado");
+      validateInput(reqData);
+      
       event = await getEventData(supabase, reqData.eventId);
       preference = await createPaymentPreference(supabase, reqData, event);
     }

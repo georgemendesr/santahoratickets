@@ -92,7 +92,7 @@ export async function updatePaymentPreference(supabase, preference, pixData) {
   }
 }
 
-// Função para criar nova preferência de pagamento
+// Função para criar nova preferência de pagamento para usuário logado
 export async function createPaymentPreference(supabase, data, eventData) {
   try {
     const preference = {
@@ -117,5 +117,65 @@ export async function createPaymentPreference(supabase, data, eventData) {
   } catch (error) {
     console.error("Erro ao criar preferência de pagamento:", error);
     throw new Error(`Erro ao criar preferência: ${error.message}`);
+  }
+}
+
+// Função para criar nova preferência de pagamento para convidado
+export async function createGuestPaymentPreference(supabase, data, eventData) {
+  try {
+    console.log("Criando preferência para checkout como convidado:", {
+      eventId: data.eventId,
+      guestInfo: {
+        name: data.guestInfo.name,
+        email: data.guestInfo.email,
+        // CPF ofuscado para o log
+        cpf: data.guestInfo.cpf ? `${data.guestInfo.cpf.substring(0, 3)}...` : null
+      }
+    });
+    
+    // Gerar identificador único para convidado usando dados fornecidos
+    const guestId = `guest-${Date.now()}-${data.guestInfo.email.replace(/[^a-zA-Z0-9]/g, '')}`;
+    
+    const preference = {
+      ticket_quantity: data.ticketQuantity,
+      total_amount: data.totalAmount,
+      event_id: data.eventId,
+      // Usar ID de convidado no lugar do user_id
+      user_id: guestId,
+      status: 'pending',
+      payment_type: data.paymentType || "pix",
+      payment_method_id: data.paymentMethodId || "pix",
+      init_point: `${data.eventId}-${guestId}-${Date.now()}`,
+      // Armazenar informações do convidado como metadados
+      metadata: {
+        is_guest: true,
+        guest_name: data.guestInfo.name,
+        guest_email: data.guestInfo.email,
+        guest_cpf: data.guestInfo.cpf,
+        guest_phone: data.guestInfo.phone || null
+      }
+    };
+    
+    const { data: savedPreference, error } = await supabase
+      .from('payment_preferences')
+      .insert(preference)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Erro ao salvar preferência de convidado:", error);
+      throw error;
+    }
+    
+    console.log("Preferência para convidado criada com sucesso:", {
+      id: savedPreference.id,
+      guestId,
+      eventId: data.eventId
+    });
+    
+    return savedPreference;
+  } catch (error) {
+    console.error("Erro ao criar preferência para convidado:", error);
+    throw new Error(`Erro ao processar checkout como convidado: ${error.message}`);
   }
 }

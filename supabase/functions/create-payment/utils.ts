@@ -14,6 +14,21 @@ export function validateInput(data: any) {
   }
 }
 
+// Função para validar dados de entrada do checkout como convidado
+export function validateGuestInput(data: any) {
+  if (!data) {
+    throw new Error("Dados de entrada inválidos ou ausentes");
+  }
+  
+  if (!data.eventId || !data.ticketQuantity || !data.totalAmount) {
+    throw new Error("Dados obrigatórios de evento ausentes para processar pagamento");
+  }
+  
+  if (!data.guestInfo || !data.guestInfo.name || !data.guestInfo.email || !data.guestInfo.cpf) {
+    throw new Error("Dados do comprador são obrigatórios para checkout como convidado");
+  }
+}
+
 // Função para gerar resposta de sucesso
 export function createSuccessResponse(pixData, isTestEnvironment) {
   return new Response(

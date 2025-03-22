@@ -10,6 +10,7 @@ import { ReferralCard } from "./ReferralCard";
 import { EventImage } from "./EventImage";
 import { computeBatchStatus } from "@/utils/batchStatusUtils";
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface EventDetailsContentProps {
   event: Event;
@@ -21,6 +22,7 @@ interface EventDetailsContentProps {
   onShare: () => void;
   onPurchase: (selectedBatchId: string, quantity: number) => void;
   onEdit: () => void;
+  isLoggedIn?: boolean;
 }
 
 export function EventDetailsContent({
@@ -32,8 +34,10 @@ export function EventDetailsContent({
   referralCode,
   onShare,
   onPurchase,
-  onEdit
+  onEdit,
+  isLoggedIn = false
 }: EventDetailsContentProps) {
+  const navigate = useNavigate();
   const [selectedQuantities, setSelectedQuantities] = useState<Record<string, number>>({});
   
   // Memorize the calculation to avoid recalculating on every render
@@ -131,6 +135,8 @@ export function EventDetailsContent({
               soldOut={areAllBatchesSoldOut}
               hasSelectedQuantity={hasSelectedQuantity}
               selectedQuantity={selectedBatchInfo.quantity}
+              batchId={selectedBatchInfo.batchId}
+              isLoggedIn={isLoggedIn}
             />
           </CardContent>
         </Card>

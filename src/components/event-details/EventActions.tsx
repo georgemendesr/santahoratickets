@@ -1,8 +1,9 @@
 
 import { Event } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Edit, Share } from "lucide-react";
+import { Edit, Share, LogIn } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { useNavigate } from "react-router-dom";
 
 interface EventActionsProps {
   event: Event;
@@ -13,6 +14,8 @@ interface EventActionsProps {
   soldOut?: boolean;
   hasSelectedQuantity?: boolean;
   selectedQuantity?: number;
+  batchId?: string;
+  isLoggedIn?: boolean;
 }
 
 export function EventActions({ 
@@ -23,13 +26,23 @@ export function EventActions({
   onEdit,
   soldOut = false,
   hasSelectedQuantity = false,
-  selectedQuantity = 0
+  selectedQuantity = 0,
+  batchId,
+  isLoggedIn = false
 }: EventActionsProps) {
+  const navigate = useNavigate();
+  
   // Determine o texto do botão baseado no estado
   const getPurchaseButtonText = () => {
     if (soldOut) return "Ingressos Esgotados";
     if (hasSelectedQuantity) return `Comprar ${selectedQuantity} Pulseira${selectedQuantity > 1 ? 's' : ''}`;
     return "Comprar Pulseira";
+  };
+  
+  // Função para iniciar checkout como convidado
+  const handleGuestCheckout = () => {
+    if (!hasSelectedQuantity || !batchId) return;
+    navigate(`/checkout/${event.id}?batch=${batchId}&quantity=${selectedQuantity}&guest=true`);
   };
   
   return (
@@ -41,8 +54,20 @@ export function EventActions({
           onClick={onPurchase}
           disabled={soldOut || !hasSelectedQuantity} // Desabilitar se esgotado ou nenhuma quantidade selecionada
         >
-          {getPurchaseButtonText()}
+          {isLoggedIn ? getPurchaseButtonText() : "Comprar com Cadastro"}
         </Button>
+        
+        {!isLoggedIn && (
+          <Button
+            className="w-full"
+            variant="secondary"
+            size="lg"
+            onClick={handleGuestCheckout}
+            disabled={soldOut || !hasSelectedQuantity}
+          >
+            Comprar sem Cadastro
+          </Button>
+        )}
         
         <div className="flex gap-2">
           <Button 

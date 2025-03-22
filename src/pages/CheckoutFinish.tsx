@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCheckoutQueries } from "@/hooks/useCheckoutQueries";
 import { CheckoutLayout } from "@/components/checkout/CheckoutLayout";
 import { CheckoutContent } from "@/components/checkout/CheckoutContent";
+import { GuestCheckout } from "@/components/checkout/GuestCheckout";
 import { useCheckoutState } from "@/hooks/useCheckoutState";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +17,7 @@ const CheckoutFinish = () => {
   const batchId = searchParams.get("batch");
   const quantityParam = searchParams.get("quantity");
   const quantity = quantityParam ? parseInt(quantityParam, 10) : 1;
+  const isGuestMode = searchParams.get("guest") === "true";
   
   const { session } = useAuth();
   const [selectedBatch, setSelectedBatch] = useState<any>(null);
@@ -94,6 +96,20 @@ const CheckoutFinish = () => {
     );
   }
 
+  // Usar o checkout como convidado se estiver no modo convidado ou se não houver sessão
+  if (isGuestMode || !session) {
+    return (
+      <CheckoutLayout>
+        <GuestCheckout
+          event={event}
+          batch={selectedBatch}
+          quantity={quantity}
+        />
+      </CheckoutLayout>
+    );
+  }
+
+  // Checkout normal para usuários logados
   return (
     <CheckoutLayout>
       <CheckoutContent

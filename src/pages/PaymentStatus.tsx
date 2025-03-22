@@ -125,7 +125,9 @@ const PaymentStatus = () => {
                           </div>
                           <p className="text-center font-medium">Houve um problema ao gerar o QR code</p>
                           <p className="text-center text-sm text-muted-foreground max-w-xs mx-auto">
-                            Você pode tentar novamente ou usar o código PIX para pagamento
+                            {error.includes("organizer_name") 
+                              ? "Erro ao processar dados do evento. Nossa equipe foi notificada."
+                              : "Você pode tentar novamente ou usar o código PIX para pagamento"}
                           </p>
                           <Button 
                             variant="outline"

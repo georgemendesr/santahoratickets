@@ -101,6 +101,13 @@ export const usePaymentPolling = ({
   // Retry automaticamente se não conseguir carregar o QR code
   useEffect(() => {
     if (error && !qrCode && retryCount < 3 && !isLoading) {
+      // Se o erro for relacionado à coluna 'organizer_name', não tentar novamente automaticamente,
+      // pois é um erro no servidor que não será resolvido com retries
+      if (error.includes("organizer_name")) {
+        console.log("Erro relacionado à coluna 'organizer_name' detectado, não tentando novamente automaticamente");
+        return;
+      }
+      
       const timer = setTimeout(() => {
         console.log(`Tentativa ${retryCount + 1} de 3 para carregar o QR code...`);
         setRetryCount(prev => prev + 1);

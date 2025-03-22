@@ -95,7 +95,10 @@ export const usePixData = ({ preferenceId, forceRefresh = false }: UsePixDataPro
       
       // Tentar extrair mensagem de erro mais específica
       if (error.message) {
-        if (error.message.includes("Edge Function returned a non-2xx status code")) {
+        // Remover referência à coluna inexistente no erro
+        if (error.message.includes("organizer_name does not exist")) {
+          errorMessage += "Erro ao processar dados do evento. Por favor, contate o suporte.";
+        } else if (error.message.includes("Edge Function returned a non-2xx status code")) {
           errorMessage += "O servidor não conseguiu processar a solicitação.";
         } else {
           errorMessage += error.message;

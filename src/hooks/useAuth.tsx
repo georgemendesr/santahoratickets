@@ -6,9 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 export function useAuth() {
   const { 
     session, 
-    loading, 
+    isLoading,
     error, 
-    checkAuth, 
+    initialize, 
     signOut, 
     refreshAuth,
     isAdmin
@@ -22,14 +22,14 @@ export function useAuth() {
     
     if (!authInitialized) {
       console.log("useAuth - Primeira verificação de autenticação");
-      checkAuth();
+      initialize();
       setAuthInitialized(true);
     }
     
     return () => {
       console.log("useAuth - Limpeza do hook");
     };
-  }, [checkAuth, authInitialized]);
+  }, [initialize, authInitialized]);
 
   // Função para depurar o problema de autenticação
   const debugAuth = async () => {
@@ -49,7 +49,7 @@ export function useAuth() {
 
   return {
     session,
-    loading,
+    loading: isLoading,
     error,
     signOut,
     debugAuth,

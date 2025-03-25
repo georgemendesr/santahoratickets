@@ -12,12 +12,14 @@ interface AuthState {
   isAdmin: boolean;
   isLoading: boolean;
   initialized: boolean;
+  error: Error | null;
   
   setSession: (session: Session | null) => void;
   setUserProfile: (profile: UserProfile | null) => void;
   setUserRole: (role: UserRole | null) => void;
   initialize: () => Promise<void>;
   signOut: () => Promise<void>;
+  refreshAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -28,6 +30,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isAdmin: false,
   isLoading: true,
   initialized: false,
+  error: null,
   
   setSession: (session: Session | null) => {
     set({ 
@@ -47,6 +50,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   
   initialize: async () => {
     try {
+      set({ isLoading: true, error: null });
+      
       // Get the current session
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -106,11 +111,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       );
       
       set({ initialized: true, isLoading: false });
-      
-      return () => subscription.unsubscribe();
     } catch (error) {
       console.error("Error initializing auth:", error);
-      set({ isLoading: false, initialized: true });
+      set({ error: error as Error, isLoading: false, initialized: true });
+    }
+  },
+  
+  refreshAuth: async () => {
+    try {
+      set({ isLoading: true, error: null });
+      const { data: { session } } = await supabase.auth.getSession();
+      get().setSession(session);
+      set({ isLoading: false });
+    } catch (error) {
+      console.error("Error refreshing auth:", error);
+      set({ error: error as Error, isLoading: false });
     }
   },
   

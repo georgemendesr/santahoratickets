@@ -4,12 +4,12 @@ import { Session } from "@supabase/supabase-js";
 import { UserRole } from "@/types";
 
 export function useRole(session: Session | null) {
-  const { role, isAdmin } = useAuthStore();
+  const { userRole, isAdmin } = useAuthStore();
   
-  console.log("[useRole] Current role:", role, "Is admin?", isAdmin);
+  console.log("[useRole] Current role:", userRole, "Is admin?", isAdmin);
 
   return {
-    role: role as UserRole,
+    role: userRole,
     isAdmin,
   };
 }

@@ -15,16 +15,16 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps) {
-  const { isAdmin, loading, checkAuth } = useAuthStore();
+  const { isAdmin, isLoading, initialize } = useAuthStore();
   const navigate = useNavigate();
   const { toast } = useToast();
   
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    initialize();
+  }, [initialize]);
   
   useEffect(() => {
-    if (!loading && requiresAdmin && !isAdmin) {
+    if (!isLoading && requiresAdmin && !isAdmin) {
       toast({
         title: "Acesso restrito",
         description: "Você não tem permissão para acessar esta página",
@@ -32,9 +32,9 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
       });
       navigate('/');
     }
-  }, [loading, isAdmin, requiresAdmin, navigate, toast]);
+  }, [isLoading, isAdmin, requiresAdmin, navigate, toast]);
   
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <p className="text-lg">Carregando...</p>

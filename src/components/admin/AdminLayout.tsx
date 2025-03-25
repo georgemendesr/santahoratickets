@@ -13,7 +13,7 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps) {
-  const { session, isAdmin, loading, checkAuth } = useAuthStore();
+  const { session, isAdmin, isLoading, initialize } = useAuthStore();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [initialized, setInitialized] = useState(false);
@@ -26,7 +26,7 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
       const initAuth = async () => {
         try {
           console.log("AdminLayout - Iniciando verificação de autenticação");
-          await checkAuth();
+          await initialize();
           console.log("AdminLayout - Autenticação verificada com sucesso");
           setInitialized(true);
         } catch (error) {
@@ -47,14 +47,14 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
     return () => {
       console.log("AdminLayout - Desmontando componente");
     };
-  }, [checkAuth, toast, initialized]);
+  }, [initialize, toast, initialized]);
   
   // Efeito separado para lidar com redirecionamento
   useEffect(() => {
     if (!initialized) return;
     
     // Lógica para redirecionar se necessário, apenas após inicialização
-    if (!loading && requiresAdmin && !isAdmin) {
+    if (!isLoading && requiresAdmin && !isAdmin) {
       console.log("AdminLayout - Usuário não autorizado, redirecionando");
       toast({
         title: "Acesso restrito",
@@ -63,10 +63,10 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
       });
       navigate('/');
     }
-  }, [loading, isAdmin, requiresAdmin, navigate, toast, initialized]);
+  }, [isLoading, isAdmin, requiresAdmin, navigate, toast, initialized]);
   
   // Mostra o estado de carregamento
-  if (loading || !initialized) {
+  if (isLoading || !initialized) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center">

@@ -1,7 +1,7 @@
 
 import { create } from "zustand";
 import { Session, User } from "@supabase/supabase-js";
-import { UserProfile, UserRole } from "@/types/user.types";
+import { UserProfile, UserRole, UserRoleType } from "@/types/user.types";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AuthState {
@@ -85,7 +85,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const userRole: UserRole = {
           id: roleData.id,
           user_id: roleData.user_id,
-          role: roleData.role as 'admin' | 'user' | 'staff',
+          role: roleData.role as UserRoleType,
           created_at: roleData.created_at
         };
         get().setUserRole(userRole);

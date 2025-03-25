@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
  * @param table The table name to query
  * @returns A Supabase query builder for the specified table
  */
-export function createQuery<T extends string>(table: T) {
+export function createQuery(table: string) {
   return supabase.from(table);
 }
 

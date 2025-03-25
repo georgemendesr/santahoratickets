@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export function useAuth() {
   const { 
@@ -11,38 +12,37 @@ export function useAuth() {
     initialize, 
     signOut, 
     refreshAuth,
-    isAdmin
+    isAdmin,
+    userProfile
   } = useAuthStore();
   
   const [authInitialized, setAuthInitialized] = useState(false);
 
-  // Verificamos a autenticação apenas uma vez ao montar o componente
+  // Initialize authentication on first render
   useEffect(() => {
-    console.log("useAuth - Inicializando hook");
-    
     if (!authInitialized) {
-      console.log("useAuth - Primeira verificação de autenticação");
-      initialize();
-      setAuthInitialized(true);
+      try {
+        initialize();
+        setAuthInitialized(true);
+      } catch (err) {
+        console.error("Failed to initialize authentication:", err);
+        toast.error("Falha ao inicializar autenticação");
+      }
     }
-    
-    return () => {
-      console.log("useAuth - Limpeza do hook");
-    };
   }, [initialize, authInitialized]);
 
-  // Função para depurar o problema de autenticação
+  // Debug function to help troubleshoot auth issues
   const debugAuth = async () => {
     try {
       const sessionResult = await supabase.auth.getSession();
-      console.log("Sessão atual:", sessionResult);
+      console.log("Current session:", sessionResult);
       
       const userResult = await supabase.auth.getUser();
-      console.log("Usuário atual:", userResult);
+      console.log("Current user:", userResult);
       
       return { session: sessionResult, user: userResult };
     } catch (error) {
-      console.error("Erro ao depurar autenticação:", error);
+      console.error("Error debugging authentication:", error);
       return { error };
     }
   };
@@ -55,6 +55,7 @@ export function useAuth() {
     debugAuth,
     refreshSession: refreshAuth,
     isAdmin,
-    initialized: authInitialized
+    initialized: authInitialized,
+    userProfile
   };
 }

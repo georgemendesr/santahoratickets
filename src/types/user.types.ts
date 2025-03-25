@@ -10,6 +10,7 @@ export interface UserProfile {
   created_at?: string;
   updated_at?: string;
   referral_code?: string;
+  loyalty_points?: number;
 }
 
 export interface UserPreference {
@@ -22,10 +23,12 @@ export interface UserPreference {
   updated_at?: string;
 }
 
+export type UserRoleType = 'admin' | 'user' | 'staff';
+
 export interface UserRole {
   id: string;
   user_id: string;
-  role: 'admin' | 'user' | 'staff';
+  role: UserRoleType;
   created_at?: string;
 }
 

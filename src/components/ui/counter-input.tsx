@@ -1,82 +1,83 @@
-import { useState, useEffect } from "react";
+
+import * as React from "react";
+import { MinusIcon, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Plus, Minus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface CounterInputProps {
   value: number;
+  onChange: (value: number) => void;
   min?: number;
   max?: number;
-  onChange: (value: number) => void;
-  disabled?: boolean;
-  size?: "default" | "sm" | "lg";
+  step?: number;
   className?: string;
+  disabled?: boolean;
+  size?: "default" | "sm" | "lg" | "icon";
 }
 
 export function CounterInput({
   value,
+  onChange,
   min = 0,
   max = Infinity,
-  onChange,
+  step = 1,
+  className,
   disabled = false,
   size = "default",
-  className = "",
 }: CounterInputProps) {
-  const [count, setCount] = useState(value);
-
-  // Keep local state synced with prop value
-  useEffect(() => {
-    setCount(value);
-  }, [value]);
-
-  const increment = () => {
-    if (count < max && !disabled) {
-      const newValue = count + 1;
-      setCount(newValue);
-      onChange(newValue);
+  const handleIncrement = () => {
+    if (value < max) {
+      onChange(Math.min(value + step, max));
     }
   };
 
-  const decrement = () => {
-    if (count > min && !disabled) {
-      const newValue = count - 1;
-      setCount(newValue);
-      onChange(newValue);
+  const handleDecrement = () => {
+    if (value > min) {
+      onChange(Math.max(value - step, min));
     }
   };
 
-  // Determine button size
-  const buttonSize = size === "sm" ? "icon-sm" : size === "lg" ? "icon-lg" : "icon";
-  const buttonPadding = size === "sm" ? "px-2 h-8" : size === "lg" ? "px-3 h-11" : "px-2.5 h-10";
-  const fontSize = size === "sm" ? "text-sm" : size === "lg" ? "text-lg" : "text-base";
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = parseInt(e.target.value, 10);
+    if (!isNaN(newValue)) {
+      onChange(Math.min(Math.max(newValue, min), max));
+    }
+  };
 
   return (
     <div
-      className={`flex items-center border rounded-md overflow-hidden ${className}`}
+      className={cn(
+        "flex items-center border rounded-md overflow-hidden",
+        disabled && "opacity-50 cursor-not-allowed",
+        className
+      )}
     >
       <Button
-        type="button"
         variant="ghost"
-        size={buttonSize}
-        className={`${buttonPadding} rounded-none border-r`}
-        onClick={decrement}
-        disabled={count <= min || disabled}
+        size={size}
+        onClick={handleDecrement}
+        disabled={disabled || value <= min}
+        className="px-2 rounded-none border-r"
       >
-        <Minus className="h-4 w-4" />
+        <MinusIcon size={16} />
       </Button>
-      
-      <div className={`px-3 py-1 min-w-[50px] text-center ${fontSize} font-medium`}>
-        {count}
-      </div>
-      
+      <input
+        type="text"
+        value={value}
+        onChange={handleInputChange}
+        disabled={disabled}
+        className="w-16 text-center border-none focus:outline-none focus:ring-0 py-1"
+        min={min}
+        max={max}
+      />
       <Button
-        type="button"
         variant="ghost"
-        size={buttonSize}
-        className={`${buttonPadding} rounded-none border-l`}
-        onClick={increment}
-        disabled={count >= max || disabled}
+        size={size}
+        onClick={handleIncrement}
+        disabled={disabled || value >= max}
+        className="px-2 rounded-none border-l"
       >
-        <Plus className="h-4 w-4" />
+        <PlusIcon size={16} />
       </Button>
     </div>
   );

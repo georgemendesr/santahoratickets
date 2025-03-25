@@ -1,6 +1,8 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { pt } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { 
@@ -12,33 +14,14 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { 
-  PlusCircle, 
-  Edit, 
-  Ticket, 
-  Users, 
-  Eye, 
-  Calendar,
-  BarChart4,
-  ChevronRight,
-  Copy
-} from "lucide-react";
-import { format } from "date-fns";
-import { pt } from "date-fns/locale";
+import { PlusCircle } from "lucide-react";
 import { type Event } from "@/types";
 import { useNavigation } from "@/hooks/useNavigation";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { EventosFilter } from "@/components/admin/eventos/EventosFilter";
+import { EventosTable } from "@/components/admin/eventos/EventosTable";
+import { EmptyEventsList } from "@/components/admin/eventos/EmptyEventsList";
+import { EventosLoading } from "@/components/admin/eventos/EventosLoading";
 
 const AdminEventos = () => {
   const [filter, setFilter] = useState("todos");
@@ -65,22 +48,6 @@ const AdminEventos = () => {
     },
   });
 
-  const getEventStatus = (event: Event) => {
-    const today = new Date();
-    const eventDate = new Date(event.date);
-    
-    if (event.status === 'draft') return { label: 'Rascunho', variant: 'secondary' as const };
-    if (event.status === 'ended') return { label: 'Finalizado', variant: 'secondary' as const };
-    
-    if (eventDate < today) {
-      return { label: 'Passado', variant: 'secondary' as const };
-    } else if (eventDate.toDateString() === today.toDateString()) {
-      return { label: 'Hoje', variant: 'destructive' as const };
-    } else {
-      return { label: 'Ativo', variant: 'default' as const };
-    }
-  };
-
   const handleViewEvent = (eventId: string) => {
     navigateTo(`/eventos/${eventId}`);
   };
@@ -103,6 +70,10 @@ const AdminEventos = () => {
 
   const handleDuplicateEvent = (eventId: string) => {
     navigateTo(`/eventos/${eventId}/duplicate`);
+  };
+
+  const handleCreateEvent = () => {
+    navigateTo("/eventos/create");
   };
 
   const toggleEventStatus = async (event: Event) => {
@@ -132,7 +103,7 @@ const AdminEventos = () => {
             <p className="text-muted-foreground">Gerencie seus eventos e lotes de ingressos</p>
           </div>
           <Button 
-            onClick={() => navigateTo("/eventos/create")}
+            onClick={handleCreateEvent}
             className="flex items-center gap-2"
           >
             <PlusCircle className="h-4 w-4" />
@@ -140,29 +111,10 @@ const AdminEventos = () => {
           </Button>
         </div>
         
-        <div className="mb-6 flex flex-wrap gap-2">
-          <Button 
-            variant={filter === "todos" ? "default" : "outline"}
-            onClick={() => setFilter("todos")}
-            size="sm"
-          >
-            Todos
-          </Button>
-          <Button 
-            variant={filter === "ativos" ? "default" : "outline"}
-            onClick={() => setFilter("ativos")}
-            size="sm"
-          >
-            Ativos
-          </Button>
-          <Button 
-            variant={filter === "passados" ? "default" : "outline"}
-            onClick={() => setFilter("passados")}
-            size="sm"
-          >
-            Encerrados
-          </Button>
-        </div>
+        <EventosFilter 
+          currentFilter={filter} 
+          onFilterChange={setFilter} 
+        />
         
         <Card>
           <CardHeader className="pb-3">
@@ -175,165 +127,23 @@ const AdminEventos = () => {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="flex justify-center items-center py-8">
-                <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-primary rounded-full"></div>
-              </div>
+              <EventosLoading />
             ) : !events || events.length === 0 ? (
-              <div className="text-center py-12 border rounded-lg bg-muted/20">
-                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                <h3 className="text-lg font-medium mb-2">Nenhum evento encontrado</h3>
-                <p className="text-muted-foreground mb-4">
-                  {filter === "todos" ? "Você ainda não possui eventos cadastrados." : 
-                   `Não há eventos ${filter === "ativos" ? "ativos" : "passados"}.`}
-                </p>
-                <Button 
-                  onClick={() => navigateTo("/eventos/create")}
-                  variant="outline"
-                >
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  Criar Evento
-                </Button>
-              </div>
+              <EmptyEventsList 
+                filter={filter} 
+                onCreateEvent={handleCreateEvent} 
+              />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-28">Status</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Local</TableHead>
-                    <TableHead className="text-center">Ingressos</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {events.map((event) => {
-                    const status = getEventStatus(event);
-                    
-                    return (
-                      <TableRow key={event.id} className="group">
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Switch 
-                                    checked={event.status === 'published'} 
-                                    onCheckedChange={() => toggleEventStatus(event)}
-                                  />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {event.status === 'published' ? 'Arquivar evento' : 'Publicar evento'}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            <Badge variant={status.variant}>{status.label}</Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <button
-                            onClick={() => handleEditEvent(event.id)}
-                            className="font-medium hover:underline text-left w-full"
-                          >
-                            {event.title}
-                          </button>
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(event.date), "dd 'de' MMMM 'de' yyyy", { locale: pt })}
-                        </TableCell>
-                        <TableCell>{event.location}</TableCell>
-                        <TableCell className="text-center">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  className="font-medium"
-                                  onClick={() => handleManageBatches(event.id)}
-                                >
-                                  <Ticket className="h-3 w-3 mr-1" />
-                                  <span>{event.approved_tickets || 0}</span>
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <div className="text-xs space-y-1">
-                                  <div>Aprovados: {event.approved_tickets || 0}</div>
-                                  <div>Pendentes: {event.pending_tickets || 0}</div>
-                                  <div>Reembolsados: {event.refunded_tickets || 0}</div>
-                                  <div className="pt-1 text-primary">Clique para gerenciar lotes</div>
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => handleViewEvent(event.id)}
-                              title="Visualizar evento"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => handleEditEvent(event.id)}
-                              title="Editar evento"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => handleManageBatches(event.id)}
-                              title="Gerenciar lotes"
-                            >
-                              <Ticket className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => handleViewParticipants(event.id)}
-                              title="Ver participantes"
-                            >
-                              <Users className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => handleViewAnalytics(event.id)}
-                              title="Estatísticas"
-                            >
-                              <BarChart4 className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => handleDuplicateEvent(event.id)}
-                              title="Duplicar evento"
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              asChild
-                              className="ml-1 lg:hidden group-hover:opacity-100 opacity-0 transition-opacity"
-                            >
-                              <a href={`/admin/eventos/${event.id}`}>
-                                <ChevronRight className="h-4 w-4" />
-                              </a>
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+              <EventosTable 
+                events={events}
+                onViewEvent={handleViewEvent}
+                onEditEvent={handleEditEvent}
+                onManageBatches={handleManageBatches}
+                onViewParticipants={handleViewParticipants}
+                onViewAnalytics={handleViewAnalytics}
+                onDuplicateEvent={handleDuplicateEvent}
+                onToggleEventStatus={toggleEventStatus}
+              />
             )}
           </CardContent>
           <CardFooter className="border-t px-6 py-3 flex justify-between text-sm text-muted-foreground">

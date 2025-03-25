@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoyaltyPointsHistory } from "@/types";
-import { QueryBuilder } from "@/utils/queryBuilder";
+import { supabase } from "@/integrations/supabase/client";
 import { PointsHistoryList } from "./PointsHistoryList";
 import { EmptyPointsHistory } from "./EmptyPointsHistory";
 import { PointsHistoryLoading } from "./PointsHistoryLoading";
@@ -21,12 +21,13 @@ export function PointsHistory({ userId }: PointsHistoryProps) {
 
       try {
         setLoading(true);
-        const query = new QueryBuilder<LoyaltyPointsHistory>("loyalty_points_history")
+        const { data, error } = await supabase
+          .from("loyalty_points_history")
           .select("*")
           .eq("user_id", userId)
           .order("created_at", { ascending: false });
           
-        const data = await query.execute();
+        if (error) throw error;
         setTransactions(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Erro ao carregar histórico:", error);

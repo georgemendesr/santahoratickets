@@ -5,14 +5,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { UserRole } from "@/types/user.types";
+import { UserRole, UserRoleType } from "@/types/user.types";
 import { toast } from "sonner";
 
 interface UserWithRole {
   id: string;
   email: string;
   name: string | null;
-  role: 'admin' | 'user' | 'staff';
+  role: UserRoleType;
   role_id: string;
 }
 
@@ -63,7 +63,7 @@ export function UserRolesTable() {
     fetchUsers();
   }, []);
   
-  const updateUserRole = async (userId: string, roleId: string | null, newRole: 'user' | 'admin' | 'staff') => {
+  const updateUserRole = async (userId: string, roleId: string | null, newRole: UserRoleType) => {
     try {
       if (roleId) {
         // Atualizar papel existente
@@ -137,10 +137,9 @@ export function UserRolesTable() {
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
                     <Badge 
-                      variant={user.role === 'admin' ? 'destructive' : user.role === 'staff' ? 'secondary' : 'outline'}
+                      variant={user.role === 'admin' ? 'destructive' : 'outline'}
                     >
-                      {user.role === 'admin' ? 'Administrador' : 
-                       user.role === 'staff' ? 'Colaborador' : 'Usuário'}
+                      {user.role === 'admin' ? 'Administrador' : 'Usuário'}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -150,7 +149,7 @@ export function UserRolesTable() {
                         updateUserRole(
                           user.id, 
                           user.role_id, 
-                          value as 'user' | 'admin' | 'staff'
+                          value as UserRoleType
                         )
                       }
                     >
@@ -159,7 +158,6 @@ export function UserRolesTable() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="user">Usuário</SelectItem>
-                        <SelectItem value="staff">Colaborador</SelectItem>
                         <SelectItem value="admin">Administrador</SelectItem>
                       </SelectContent>
                     </Select>

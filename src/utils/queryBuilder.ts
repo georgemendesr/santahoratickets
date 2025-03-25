@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { PostgrestQueryBuilder } from '@supabase/supabase-js';
 
 /**
  * A utility function to build Supabase queries with better type safety.
@@ -23,7 +24,31 @@ export function getRelation(query: any, relation: string) {
 }
 
 export class QueryBuilder {
+  private query: PostgrestQueryBuilder<any, any>;
+
+  constructor(table: string) {
+    this.query = supabase.from(table);
+  }
+
   static create(table: string) {
     return supabase.from(table);
+  }
+
+  select(columns: string) {
+    return this.query.select(columns);
+  }
+
+  eq(column: string, value: any) {
+    return this.query.eq(column, value);
+  }
+
+  order(column: string, options: { ascending: boolean }) {
+    return this.query.order(column, options);
+  }
+
+  async execute() {
+    const { data, error } = await this.query;
+    if (error) throw error;
+    return data;
   }
 }

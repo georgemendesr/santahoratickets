@@ -13,12 +13,12 @@ import { DateRange, dateUtils } from "@/types/date";
 
 const AdminAnalytics = () => {
   const navigate = useNavigate();
-  const { isAdmin, loading } = useAuthStore();
+  const { isAdmin, isLoading } = useAuthStore();
   const [dateRange, setDateRange] = useState<DateRange>(dateUtils.createDefaultRange(30));
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!loading && !isAdmin) {
+    if (!isLoading && !isAdmin) {
       toast({
         title: "Acesso restrito",
         description: "Você não tem permissão para acessar esta página",
@@ -26,9 +26,9 @@ const AdminAnalytics = () => {
       });
       navigate("/");
     }
-  }, [isAdmin, navigate, toast, loading]);
+  }, [isAdmin, navigate, toast, isLoading]);
 
-  if (loading) {
+  if (isLoading) {
     return <div className="flex justify-center items-center h-64">Carregando...</div>;
   }
 

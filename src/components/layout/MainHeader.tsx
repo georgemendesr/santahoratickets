@@ -2,14 +2,13 @@
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
+  NavigationMenuItem,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
-import { Ticket, LayoutTemplate, Users, User, PlusCircle, Settings, CalendarDays } from "lucide-react";
+import { User, Settings, PlusCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function MainHeader() {
@@ -22,21 +21,17 @@ export function MainHeader() {
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem>
-              <Link to="/">
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Início
-                </NavigationMenuLink>
+              <Link to="/" className={navigationMenuTriggerStyle()}>
+                Início
               </Link>
             </NavigationMenuItem>
 
             {/* Evento pode ser criado por qualquer usuário logado */}
             {session && (
               <NavigationMenuItem>
-                <Link to="/events/create">
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Criar Evento
-                  </NavigationMenuLink>
+                <Link to="/events/create" className={navigationMenuTriggerStyle()}>
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Criar Evento
                 </Link>
               </NavigationMenuItem>
             )}
@@ -44,11 +39,9 @@ export function MainHeader() {
             {/* Link único para administração */}
             {isAdmin && (
               <NavigationMenuItem>
-                <Link to="/admin">
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Administração
-                  </NavigationMenuLink>
+                <Link to="/admin" className={navigationMenuTriggerStyle()}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Administração
                 </Link>
               </NavigationMenuItem>
             )}

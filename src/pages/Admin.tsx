@@ -2,7 +2,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AdminLayout } from "@/components/admin/AdminLayout";
+import { AdminLayout } from "@/layouts/AdminLayout";
 import { DashboardHeader } from "@/components/admin/dashboard/DashboardHeader";
 import { MetricsCards } from "@/components/admin/dashboard/MetricsCards";
 import { DashboardCharts } from "@/components/admin/dashboard/DashboardCharts";

@@ -21,13 +21,20 @@ export function useAuth() {
   // Initialize authentication on first render
   useEffect(() => {
     if (!authInitialized) {
-      try {
-        initialize();
-        setAuthInitialized(true);
-      } catch (err) {
-        console.error("Failed to initialize authentication:", err);
-        toast.error("Falha ao inicializar autenticação");
-      }
+      const initAuth = async () => {
+        try {
+          console.log("useAuth - Initializing authentication");
+          await initialize();
+          console.log("useAuth - Authentication initialized successfully");
+          setAuthInitialized(true);
+        } catch (err) {
+          console.error("Failed to initialize authentication:", err);
+          toast.error("Falha ao inicializar autenticação");
+          setAuthInitialized(true); // Still mark as initialized to prevent infinite retries
+        }
+      };
+      
+      initAuth();
     }
   }, [initialize, authInitialized]);
 

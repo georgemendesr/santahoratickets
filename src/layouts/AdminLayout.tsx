@@ -15,16 +15,29 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps) {
-  const { isAdmin, isLoading, initialize } = useAuthStore();
+  const { isAdmin, isLoading, initialize, session } = useAuthStore();
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  // Check authentication when component mounts
   useEffect(() => {
-    initialize();
+    const checkAuth = async () => {
+      try {
+        console.log("AdminLayout - Checking authentication");
+        await initialize();
+        console.log("AdminLayout - Authentication verified successfully");
+      } catch (error) {
+        console.error("AdminLayout - Authentication verification error:", error);
+      }
+    };
+    
+    checkAuth();
   }, [initialize]);
   
+  // Handle authorization redirection separately
   useEffect(() => {
     if (!isLoading && requiresAdmin && !isAdmin) {
+      console.log("AdminLayout - User not authorized, redirecting");
       toast({
         title: "Acesso restrito",
         description: "Você não tem permissão para acessar esta página",
@@ -37,13 +50,23 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-lg">Carregando...</p>
+        <div className="flex flex-col items-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-amber-500"></div>
+          <span className="mt-4 text-gray-600">Verificando permissões...</span>
+        </div>
       </div>
     );
   }
   
   if (requiresAdmin && !isAdmin) {
-    return null; // Será redirecionado pelo useEffect
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p className="text-red-500 text-xl mb-2">Acesso não autorizado</p>
+          <p className="text-gray-500">Redirecionando...</p>
+        </div>
+      </div>
+    );
   }
   
   return (
@@ -70,7 +93,7 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
   );
 }
 
-// Higher-Order Component (HOC) para adicionar AdminLayout a um componente
+// Higher-Order Component (HOC) to add AdminLayout to a component
 export function withAdminLayout<P extends object>(
   Component: React.ComponentType<P>,
   layoutProps: Omit<AdminLayoutProps, 'children'> = {}

@@ -1,4 +1,3 @@
-
 import { Batch } from "@/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -12,14 +11,15 @@ import { computeBatchStatus } from "@/utils/batchStatusUtils";
 interface BatchesTableProps {
   batches: Batch[];
   onQuantityChange?: (quantities: Record<string, number>) => void;
+  onPurchase?: (batchId: string, quantity: number) => void;
+  isLoggedIn?: boolean;
 }
 
-export function BatchesTable({ batches, onQuantityChange }: BatchesTableProps) {
+export function BatchesTable({ batches, onQuantityChange, onPurchase, isLoggedIn = false }: BatchesTableProps) {
   const [selectedQuantities, setSelectedQuantities] = useState<Record<string, number>>({});
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
-    // Atualiza o estado 'now' a cada minuto
     const interval = setInterval(() => {
       setNow(new Date());
     }, 60000);
@@ -27,7 +27,6 @@ export function BatchesTable({ batches, onQuantityChange }: BatchesTableProps) {
     return () => clearInterval(interval);
   }, []);
 
-  // Notificar componente pai quando as quantidades mudarem
   useEffect(() => {
     if (onQuantityChange) {
       onQuantityChange(selectedQuantities);
@@ -48,9 +47,7 @@ export function BatchesTable({ batches, onQuantityChange }: BatchesTableProps) {
     }));
   };
 
-  // Função que usa computeBatchStatus para garantir consistência
   const getBatchStatus = (batch: Batch) => {
-    // Calcular o status real usando a função centralizada
     const calculatedStatus = computeBatchStatus(batch);
     
     switch (calculatedStatus) {
@@ -70,7 +67,6 @@ export function BatchesTable({ batches, onQuantityChange }: BatchesTableProps) {
   };
 
   const isBatchAvailable = (batch: Batch) => {
-    // Um lote está disponível para compra apenas se estiver com status "active"
     return computeBatchStatus(batch) === 'active';
   };
 
@@ -92,10 +88,8 @@ export function BatchesTable({ batches, onQuantityChange }: BatchesTableProps) {
     }
   };
 
-  // Filtrar lotes que não estão visíveis
   const visibleBatches = batches.filter(batch => batch.is_visible);
 
-  // Agrupar lotes por grupo
   const groupedBatches = visibleBatches.reduce((groups, batch) => {
     const group = batch.batch_group || 'default';
     return {
@@ -104,7 +98,6 @@ export function BatchesTable({ batches, onQuantityChange }: BatchesTableProps) {
     };
   }, {} as Record<string, Batch[]>);
 
-  // Se não houver lotes visíveis, mostrar mensagem
   if (visibleBatches.length === 0) {
     return (
       <div className="rounded-md border p-6 text-center">

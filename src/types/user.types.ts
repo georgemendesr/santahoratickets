@@ -1,21 +1,33 @@
 
 export interface UserProfile {
   id: string;
-  cpf: string | null;
-  birth_date: string | null;
-  loyalty_points: number;
+  email?: string;
+  name?: string;
+  avatar_url?: string;
   created_at?: string;
-  name: string | null;
-  phone: string | null;
-  email: string | null;
-  referral_code?: string | null;
+  updated_at?: string;
+  cpf?: string;
+  birth_date?: string;
+  phone?: string;
+  loyalty_points?: number;
+  tickets_purchased?: number;
+  events_attended?: number;
+  referral_code?: string;
 }
 
-export type UserRole = 'admin' | 'user';
-
-export interface UserRoleData {
+export interface UserRole {
   id: string;
   user_id: string;
-  role: UserRole;
+  role: 'admin' | 'user' | 'staff';
   created_at?: string;
+}
+
+export interface UserPreference {
+  id: string;
+  user_id: string;
+  email_notifications: boolean;
+  push_notifications: boolean;
+  theme: 'light' | 'dark' | 'system';
+  created_at?: string;
+  updated_at?: string;
 }

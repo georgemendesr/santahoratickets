@@ -6,11 +6,11 @@ import { ptBR } from "date-fns/locale";
 
 interface EventInfoProps {
   event: Event;
-  getLowStockAlert: (availableTickets: number) => React.ReactNode;
-  soldOut?: boolean; // Nova propriedade
+  getLowStockAlert?: (availableTickets: number) => React.ReactNode;
+  soldOut?: boolean;
 }
 
-export function EventInfo({ event, getLowStockAlert, soldOut = false }: EventInfoProps) {
+export function EventInfo({ event, getLowStockAlert = () => null, soldOut = false }: EventInfoProps) {
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);

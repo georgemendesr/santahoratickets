@@ -8,6 +8,8 @@ import { ReferralCard } from "./ReferralCard";
 import { Event, Batch, UserProfile } from "@/types";
 import { CheckoutProButton } from "../payment/CheckoutProButton";
 import { Session } from "@supabase/supabase-js";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 interface EventDetailsContentProps {
   event: Event;
@@ -36,12 +38,42 @@ export function EventDetailsContent({
   isLoggedIn,
   session
 }: EventDetailsContentProps) {
+  const navigate = useNavigate();
   const activeBatch = batches?.find(batch => batch.status === 'active') || null;
   const hasLoyaltyEnabled = true; // TODO: Verificar configuração de lealdade do evento
+  const [selectedQuantities, setSelectedQuantities] = useState<Record<string, number>>({});
+  
+  const handleQuantityChange = (quantities: Record<string, number>) => {
+    setSelectedQuantities(quantities);
+  };
+  
+  const getLowStockAlert = (availableTickets: number) => {
+    if (availableTickets <= 5 && availableTickets > 0) {
+      return (
+        <p className="text-sm text-amber-600 font-medium">
+          Apenas {availableTickets} ingressos disponíveis!
+        </p>
+      );
+    }
+    return null;
+  };
+  
+  const handlePurchase = () => {
+    // Encontre o lote e quantidade selecionados
+    for (const [batchId, quantity] of Object.entries(selectedQuantities)) {
+      if (quantity > 0) {
+        onPurchase(batchId, quantity);
+        return;
+      }
+    }
+  };
   
   return (
     <div className="space-y-8 p-4 md:p-6">
-      <EventInfo event={event} />
+      <EventInfo 
+        event={event} 
+        getLowStockAlert={getLowStockAlert}
+      />
       
       <div className="grid gap-6 md:grid-cols-3">
         <div className="md:col-span-2">
@@ -50,6 +82,7 @@ export function EventDetailsContent({
               batches={batches || []} 
               onPurchase={onPurchase}
               isLoggedIn={isLoggedIn}
+              onQuantityChange={handleQuantityChange}
             />
             
             {activeBatch && (
@@ -69,7 +102,7 @@ export function EventDetailsContent({
                     <>
                       <Button
                         variant="outline"
-                        onClick={() => onPurchase(activeBatch.id, 1)}
+                        onClick={handlePurchase}
                       >
                         Comprar com Cadastro
                       </Button>
@@ -101,6 +134,9 @@ export function EventDetailsContent({
             isAdmin={isAdmin}
             onShare={onShare}
             onEdit={onEdit}
+            onPurchase={handlePurchase}
+            hasSelectedQuantity={Object.values(selectedQuantities).some(q => q > 0)}
+            isLoggedIn={isLoggedIn}
           />
           
           {referrer && (

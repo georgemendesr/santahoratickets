@@ -4,12 +4,17 @@ import { Gift } from "lucide-react";
 import { LoyaltyLevel } from "./LoyaltyLevel";
 import { LoyaltyFeatures } from "./LoyaltyFeatures";
 import { LoyaltyActions } from "./LoyaltyActions";
+import { UserProfile, Event } from "@/types";
 
 interface LoyaltyCardProps {
-  points: number;
+  points?: number;
+  profile?: UserProfile | null;
+  event?: Event;
 }
 
-export function LoyaltyCard({ points }: LoyaltyCardProps) {
+export function LoyaltyCard({ points = 0, profile, event }: LoyaltyCardProps) {
+  const userPoints = profile?.loyalty_points || points;
+  
   return (
     <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-100">
       <CardHeader>
@@ -18,8 +23,8 @@ export function LoyaltyCard({ points }: LoyaltyCardProps) {
           Programa de Fidelidade
         </CardTitle>
         <CardDescription className="flex justify-between items-center">
-          <span>Você tem {points} pontos acumulados</span>
-          <LoyaltyLevel points={points} />
+          <span>Você tem {userPoints} pontos acumulados</span>
+          <LoyaltyLevel points={userPoints} />
         </CardDescription>
       </CardHeader>
       <CardContent>

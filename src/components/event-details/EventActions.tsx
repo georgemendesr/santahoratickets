@@ -10,7 +10,7 @@ interface EventActionsProps {
   isAdmin: boolean;
   onPurchase: () => void;
   onShare: () => void;
-  onEdit: () => void;
+  onEdit?: () => void;
   soldOut?: boolean;
   hasSelectedQuantity?: boolean;
   selectedQuantity?: number;

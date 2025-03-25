@@ -5,10 +5,15 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 interface ReferralCardProps {
-  code: string;
+  code?: string;
+  referralCode?: string;
+  eventUrl?: string;
 }
 
-export function ReferralCard({ code }: ReferralCardProps) {
+export function ReferralCard({ code, referralCode, eventUrl }: ReferralCardProps) {
+  const displayCode = code || referralCode || '';
+  const shareUrl = eventUrl || '';
+  
   return (
     <Card>
       <CardHeader>
@@ -20,13 +25,13 @@ export function ReferralCard({ code }: ReferralCardProps) {
       <CardContent>
         <div className="flex gap-2">
           <Input
-            value={code}
+            value={displayCode}
             readOnly
             className="font-mono"
           />
           <Button
             onClick={() => {
-              navigator.clipboard.writeText(code);
+              navigator.clipboard.writeText(shareUrl.includes(displayCode) ? shareUrl : `${shareUrl}?ref=${displayCode}`);
               toast.success("Código copiado!");
             }}
           >

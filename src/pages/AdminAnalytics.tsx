@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
-import { AdminLayout } from "@/components/admin/AdminLayout";
+import { AdminLayout } from "@/layouts/AdminLayout";
 import { SalesFunnelChart } from "@/components/analytics/SalesFunnelChart";
 import { ConversionMetrics } from "@/components/analytics/ConversionMetrics";
 import { EventPerformance } from "@/components/analytics/EventPerformance";

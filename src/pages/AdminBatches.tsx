@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
-import { AdminLayout } from "@/components/admin/AdminLayout";
+import { AdminLayout } from "@/layouts/AdminLayout";
 import { BatchForm } from "@/components/batch-management/BatchForm";
 import { NoEventSelected } from "@/components/batch-management/NoEventSelected";
 import { useBatchOrderNumber } from "@/hooks/useBatchOrderNumber";

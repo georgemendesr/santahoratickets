@@ -1,93 +1,157 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+import { useEffect, useState } from "react";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { UserProfile, UserRole } from "@/types";
-import { useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { UserRole } from "@/types/user.types";
+
+interface UserRoleTableItem {
+  id: string;
+  user_id: string;
+  role: 'admin' | 'user' | 'staff';
+  created_at?: string;
+  user_email?: string;
+  user_name?: string;
+}
 
 export function UserRolesTable() {
-  const [updating, setUpdating] = useState(false);
-
-  const { data: users, refetch } = useQuery({
-    queryKey: ["admin-users"],
-    queryFn: async () => {
-      const { data: profiles, error: profilesError } = await supabase
-        .from("user_profiles")
-        .select("*");
-
-      if (profilesError) throw profilesError;
-
-      const { data: roles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("*");
-
-      if (rolesError) throw rolesError;
-
-      return profiles.map((profile: UserProfile) => ({
-        ...profile,
-        role: roles.find((r) => r.user_id === profile.id)?.role || "user",
-      }));
-    },
-  });
-
-  const toggleUserRole = async (userId: string, currentRole: UserRole) => {
-    setUpdating(true);
+  const [userRoles, setUserRoles] = useState<UserRoleTableItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    fetchUserRoles();
+  }, []);
+  
+  async function fetchUserRoles() {
     try {
-      const newRole = currentRole === "admin" ? "user" : "admin";
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select(`
+          *,
+          user_profiles:user_id (
+            email,
+            name
+          )
+        `)
+        .order('created_at', { ascending: false });
       
-      const { error } = await supabase
-        .from("user_roles")
-        .upsert(
-          { user_id: userId, role: newRole },
-          { onConflict: "user_id" }
-        );
-
       if (error) throw error;
-      await refetch();
+      
+      const formattedData = data.map(item => ({
+        id: item.id,
+        user_id: item.user_id,
+        role: item.role as 'admin' | 'user' | 'staff',
+        created_at: item.created_at,
+        user_email: item.user_profiles?.email,
+        user_name: item.user_profiles?.name
+      }));
+      
+      setUserRoles(formattedData);
     } catch (error) {
-      console.error("Erro ao atualizar role:", error);
+      console.error('Error fetching user roles:', error);
+      toast.error('Falha ao carregar papéis dos usuários');
     } finally {
-      setUpdating(false);
+      setIsLoading(false);
     }
-  };
-
+  }
+  
+  async function updateUserRole(userId: string, roleId: string, newRole: 'admin' | 'user' | 'staff') {
+    try {
+      const { error } = await supabase
+        .from('user_roles')
+        .update({ role: newRole })
+        .eq('id', roleId);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setUserRoles(prevRoles => 
+        prevRoles.map(role => 
+          role.id === roleId ? { ...role, role: newRole } : role
+        )
+      );
+      
+      toast.success('Papel do usuário atualizado com sucesso');
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      toast.error('Falha ao atualizar papel do usuário');
+    }
+  }
+  
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+      </div>
+    );
+  }
+  
   return (
-    <div className="rounded-md border">
+    <div>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Ações</TableHead>
+            <TableHead>Usuário</TableHead>
+            <TableHead>Papel</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users?.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell>{user.name || "N/A"}</TableCell>
-              <TableCell>{user.email || "N/A"}</TableCell>
-              <TableCell>{user.role}</TableCell>
+          {userRoles.map(role => (
+            <TableRow key={role.id}>
               <TableCell>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={updating}
-                  onClick={() => toggleUserRole(user.id, user.role as UserRole)}
+                <div className="font-medium">{role.user_name || 'Sem nome'}</div>
+                <div className="text-sm text-muted-foreground">{role.user_email}</div>
+              </TableCell>
+              <TableCell>
+                <Badge variant={role.role === 'admin' ? 'destructive' : role.role === 'staff' ? 'outline' : 'secondary'}>
+                  {role.role}
+                </Badge>
+              </TableCell>
+              <TableCell className="text-right">
+                <Select
+                  value={role.role}
+                  onValueChange={(value: string) => updateUserRole(role.user_id, role.id, value as 'admin' | 'user' | 'staff')}
                 >
-                  Tornar {user.role === "admin" ? "Usuário" : "Admin"}
-                </Button>
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue placeholder="Selecionar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">Usuário</SelectItem>
+                    <SelectItem value="staff">Staff</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
               </TableCell>
             </TableRow>
           ))}
+          
+          {userRoles.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
+                Nenhum usuário encontrado
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </div>

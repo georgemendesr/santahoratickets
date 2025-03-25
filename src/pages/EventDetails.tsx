@@ -1,208 +1,116 @@
 
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { EventLayout } from "@/components/event-details/EventLayout";
-import { EventHeader } from "@/components/event-details/EventHeader";
+import { useParams, useSearchParams } from "react-router-dom";
 import { EventDetailsContent } from "@/components/event-details/EventDetailsContent";
-import { ProfileDialog } from "@/components/event-details/ProfileDialog";
-import { useEventDetails } from "@/hooks/useEventDetails";
-import { useRole } from "@/hooks/useRole";
-import { useAuth } from "@/hooks/useAuth";
-import { useProfile } from "@/hooks/useProfile";
-import { supabase } from "@/integrations/supabase/client";
+import { EventHeader } from "@/components/events/EventHeader";
+import { EventLayout } from "@/components/events/EventLayout";
+import { useEventQueries } from "@/hooks/useEventQueries";
 import { useReferrals } from "@/hooks/useReferrals";
-import { toast } from "sonner";
+import { useAuthStore } from "@/store/authStore";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ProfileForm } from "@/components/auth/ProfileForm";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Error } from "@/components/shared/Error";
 
 const EventDetails = () => {
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  const { isAdmin } = useRole();
-  const { session } = useAuth();
-  const referralCode = searchParams.get('ref');
+  const refCode = searchParams.get("ref") || undefined;
+  const { session, userProfile } = useAuthStore();
   
-  const [shareUrl, setShareUrl] = useState("");
-  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  // Pass the ID parameter to useReferrals 
+  const { referralCode, createReferral, useGetReferrer } = useReferrals(id);
   
-  // Profile state
-  const [cpf, setCpf] = useState("");
-  const [birthDate, setBirthDate] = useState("");
-  const [phone, setPhone] = useState("");
-  const [isPendingProfileUpdate, setIsPendingProfileUpdate] = useState(false);
+  // Use the useGetReferrer hook
+  const { referrer, isLoading: loadingReferrer } = useGetReferrer(refCode);
   
-  // Usar useReferrals para obter o hook useGetReferrer
-  const referrals = useReferrals(session?.user?.id);
-  // Então usar o hook retornado com o código de referência
-  const { data: referrer } = referrals.useGetReferrer(referralCode);
-  
-  const { profile } = useProfile(session?.user?.id);
-  const { event, batches, isLoading } = useEventDetails(id as string);
-  
-  const handleGoBack = () => {
-    navigate(-1);
-  };
+  const { event, batches, isLoading, error } = useEventQueries(id);
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
   
   useEffect(() => {
-    if (event) {
-      // Criar URL para compartilhamento
-      const userReferralCode = profile?.referral_code ?? null;
-      const baseUrl = window.location.origin;
-      const eventUrl = `${baseUrl}/event/${event.id}`;
-      
-      setShareUrl(userReferralCode ? `${eventUrl}?ref=${userReferralCode}` : eventUrl);
-    }
-  }, [event, profile]);
+    const hasIncompleteProfile = !!session && (!userProfile?.name || !userProfile?.cpf || !userProfile?.phone);
+    setShowProfileDialog(hasIncompleteProfile);
+  }, [session, userProfile]);
   
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: event?.title,
-          text: `Confira este evento: ${event?.title}`,
-          url: shareUrl,
-        });
-      } catch (error) {
-        console.error("Erro ao compartilhar:", error);
-        // Fallback para copiar link
-        await copyToClipboard();
-      }
+  // Handle back navigation
+  const handleBack = () => {
+    window.history.back();
+  };
+  
+  const handleShare = () => {
+    if (navigator.share && event) {
+      navigator.share({
+        title: event.title,
+        text: `Confira este evento: ${event.title}`,
+        url: window.location.href
+      }).catch(err => {
+        console.error("Erro ao compartilhar:", err);
+      });
     } else {
-      // Fallback para navegadores que não suportam a API Share
-      await copyToClipboard();
+      navigator.clipboard.writeText(window.location.href);
+      alert("Link copiado para a área de transferência!");
     }
   };
   
-  const copyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success("Link copiado para a área de transferência!");
-    } catch (error) {
-      console.error("Erro ao copiar link:", error);
-      toast.error("Erro ao copiar link");
-    }
-  };
-  
-  const checkProfileCompletion = async () => {
-    if (!session?.user) return false;
-    
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('cpf, birth_date, phone')
-      .eq('id', session.user.id)
-      .single();
-      
-    if (error) return false;
-    
-    return !!(data?.cpf && data?.phone);
-  };
-  
-  const handlePurchase = async (selectedBatchId: string, quantity: number) => {
-    if (!session?.user) {
-      // Redirecionar para autenticação
-      navigate(`/auth?redirect=/checkout/${id}?batch=${selectedBatchId}&quantity=${quantity}`);
+  const handlePurchase = (batchId: string, quantity: number) => {
+    if (!session) {
+      window.location.href = `/auth?redirect=/event/${id}`;
       return;
     }
     
-    // Verificar se o perfil está completo
-    const isProfileComplete = await checkProfileCompletion();
-    
-    if (!isProfileComplete) {
-      // Abrir modal para completar perfil
-      setProfileDialogOpen(true);
-      return;
-    }
-    
-    // Perfil completo, prosseguir para checkout
-    navigate(`/checkout/${id}?batch=${selectedBatchId}&quantity=${quantity}`);
+    window.location.href = `/checkout/${id}/finish?batch=${batchId}&quantity=${quantity}`;
   };
   
-  const handleProfileSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!session?.user) return;
-    
-    try {
-      setIsPendingProfileUpdate(true);
-      
-      const { error } = await supabase
-        .from('user_profiles')
-        .upsert({
-          id: session.user.id,
-          cpf,
-          birth_date: birthDate,
-          phone
-        });
-        
-      if (error) throw error;
-      
-      setProfileDialogOpen(false);
-      toast.success("Perfil atualizado com sucesso!");
-      
-      // Continuar para checkout
-      navigate(`/checkout/${id}`);
-      
-    } catch (error) {
-      console.error("Erro ao atualizar perfil:", error);
-      toast.error("Erro ao atualizar perfil");
-    } finally {
-      setIsPendingProfileUpdate(false);
-    }
-  };
-  
-  const handleEdit = () => {
-    navigate(`/admin/events/edit/${id}`);
-  };
-
   if (isLoading) {
     return (
-      <EventLayout onBack={handleGoBack}>
-        <div className="flex justify-center items-center min-h-[60vh]">
-          <p>Carregando detalhes do evento...</p>
+      <EventLayout onBack={handleBack}>
+        <EventHeader event={null} />
+        <div className="container space-y-8 py-8">
+          <Skeleton className="h-8 w-2/3" />
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-96 w-full" />
         </div>
       </EventLayout>
     );
   }
-
-  if (!event) {
+  
+  if (error || !event) {
     return (
-      <EventLayout onBack={handleGoBack}>
-        <div className="flex justify-center items-center min-h-[60vh]">
-          <p className="text-red-500">Evento não encontrado ou ocorreu um erro ao carregá-lo.</p>
-        </div>
+      <EventLayout onBack={handleBack}>
+        <EventHeader event={null} />
+        <Error message="Não foi possível carregar o evento" />
       </EventLayout>
     );
   }
-
+  
   return (
-    <EventLayout onBack={handleGoBack}>
+    <EventLayout onBack={handleBack}>
       <EventHeader event={event} />
-      
       <EventDetailsContent
         event={event}
-        batches={batches}
-        isAdmin={isAdmin}
-        profile={profile}
+        batches={batches || []}
+        isAdmin={useAuthStore.getState().isAdmin}
+        profile={userProfile}
         referrer={referrer}
-        referralCode={profile?.referral_code ?? null}
+        referralCode={userProfile?.referral_code || null}
         onShare={handleShare}
         onPurchase={handlePurchase}
-        onEdit={handleEdit}
-        isLoggedIn={!!session?.user}
+        isLoggedIn={!!session}
         session={session}
       />
       
-      <ProfileDialog
-        open={profileDialogOpen}
-        onOpenChange={setProfileDialogOpen}
-        cpf={cpf}
-        birthDate={birthDate}
-        phone={phone}
-        onCpfChange={setCpf}
-        onBirthDateChange={setBirthDate}
-        onPhoneChange={setPhone}
-        onSubmit={handleProfileSubmit}
-        isPending={isPendingProfileUpdate}
-      />
+      <Dialog open={showProfileDialog} onOpenChange={setShowProfileDialog}>
+        <DialogContent className="max-w-md">
+          <h2 className="text-xl font-semibold mb-4">Complete seu perfil</h2>
+          <p className="text-muted-foreground mb-4">
+            Para continuar, precisamos de algumas informações adicionais.
+          </p>
+          <ProfileForm 
+            onComplete={() => setShowProfileDialog(false)}
+            initialData={userProfile}
+          />
+        </DialogContent>
+      </Dialog>
     </EventLayout>
   );
 };

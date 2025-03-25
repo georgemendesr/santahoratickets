@@ -1,130 +1,127 @@
 
-import { create } from 'zustand';
-import { supabase } from '@/integrations/supabase/client';
-import { UserRole } from '@/types';
+import { create } from "zustand";
+import { Session, User } from "@supabase/supabase-js";
+import { UserProfile, UserRole } from "@/types/user.types";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AuthState {
-  session: any | null;
-  role: UserRole | null;
+  session: Session | null;
+  user: User | null;
+  userProfile: UserProfile | null;
+  userRole: UserRole | null;
   isAdmin: boolean;
-  loading: boolean;
-  error: string | null;
-  lastChecked: number | null;
-  checkAuth: () => Promise<void>;
+  isLoading: boolean;
+  initialized: boolean;
+  
+  setSession: (session: Session | null) => void;
+  setUserProfile: (profile: UserProfile | null) => void;
+  setUserRole: (role: UserRole | null) => void;
+  initialize: () => Promise<void>;
   signOut: () => Promise<void>;
-  refreshAuth: () => Promise<void>;
 }
-
-// Tempo mínimo entre verificações de autenticação (5 segundos)
-const MIN_CHECK_INTERVAL = 5000;
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   session: null,
-  role: null,
+  user: null,
+  userProfile: null,
+  userRole: null,
   isAdmin: false,
-  loading: true,
-  error: null,
-  lastChecked: null,
+  isLoading: true,
+  initialized: false,
   
-  checkAuth: async () => {
-    const now = Date.now();
-    const lastChecked = get().lastChecked;
-    
-    // Evita verificações muito frequentes
-    if (lastChecked && now - lastChecked < MIN_CHECK_INTERVAL) {
-      console.log("[AuthStore] Verificação ignorada - muito recente");
-      return;
-    }
-    
+  setSession: (session: Session | null) => {
+    set({ 
+      session, 
+      user: session?.user || null,
+    });
+  },
+  
+  setUserProfile: (profile: UserProfile | null) => {
+    set({ userProfile: profile });
+  },
+  
+  setUserRole: (role: UserRole | null) => {
+    const isAdmin = role?.role === 'admin';
+    set({ userRole: role, isAdmin });
+  },
+  
+  initialize: async () => {
     try {
-      set({ loading: true, error: null, lastChecked: now });
-      console.log("[AuthStore] Iniciando verificação de autenticação");
-      
+      // Get the current session
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        console.log("[AuthStore] Sem sessão ativa");
-        set({ 
-          session: null, 
-          role: null, 
-          isAdmin: false, 
-          loading: false 
-        });
+        set({ isLoading: false, initialized: true });
         return;
       }
       
-      // Buscar o papel do usuário
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
+      get().setSession(session);
+      
+      // Fetch the user profile
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
         
-      if (error) {
-        console.error("[AuthStore] Erro ao buscar role:", error);
-        throw error;
+      if (profile) {
+        get().setUserProfile(profile as UserProfile);
       }
       
-      const role = data?.role as UserRole || 'user';
-      const isAdmin = role === 'admin';
+      // Fetch the user role
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single();
       
-      console.log("[AuthStore] Sessão verificada:", { 
-        hasSession: !!session,
-        role,
-        isAdmin
-      });
+      if (roleData) {
+        // Ensure we're using the UserRole type
+        const userRole: UserRole = {
+          id: roleData.id,
+          user_id: roleData.user_id,
+          role: roleData.role as 'admin' | 'user' | 'staff',
+          created_at: roleData.created_at
+        };
+        get().setUserRole(userRole);
+      } else {
+        // Default role is 'user' if no role is set
+        get().setUserRole({
+          id: '',
+          user_id: session.user.id,
+          role: 'user'
+        });
+      }
       
-      set({ 
-        session, 
-        role, 
-        isAdmin, 
-        loading: false 
-      });
+      // Set up authentication state listener
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, newSession) => {
+          get().setSession(newSession);
+          
+          if (event === 'SIGNED_OUT') {
+            get().setUserProfile(null);
+            get().setUserRole(null);
+          }
+        }
+      );
+      
+      set({ initialized: true, isLoading: false });
+      
+      return () => subscription.unsubscribe();
     } catch (error) {
-      console.error("[AuthStore] Erro ao verificar autenticação:", error);
-      set({ 
-        session: null, 
-        role: null, 
-        isAdmin: false, 
-        error: error.message, 
-        loading: false 
-      });
+      console.error("Error initializing auth:", error);
+      set({ isLoading: false, initialized: true });
     }
-  },
-  
-  refreshAuth: async () => {
-    console.log("[AuthStore] Atualizando sessão");
-    const { data, error } = await supabase.auth.refreshSession();
-    
-    if (error) {
-      console.error("[AuthStore] Erro ao atualizar sessão:", error);
-      set({ 
-        session: null, 
-        role: null, 
-        isAdmin: false, 
-        error: error.message
-      });
-      return;
-    }
-    
-    set({ session: data.session });
-    await get().checkAuth();
   },
   
   signOut: async () => {
-    try {
-      await supabase.auth.signOut();
-      set({ 
-        session: null, 
-        role: null,
-        isAdmin: false,
-        error: null,
-        lastChecked: null
-      });
-      console.log("[AuthStore] Logout realizado");
-    } catch (error) {
-      console.error("[AuthStore] Erro ao fazer logout:", error);
-      set({ error: error.message });
-    }
+    await supabase.auth.signOut();
+    set({ 
+      session: null, 
+      user: null, 
+      userProfile: null, 
+      userRole: null,
+      isAdmin: false
+    });
   }
 }));

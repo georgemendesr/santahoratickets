@@ -1,6 +1,9 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { PostgrestQueryBuilder } from '@supabase/supabase-js';
+import type { Database } from '@/integrations/supabase/types';
+
+type Tables = Database['public']['Tables'];
+type TableNames = keyof Tables;
 
 /**
  * A utility function to build Supabase queries with better type safety.
@@ -8,7 +11,7 @@ import { PostgrestQueryBuilder } from '@supabase/supabase-js';
  * @param table The table name to query
  * @returns A Supabase query builder for the specified table
  */
-export function createQuery(table: string) {
+export function createQuery<T extends TableNames>(table: T) {
   return supabase.from(table);
 }
 
@@ -24,26 +27,29 @@ export function getRelation(query: any, relation: string) {
 }
 
 export class QueryBuilder {
-  private query: PostgrestQueryBuilder<any, any>;
+  private query: any;
 
-  constructor(table: string) {
+  constructor(table: TableNames) {
     this.query = supabase.from(table);
   }
 
-  static create(table: string) {
-    return supabase.from(table);
+  static create(table: TableNames) {
+    return new QueryBuilder(table);
   }
 
   select(columns: string) {
-    return this.query.select(columns);
+    this.query = this.query.select(columns);
+    return this;
   }
 
   eq(column: string, value: any) {
-    return this.query.eq(column, value);
+    this.query = this.query.eq(column, value);
+    return this;
   }
 
   order(column: string, options: { ascending: boolean }) {
-    return this.query.order(column, options);
+    this.query = this.query.order(column, options);
+    return this;
   }
 
   async execute() {

@@ -46,7 +46,7 @@ export function UserRolesTable() {
             id: user.id,
             email: user.email || '',
             name: user.name,
-            role: userRole?.role || 'user',
+            role: (userRole?.role || 'user') as UserRoleType,
             role_id: userRole?.id || ''
           };
         });

@@ -10,6 +10,7 @@ import { CheckoutProButton } from "../payment/CheckoutProButton";
 import { Session } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { EventImage } from "./EventImage";
 
 interface EventDetailsContentProps {
   event: Event;
@@ -70,6 +71,12 @@ export function EventDetailsContent({
   
   return (
     <div className="space-y-8 p-4 md:p-6">
+      {event.image && (
+        <div className="mb-6">
+          <EventImage src={event.image} alt={event.title} />
+        </div>
+      )}
+      
       <EventInfo 
         event={event} 
         getLowStockAlert={getLowStockAlert}
@@ -157,7 +164,7 @@ export function EventDetailsContent({
           {isLoggedIn && hasLoyaltyEnabled && referralCode && (
             <ReferralCard 
               referralCode={referralCode}
-              eventUrl={`${window.location.origin}/event/${event.id}`}
+              eventUrl={`${window.location.origin}/eventos/${event.id}`}
             />
           )}
         </div>

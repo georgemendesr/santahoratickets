@@ -21,9 +21,17 @@ export function EventInfo({ event, getLowStockAlert = () => null, soldOut = fals
     }
   };
 
-  const formatTime = (timeString: string) => {
+  const formatTime = (timeString: string | undefined) => {
     try {
-      // Converter string de hora (HH:MM:SS) para objeto Date
+      if (!timeString) return "";
+      
+      // Verificar se é um objeto Date ou uma string de data completa
+      if (timeString.includes('T') || timeString.includes('-')) {
+        const date = new Date(timeString);
+        return format(date, "HH:mm", { locale: ptBR });
+      }
+      
+      // Se for apenas uma string de hora (HH:MM:SS)
       const [hours, minutes] = timeString.split(':');
       const date = new Date();
       date.setHours(parseInt(hours, 10));
@@ -32,7 +40,7 @@ export function EventInfo({ event, getLowStockAlert = () => null, soldOut = fals
       return format(date, "HH:mm", { locale: ptBR });
     } catch (error) {
       console.error("Erro ao formatar hora:", error);
-      return timeString;
+      return timeString || "";
     }
   };
 
@@ -43,9 +51,13 @@ export function EventInfo({ event, getLowStockAlert = () => null, soldOut = fals
         <div className="flex items-center gap-1 mt-1 text-muted-foreground">
           <CalendarDays className="h-4 w-4" />
           <span className="text-sm">{formatDate(event.date)}</span>
-          <span className="mx-1">•</span>
-          <Clock className="h-4 w-4" />
-          <span className="text-sm">{formatTime(event.time)}</span>
+          {event.time && (
+            <>
+              <span className="mx-1">•</span>
+              <Clock className="h-4 w-4" />
+              <span className="text-sm">{formatTime(event.time)}</span>
+            </>
+          )}
         </div>
         <div className="flex items-center text-muted-foreground mt-1">
           <MapPin className="h-4 w-4 mr-1" />

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/layouts/AdminLayout";
@@ -8,9 +8,19 @@ import { MetricsCards } from "@/components/admin/dashboard/MetricsCards";
 import { DashboardCharts } from "@/components/admin/dashboard/DashboardCharts";
 import { ActionCards } from "@/components/admin/dashboard/ActionCards";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const Admin = () => {
   const { toast } = useToast();
+  const { isAdmin, loading, initialized } = useAuth();
+  
+  useEffect(() => {
+    console.log("Admin Page - Mounting component. isAdmin:", isAdmin, "loading:", loading, "initialized:", initialized);
+    
+    return () => {
+      console.log("Admin Page - Unmounting component");
+    };
+  }, [isAdmin, loading, initialized]);
   
   // Simplificada a consulta e adicionado retentativas limitadas
   const { data, isLoading, error } = useQuery({
@@ -39,6 +49,7 @@ const Admin = () => {
     },
     retry: 1, // Limita retentativas para evitar loops
     staleTime: 60000, // Cache por 1 minuto
+    enabled: !loading && initialized && isAdmin // Só carrega se autenticação estiver pronta e usuário for admin
   });
 
   // Em caso de erro, exibimos uma mensagem amigável

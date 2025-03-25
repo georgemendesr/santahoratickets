@@ -23,12 +23,12 @@ export function useAuth() {
     if (!authInitialized) {
       const initAuth = async () => {
         try {
-          console.log("useAuth - Initializing authentication");
+          console.log("useAuth - Inicializando autenticação");
           await initialize();
-          console.log("useAuth - Authentication initialized successfully");
+          console.log("useAuth - Autenticação inicializada com sucesso");
           setAuthInitialized(true);
         } catch (err) {
-          console.error("Failed to initialize authentication:", err);
+          console.error("Falha ao inicializar autenticação:", err);
           toast.error("Falha ao inicializar autenticação");
           setAuthInitialized(true); // Still mark as initialized to prevent infinite retries
         }
@@ -42,20 +42,21 @@ export function useAuth() {
   const debugAuth = async () => {
     try {
       const sessionResult = await supabase.auth.getSession();
-      console.log("Current session:", sessionResult);
+      console.log("Auth Debug - Sessão atual:", sessionResult);
       
       const userResult = await supabase.auth.getUser();
-      console.log("Current user:", userResult);
+      console.log("Auth Debug - Usuário atual:", userResult);
       
       return { session: sessionResult, user: userResult };
     } catch (error) {
-      console.error("Error debugging authentication:", error);
+      console.error("Erro ao debugar autenticação:", error);
       return { error };
     }
   };
 
   return {
     session,
+    user: session?.user || null,
     loading: isLoading,
     error,
     signOut,

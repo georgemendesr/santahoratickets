@@ -7,13 +7,11 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { useAuth } from "@/hooks/useAuth";
-import { useRole } from "@/hooks/useRole";
 import { User, Settings, PlusCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function MainHeader() {
-  const { session, signOut } = useAuth();
-  const { isAdmin } = useRole(session);
+  const { session, signOut, isAdmin, loading } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -36,8 +34,8 @@ export function MainHeader() {
               </NavigationMenuItem>
             )}
 
-            {/* Link único para administração */}
-            {isAdmin && (
+            {/* Link único para administração - só mostra se não estiver carregando e for admin */}
+            {!loading && isAdmin && (
               <NavigationMenuItem>
                 <Link to="/admin" className={navigationMenuTriggerStyle()}>
                   <Settings className="h-4 w-4 mr-2" />

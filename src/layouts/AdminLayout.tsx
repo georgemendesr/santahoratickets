@@ -1,13 +1,13 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { MainHeader } from '@/components/layout/MainHeader';
 import { MainFooter } from '@/components/layout/MainFooter';
 import { LogoHeader } from '@/components/layout/LogoHeader';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
-import { useAuthStore } from '@/store/authStore';
-import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from "sonner";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -15,49 +15,56 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps) {
-  const { isAdmin, isLoading, initialize, session } = useAuthStore();
+  const { isAdmin, loading, initialized, session, debugAuth } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const [isVerifying, setIsVerifying] = useState(true);
   
-  // Check authentication when component mounts
+  // Debug authentication on component mount
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        console.log("AdminLayout - Checking authentication");
-        await initialize();
-        console.log("AdminLayout - Authentication verified successfully");
-      } catch (error) {
-        console.error("AdminLayout - Authentication verification error:", error);
-      }
+    const debug = async () => {
+      console.log("AdminLayout - Debugging auth state");
+      const result = await debugAuth();
+      console.log("AdminLayout - Auth debug result:", result);
     };
     
-    checkAuth();
-  }, [initialize]);
+    debug();
+  }, [debugAuth]);
   
-  // Handle authorization redirection separately
+  // Verificar permissões após inicialização da autenticação
   useEffect(() => {
-    if (!isLoading && requiresAdmin && !isAdmin) {
-      console.log("AdminLayout - User not authorized, redirecting");
-      toast({
-        title: "Acesso restrito",
-        description: "Você não tem permissão para acessar esta página",
-        variant: "destructive",
-      });
-      navigate('/');
+    if (!loading && initialized) {
+      console.log("AdminLayout - Autenticação inicializada. isAdmin:", isAdmin, "requiresAdmin:", requiresAdmin);
+      setIsVerifying(false);
+      
+      if (requiresAdmin && !isAdmin) {
+        console.log("AdminLayout - Usuário não autorizado, redirecionando");
+        toast("Acesso restrito. Você não tem permissão para acessar esta página.", {
+          description: "Redirecionando para a página inicial...",
+          duration: 5000,
+        });
+        navigate('/');
+      } else {
+        console.log("AdminLayout - Usuário autorizado, carregando dashboard");
+      }
     }
-  }, [isLoading, isAdmin, requiresAdmin, navigate, toast]);
+  }, [loading, initialized, isAdmin, requiresAdmin, navigate]);
   
-  if (isLoading) {
+  // Mostrar estado de carregamento
+  if (loading || isVerifying) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center">
           <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-amber-500"></div>
           <span className="mt-4 text-gray-600">Verificando permissões...</span>
+          <span className="mt-2 text-sm text-gray-400">
+            {loading ? "Carregando autenticação..." : "Verificando perfil de administrador..."}
+          </span>
         </div>
       </div>
     );
   }
   
+  // Se o usuário não tem permissão de administrador
   if (requiresAdmin && !isAdmin) {
     return (
       <div className="flex items-center justify-center h-screen">

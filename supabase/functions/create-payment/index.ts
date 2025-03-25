@@ -4,12 +4,14 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 import { corsHeaders } from "../_shared/cors.ts";
 import { 
   testBasicPixGeneration, 
-  createPixData 
+  createPixData,
+  createCheckoutPreference 
 } from "./mercadoPagoService.ts";
 import { 
   getEventData, 
   getExistingPreference, 
-  updatePaymentPreference, 
+  updatePaymentPreference,
+  updatePreferenceWithCheckoutPro, 
   createPaymentPreference,
   createGuestPaymentPreference
 } from "./supabaseService.ts";
@@ -18,7 +20,8 @@ import {
   validateGuestInput,
   createSuccessResponse, 
   createErrorResponse, 
-  createTestResponse 
+  createTestResponse,
+  createCheckoutProResponse
 } from "./utils.ts";
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
@@ -60,9 +63,13 @@ serve(async (req) => {
     let preference;
     let event;
     
-    // Fluxo para regeneração de PIX
+    // Verificar se estamos usando Checkout Pro
+    const isCheckoutPro = reqData.paymentType === "checkout_pro" || !reqData.paymentType;
+    console.log("Modo de pagamento:", isCheckoutPro ? "Checkout Pro" : "PIX/Cartão");
+    
+    // Fluxo para regeneração de pagamento
     if (reqData.regenerate && reqData.preferenceId) {
-      console.log("Modo de regeneração do código PIX");
+      console.log("Modo de regeneração do código PIX/checkout");
       preference = await getExistingPreference(supabase, reqData.preferenceId);
       
       if (!preference.event_id) {
@@ -88,20 +95,42 @@ serve(async (req) => {
       preference = await createPaymentPreference(supabase, reqData, event);
     }
     
-    // Criar dados PIX usando Mercado Pago
-    const pixData = await createPixData(
-      event, 
-      preference, 
-      mercadoPagoAccessToken, 
-      mercadoPagoTestAccessToken, 
-      isTestEnvironment
-    );
-    
-    // Atualizar a preferência com dados do PIX
-    await updatePaymentPreference(supabase, preference, pixData);
-    
-    // Resposta de sucesso
-    return createSuccessResponse(pixData, isTestEnvironment);
+    // Processar o pagamento de acordo com o tipo (Checkout Pro ou PIX)
+    if (isCheckoutPro) {
+      // Criar dados do Checkout Pro usando Mercado Pago
+      const checkoutData = await createCheckoutPreference(
+        event, 
+        preference, 
+        mercadoPagoAccessToken, 
+        mercadoPagoTestAccessToken, 
+        isTestEnvironment
+      );
+      
+      // Atualizar a preferência com URL de checkout
+      await updatePreferenceWithCheckoutPro(supabase, preference, checkoutData);
+      
+      // Resposta de sucesso para Checkout Pro
+      return createCheckoutProResponse(
+        checkoutData.data.checkout_url, 
+        isTestEnvironment,
+        checkoutData.data.preference_id
+      );
+    } else {
+      // Criar dados PIX usando Mercado Pago (fluxo original)
+      const pixData = await createPixData(
+        event, 
+        preference, 
+        mercadoPagoAccessToken, 
+        mercadoPagoTestAccessToken, 
+        isTestEnvironment
+      );
+      
+      // Atualizar a preferência com dados do PIX
+      await updatePaymentPreference(supabase, preference, pixData);
+      
+      // Resposta de sucesso para PIX
+      return createSuccessResponse(pixData, isTestEnvironment);
+    }
   } catch (error) {
     console.error("Erro durante processamento:", error);
     

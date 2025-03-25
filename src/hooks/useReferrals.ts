@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Referral } from '@/types';
 import { toast } from 'sonner';
@@ -51,12 +51,12 @@ export const useReferrals = (userId?: string) => {
     }
   };
 
-  // Adicionando a função useGetReferrer que faltava
+  // Função useGetReferrer implementada corretamente
   const useGetReferrer = (code: string | null) => {
     const [data, setData] = useState<{ name: string } | null>(null);
     const [loading, setLoading] = useState(false);
 
-    useState(() => {
+    useEffect(() => {
       if (!code) return;
       
       const fetchReferrer = async () => {

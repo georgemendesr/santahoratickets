@@ -29,6 +29,27 @@ export function validateGuestInput(data: any) {
   }
 }
 
+// Função para gerar resposta de sucesso para o Checkout Pro
+export function createCheckoutProResponse(checkoutUrl, isTestEnvironment, preferenceId) {
+  return new Response(
+    JSON.stringify({ 
+      success: true, 
+      environment: isTestEnvironment ? "test" : "production",
+      checkoutUrl: checkoutUrl,
+      preferenceId: preferenceId,
+      status: "pending"
+    }),
+    { 
+      headers: { 
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+        "Content-Type": "application/json" 
+      },
+      status: 200
+    }
+  );
+}
+
 // Função para gerar resposta de sucesso
 export function createSuccessResponse(pixData, isTestEnvironment) {
   return new Response(

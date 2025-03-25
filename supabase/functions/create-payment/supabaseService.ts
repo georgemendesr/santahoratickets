@@ -64,7 +64,34 @@ export async function getExistingPreference(supabase, preferenceId) {
   }
 }
 
-// Função para atualizar a preferência de pagamento
+// Função para atualizar a preferência de pagamento com dados do Checkout Pro
+export async function updatePreferenceWithCheckoutPro(supabase, preference, checkoutData) {
+  try {
+    if (!checkoutData || !checkoutData.data) {
+      throw new Error("Dados de checkout incompletos ou inválidos");
+    }
+    
+    const { data, error } = await supabase
+      .from('payment_preferences')
+      .update({
+        checkout_url: checkoutData.data.checkout_url,
+        external_id: checkoutData.data.preference_id,
+        status: checkoutData.status,
+        attempts: preference.attempts + 1,
+        last_attempt_at: new Date()
+      })
+      .eq('id', preference.id)
+      .select();
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Erro ao atualizar preferência com dados do Checkout Pro:", error);
+    throw new Error(`Erro ao atualizar preferência: ${error.message}`);
+  }
+}
+
+// Função para atualizar a preferência de pagamento com dados PIX
 export async function updatePaymentPreference(supabase, preference, pixData) {
   try {
     if (!pixData || !pixData.data) {
@@ -101,8 +128,8 @@ export async function createPaymentPreference(supabase, data, eventData) {
       event_id: data.eventId,
       user_id: data.userId,
       status: 'pending',
-      payment_type: "pix",
-      payment_method_id: "pix",
+      payment_type: data.paymentType || "checkout_pro",
+      payment_method_id: data.paymentMethodId || "checkout_pro",
       init_point: `${data.eventId}-${data.userId}-${Date.now()}`
     };
     
@@ -143,8 +170,8 @@ export async function createGuestPaymentPreference(supabase, data, eventData) {
       // Usar ID de convidado no lugar do user_id
       user_id: guestId,
       status: 'pending',
-      payment_type: data.paymentType || "pix",
-      payment_method_id: data.paymentMethodId || "pix",
+      payment_type: data.paymentType || "checkout_pro",
+      payment_method_id: data.paymentMethodId || "checkout_pro",
       init_point: `${data.eventId}-${guestId}-${Date.now()}`,
       // Armazenar informações do convidado como metadados
       metadata: {

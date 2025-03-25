@@ -1,83 +1,156 @@
 import { corsHeaders } from "../_shared/cors.ts";
 
-// Função para testar geração básica de PIX (dados mínimos garantidos)
-export async function testBasicPixGeneration(
-  mercadoPagoAccessToken: string,
-  mercadoPagoTestAccessToken: string,
-  isTestEnvironment: boolean = false
-) {
+// Função para testar geração básica de preferência do Mercado Pago
+export async function testBasicPixGeneration(accessToken, testAccessToken, isTestMode) {
+  console.log("Iniciando teste básico com token:", isTestMode ? "TESTE" : "PRODUÇÃO");
+  
+  const token = isTestMode ? testAccessToken : accessToken;
+  
   try {
-    console.log("INICIANDO TESTE BÁSICO PIX");
-    console.log("Ambiente:", isTestEnvironment ? "TESTE" : "PRODUÇÃO");
-    
-    // Usar token correto com base no ambiente
-    const accessToken = isTestEnvironment ? mercadoPagoTestAccessToken : mercadoPagoAccessToken;
-    
-    if (!accessToken) {
-      throw new Error(`Token de acesso ${isTestEnvironment ? "de teste" : "de produção"} não configurado`);
-    }
-    
-    // Dados mínimos garantidos conforme documentação do Mercado Pago
-    const minimalRequest = {
-      transaction_amount: 1.00,
-      description: `Teste básico PIX (${isTestEnvironment ? "ambiente de teste" : "ambiente de produção"})`,
-      payment_method_id: "pix",
-      payer: {
-        email: "test_user_24634007@testuser.com"
-      }
+    // Criar uma preferência simples para teste
+    const preferenceData = {
+      items: [
+        {
+          title: "Teste de Integração",
+          quantity: 1,
+          unit_price: 0.01,
+          currency_id: "BRL"
+        }
+      ],
+      payment_methods: {
+        excluded_payment_types: [{id: "credit_card"}],
+        installments: 1
+      },
+      external_reference: "test-reference",
+      notification_url: "https://webhook.site/test-notification"
     };
     
-    console.log("Requisição mínima de teste:", JSON.stringify(minimalRequest));
-    console.log("Usando token que começa com:", accessToken.substring(0, 10) + "...");
-    
-    const response = await fetch("https://api.mercadopago.com/v1/payments", {
+    const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${accessToken}`
+        "Authorization": `Bearer ${token}`
       },
-      body: JSON.stringify(minimalRequest),
+      body: JSON.stringify(preferenceData)
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(`Erro no teste: ${data.message || response.statusText}`);
+    }
+    
+    return {
+      status: "success",
+      preference_id: data.id,
+      init_point: data.init_point,
+      sandbox_init_point: data.sandbox_init_point
+    };
+  } catch (error) {
+    console.error("Erro no teste de preferência:", error);
+    return {
+      status: "error",
+      message: error.message
+    };
+  }
+}
+
+// Função para criar preferência do Checkout Pro
+export async function createCheckoutPreference(event, preference, accessToken, testAccessToken, isTestMode) {
+  console.log("Criando preferência do Checkout Pro com dados:", {
+    eventTitle: event.title,
+    amount: preference.total_amount,
+    quantity: preference.ticket_quantity,
+    isTestMode
+  });
+  
+  const token = isTestMode ? testAccessToken : accessToken;
+  const baseUrl = Deno.env.get("APP_URL") || "https://app.yourdomain.com";
+  
+  // Estrutura de referência: "eventId|preferenceId|userId"
+  const externalReference = `${event.id}|${preference.id}|${preference.user_id}`;
+  
+  // URLs de retorno para o cliente após o pagamento
+  const successUrl = `${baseUrl}/payment-status?status=approved&external_reference=${externalReference}`;
+  const failureUrl = `${baseUrl}/payment-status?status=rejected&external_reference=${externalReference}`;
+  const pendingUrl = `${baseUrl}/payment-status?status=pending&external_reference=${externalReference}`;
+  
+  try {
+    const preferenceData = {
+      items: [
+        {
+          id: event.id,
+          title: `Ingresso para ${event.title}`,
+          description: `${preference.ticket_quantity} ingresso(s) para o evento ${event.title}`,
+          quantity: preference.ticket_quantity,
+          currency_id: "BRL",
+          unit_price: parseFloat((preference.total_amount / preference.ticket_quantity).toFixed(2))
+        }
+      ],
+      back_urls: {
+        success: successUrl,
+        failure: failureUrl,
+        pending: pendingUrl
+      },
+      auto_return: "approved",
+      external_reference: externalReference,
+      notification_url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/webhook-payment`
+    };
+    
+    // Se for checkout como convidado, adicionar dados do comprador
+    if (preference.metadata?.is_guest) {
+      preferenceData.payer = {
+        name: preference.metadata.guest_name,
+        email: preference.metadata.guest_email,
+        identification: {
+          type: "CPF",
+          number: preference.metadata.guest_cpf
+        },
+        phone: preference.metadata.guest_phone ? {
+          area_code: "",
+          number: preference.metadata.guest_phone
+        } : undefined
+      };
+    }
+    
+    console.log("Enviando dados para o Mercado Pago:", JSON.stringify(preferenceData));
+    
+    const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(preferenceData)
     });
     
     const responseData = await response.json();
     
-    // Log detalhado para diagnóstico
-    console.log("Resposta do teste básico:", JSON.stringify({
-      status: response.status,
-      statusText: response.statusText,
-      headers: Object.fromEntries([...response.headers]),
-      body: responseData
-    }));
-    
     if (!response.ok) {
-      console.error("Erro no teste básico:", responseData);
-      throw new Error(`Erro na API do Mercado Pago: ${responseData.message || 'Erro desconhecido'}`);
+      console.error("Erro na resposta do Mercado Pago:", responseData);
+      throw new Error(`Erro ao criar preferência: ${responseData.message || response.statusText}`);
     }
     
-    console.log("TESTE BÁSICO BEM-SUCEDIDO:", JSON.stringify(responseData));
+    console.log("Preferência criada com sucesso:", {
+      id: responseData.id,
+      init_point: responseData.init_point
+    });
     
-    // Verificar se os campos esperados existem
-    if (responseData.point_of_interaction?.transaction_data?.qr_code) {
-      console.log("QR CODE GERADO COM SUCESSO");
-    } else {
-      console.log("RESPOSTA SEM QR CODE:", JSON.stringify(responseData));
-    }
-    
-    return responseData;
+    return {
+      data: {
+        checkout_url: responseData.init_point,
+        preference_id: responseData.id
+      },
+      status: "pending"
+    };
   } catch (error) {
-    console.error("ERRO NO TESTE BÁSICO:", JSON.stringify(error.response?.data || error.message));
-    throw error;
+    console.error("Erro ao criar preferência:", error);
+    throw new Error(`Falha na criação da preferência: ${error.message}`);
   }
 }
 
 // Função para criar dados PIX usando Mercado Pago
-export async function createPixData(
-  event: any,
-  preference: any,
-  mercadoPagoAccessToken: string,
-  mercadoPagoTestAccessToken: string,
-  isTestEnvironment: boolean = false
-) {
+export async function createPixData(event, preference, accessToken, testAccessToken, isTestEnvironment) {
   try {
     // Usar token corrigido para o ambiente de teste
     const accessToken = isTestEnvironment ? 

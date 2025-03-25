@@ -30,10 +30,12 @@ const EventDetails = () => {
   const [phone, setPhone] = useState("");
   const [isPendingProfileUpdate, setIsPendingProfileUpdate] = useState(false);
   
-  // Removido a propriedade useGetReferrer que não existe no hook useReferrals
-  const [referrer, setReferrer] = useState<{ name: string } | null>(null);
+  // Usar useReferrals para obter o hook useGetReferrer
+  const referrals = useReferrals(session?.user?.id);
+  // Então usar o hook retornado com o código de referência
+  const { data: referrer } = referrals.useGetReferrer(referralCode);
+  
   const { profile } = useProfile(session?.user?.id);
-
   const { event, batches, isLoading } = useEventDetails(id as string);
   
   const handleGoBack = () => {
@@ -186,6 +188,7 @@ const EventDetails = () => {
         onPurchase={handlePurchase}
         onEdit={handleEdit}
         isLoggedIn={!!session?.user}
+        session={session}
       />
       
       <ProfileDialog

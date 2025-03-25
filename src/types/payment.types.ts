@@ -18,4 +18,5 @@ export interface PaymentPreference {
   payment_method_id?: string;
   qr_code?: string;
   qr_code_base64?: string;
+  checkout_url?: string;
 }

@@ -91,3 +91,62 @@ export async function createPaymentPreference(
   console.log("Preferência criada:", preference);
   return preference as PaymentPreference;
 }
+
+// Função para processar checkout com Mercado Pago Checkout Pro
+export async function processCheckoutPro(
+  eventId: string,
+  session: Session | null,
+  batch: any,
+  guestInfo?: any
+): Promise<{checkoutUrl: string}> {
+  try {
+    console.log("Processando Checkout Pro", {
+      eventId,
+      userId: session?.user?.id ?? "guest",
+      batchId: batch.id,
+      amount: batch.price
+    });
+    
+    // Preparar dados para a Edge Function
+    const requestData = {
+      eventId,
+      batchId: batch.id,
+      ticketQuantity: 1,
+      totalAmount: batch.price,
+      paymentType: "checkout_pro",
+      paymentMethodId: "checkout_pro",
+      useTestCredentials: import.meta.env.DEV || false
+    };
+    
+    // Adicionar dados específicos baseado no tipo de checkout (usuário ou convidado)
+    if (session?.user) {
+      Object.assign(requestData, {
+        userId: session.user.id,
+      });
+    } else if (guestInfo) {
+      Object.assign(requestData, {
+        isGuestCheckout: true,
+        guestInfo
+      });
+    } else {
+      throw new Error("Dados insuficientes para checkout. Forneça dados de usuário ou convidado.");
+    }
+    
+    // Chamar a Edge Function para criar a preferência
+    const { data, error } = await supabase.functions.invoke("create-payment", {
+      body: requestData
+    });
+    
+    if (error) throw error;
+    if (!data || !data.checkoutUrl) {
+      throw new Error("URL de checkout não retornada pelo servidor");
+    }
+    
+    return { 
+      checkoutUrl: data.checkoutUrl
+    };
+  } catch (error: any) {
+    console.error("Erro ao processar Checkout Pro:", error);
+    throw new Error(`Falha ao iniciar checkout: ${error.message}`);
+  }
+}

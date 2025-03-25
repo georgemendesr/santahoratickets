@@ -1,28 +1,26 @@
 
-import { Event, Batch } from "@/types";
-import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { EventInfo } from "./EventInfo";
-import { EventActions } from "./EventActions";
 import { BatchesTable } from "./BatchesTable";
+import { EventActions } from "./EventActions";
 import { LoyaltyCard } from "./LoyaltyCard";
 import { ReferralCard } from "./ReferralCard";
-import { EventImage } from "./EventImage";
-import { computeBatchStatus } from "@/utils/batchStatusUtils";
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { Event, Batch, UserProfile } from "@/types";
+import { CheckoutProButton } from "../payment/CheckoutProButton";
+import { Session } from "@supabase/supabase-js";
 
 interface EventDetailsContentProps {
   event: Event;
   batches: Batch[];
   isAdmin: boolean;
-  profile: any;
+  profile: UserProfile | null;
   referrer: { name: string } | null;
   referralCode: string | null;
   onShare: () => void;
-  onPurchase: (selectedBatchId: string, quantity: number) => void;
-  onEdit: () => void;
-  isLoggedIn?: boolean;
+  onPurchase: (batchId: string, quantity: number) => void;
+  onEdit?: () => void;
+  isLoggedIn: boolean;
+  session?: Session | null;
 }
 
 export function EventDetailsContent({
@@ -35,115 +33,98 @@ export function EventDetailsContent({
   onShare,
   onPurchase,
   onEdit,
-  isLoggedIn = false
+  isLoggedIn,
+  session
 }: EventDetailsContentProps) {
-  const navigate = useNavigate();
-  const [selectedQuantities, setSelectedQuantities] = useState<Record<string, number>>({});
+  const activeBatch = batches?.find(batch => batch.status === 'active') || null;
+  const hasLoyaltyEnabled = true; // TODO: Verificar configuração de lealdade do evento
   
-  // Memorize the calculation to avoid recalculating on every render
-  const areAllBatchesSoldOut = useMemo(() => {
-    // Se não houver lotes, consideramos como esgotado
-    if (!batches || batches.length === 0) return true;
-    
-    // Filtramos apenas lotes visíveis
-    const visibleBatches = batches.filter(batch => batch.is_visible);
-    if (visibleBatches.length === 0) return true;
-    
-    // Verificamos se todos os lotes estão com status 'sold_out'
-    return visibleBatches.every(batch => 
-      computeBatchStatus(batch) === 'sold_out'
-    );
-  }, [batches]);
-
-  // Encontrar o primeiro lote selecionado e sua quantidade
-  const selectedBatchInfo = useMemo(() => {
-    const entries = Object.entries(selectedQuantities);
-    const selectedEntry = entries.find(([_, quantity]) => quantity > 0);
-    
-    if (!selectedEntry) return { batchId: null, quantity: 0 };
-    
-    const [batchId, quantity] = selectedEntry;
-    return { batchId, quantity };
-  }, [selectedQuantities]);
-
-  const handlePurchase = () => {
-    const { batchId, quantity } = selectedBatchInfo;
-    if (batchId && quantity > 0) {
-      onPurchase(batchId, quantity);
-    }
-  };
-
-  const getLowStockAlert = (availableTickets: number) => {
-    if (availableTickets <= 5 && availableTickets > 0) {
-      return (
-        <p className="text-sm text-yellow-600 font-medium">
-          Últimas unidades disponíveis!
-        </p>
-      );
-    }
-    if (areAllBatchesSoldOut) {
-      return (
-        <p className="text-sm text-red-600 font-medium">
-          Ingressos esgotados
-        </p>
-      );
-    }
-    return null;
-  };
-
-  // Verificar se há alguma quantidade selecionada
-  const hasSelectedQuantity = selectedBatchInfo.quantity > 0;
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div>
-        <EventImage src={event?.image} alt={event?.title} />
-      </div>
-
-      <div className="space-y-6">
-        {referrer && (
-          <Alert>
-            <AlertDescription className="text-sm">
-              Você está comprando através da indicação de usuário final {referrer.name}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            <EventInfo 
-              event={event} 
-              getLowStockAlert={getLowStockAlert} 
-              soldOut={areAllBatchesSoldOut}
-            />
-          </CardContent>
-        </Card>
-
-        <BatchesTable 
-          batches={batches} 
-          onQuantityChange={setSelectedQuantities}
-        />
-
-        <Card>
-          <CardContent className="p-6">
-            <EventActions
-              event={event}
-              isAdmin={isAdmin}
-              onPurchase={handlePurchase}
-              onShare={onShare}
-              onEdit={onEdit}
-              soldOut={areAllBatchesSoldOut}
-              hasSelectedQuantity={hasSelectedQuantity}
-              selectedQuantity={selectedBatchInfo.quantity}
-              batchId={selectedBatchInfo.batchId}
+    <div className="space-y-8 p-4 md:p-6">
+      <EventInfo event={event} />
+      
+      <div className="grid gap-6 md:grid-cols-3">
+        <div className="md:col-span-2">
+          <div className="space-y-6">
+            <BatchesTable 
+              batches={batches || []} 
+              onPurchase={onPurchase}
               isLoggedIn={isLoggedIn}
             />
-          </CardContent>
-        </Card>
-
-        {profile && <LoyaltyCard points={profile.loyalty_points} />}
-
-        {referralCode && <ReferralCard code={referralCode} />}
+            
+            {activeBatch && (
+              <div className="space-y-4 p-4 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-lg border border-border/40">
+                <h3 className="text-lg font-medium">Comprar com Mercado Pago</h3>
+                <p className="text-muted-foreground text-sm">
+                  Você será redirecionado para o site do Mercado Pago para completar seu pagamento com segurança.
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  {isLoggedIn ? (
+                    <CheckoutProButton
+                      eventId={event.id}
+                      batch={activeBatch}
+                      session={session}
+                    />
+                  ) : (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={() => onPurchase(activeBatch.id, 1)}
+                      >
+                        Comprar com Cadastro
+                      </Button>
+                      <Button
+                        onClick={() => navigate(`/checkout/${event.id}?batch=${activeBatch.id}&quantity=1&guest=true`)}
+                      >
+                        Comprar sem Cadastro
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {event.description && (
+              <div className="space-y-3">
+                <h3 className="text-lg font-medium">Descrição</h3>
+                <div className="prose max-w-none text-muted-foreground">
+                  <p>{event.description}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      
+        <div className="space-y-6">
+          <EventActions 
+            event={event}
+            isAdmin={isAdmin}
+            onShare={onShare}
+            onEdit={onEdit}
+          />
+          
+          {referrer && (
+            <div className="p-4 border border-yellow-200 bg-yellow-50 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                Você foi convidado por <strong>{referrer.name}</strong>
+              </p>
+            </div>
+          )}
+          
+          {isLoggedIn && hasLoyaltyEnabled && (
+            <LoyaltyCard 
+              profile={profile}
+              event={event}
+            />
+          )}
+          
+          {isLoggedIn && hasLoyaltyEnabled && referralCode && (
+            <ReferralCard 
+              referralCode={referralCode}
+              eventUrl={`${window.location.origin}/event/${event.id}`}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

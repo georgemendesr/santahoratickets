@@ -1,3 +1,4 @@
+
 import { corsHeaders } from "../_shared/cors.ts";
 
 // Função para testar geração básica de preferência do Mercado Pago
@@ -68,7 +69,7 @@ export async function createCheckoutPreference(event, preference, accessToken, t
   const baseUrl = Deno.env.get("APP_URL") || "https://app.yourdomain.com";
   
   // Estrutura de referência: "eventId|preferenceId|userId"
-  const externalReference = `${event.id}|${preference.id}|${preference.user_id}`;
+  const externalReference = `${event.id}|${preference.id}|${preference.user_id || 'guest'}`;
   
   // URLs de retorno para o cliente após o pagamento
   const successUrl = `${baseUrl}/payment-status?status=approved&external_reference=${externalReference}`;
@@ -152,17 +153,15 @@ export async function createCheckoutPreference(event, preference, accessToken, t
 // Função para criar dados PIX usando Mercado Pago
 export async function createPixData(event, preference, accessToken, testAccessToken, isTestEnvironment) {
   try {
-    // Usar token corrigido para o ambiente de teste
-    const accessToken = isTestEnvironment ? 
-      (mercadoPagoTestAccessToken || "TEST-1217057600984731-021621-11acd6ad8a3e1496fa519421793bfe42-106423283") : 
-      mercadoPagoAccessToken;
+    // Usar token apropriado para o ambiente
+    const token = isTestEnvironment ? testAccessToken : accessToken;
     
-    if (!accessToken) {
+    if (!token) {
       throw new Error(`Token de acesso ${isTestEnvironment ? "de teste" : "de produção"} não configurado`);
     }
     
     console.log("Ambiente de pagamento:", isTestEnvironment ? "TESTE" : "PRODUÇÃO");
-    console.log("Usando token que começa com:", accessToken.substring(0, 10) + "...");
+    console.log("Usando token que começa com:", token.substring(0, 10) + "...");
     
     // Gerar dados para o pagamento PIX
     const externalReference = `${event.id}|${preference.id}`;
@@ -198,7 +197,7 @@ export async function createPixData(event, preference, accessToken, testAccessTo
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${accessToken}`
+        "Authorization": `Bearer ${token}`
       },
       body: JSON.stringify(pixRequestBody),
     });

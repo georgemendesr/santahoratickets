@@ -30,7 +30,7 @@ export function useMercadoPago(amount: number, cardNumber: string, useTestMode =
     script.onload = () => {
       // Escolher a chave pública correta baseada no modo
       const publicKey = useTestMode 
-        ? "TEST-235bbcdb-d3a5-4b8a-affc-2cc6473be7eb" 
+        ? import.meta.env.VITE_MERCADOPAGO_TEST_PUBLIC_KEY 
         : import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY;
         
       console.log(`Inicializando MercadoPago com chave ${useTestMode ? 'de TESTE' : 'PADRÃO'}`);

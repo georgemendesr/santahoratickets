@@ -23,7 +23,7 @@ export interface UserPreference {
   updated_at?: string;
 }
 
-export type UserRoleType = 'admin' | 'user' | 'staff';
+export type UserRoleType = 'admin' | 'user';
 
 export interface UserRole {
   id: string;

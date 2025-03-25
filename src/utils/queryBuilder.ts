@@ -21,3 +21,9 @@ export function createQuery(table: string) {
 export function getRelation(query: any, relation: string) {
   return query.select(`${relation}:${relation}(*)`);
 }
+
+export class QueryBuilder {
+  static create(table: string) {
+    return supabase.from(table);
+  }
+}

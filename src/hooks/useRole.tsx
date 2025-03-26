@@ -47,18 +47,19 @@ export function useRole(session: Session | null) {
     enabled: !!session?.user?.id && !roleVerified,
     staleTime: 1000 * 60 * 5, // Cache por 5 minutos
     gcTime: 1000 * 60 * 10, // Manter no cache por 10 minutos (substituto do cacheTime)
-    retry: 1, // Limitar tentativas de retry para evitar loops
-    onSuccess: (data) => {
-      // Atualizar o estado global somente se for diferente
-      if (data && userRole?.role !== data) {
-        setUserRole({
-          id: '',
-          user_id: session?.user?.id || '',
-          role: data as any
-        });
-      }
-    }
+    retry: 1 // Limitar tentativas de retry para evitar loops
   });
+  
+  // Efeito para atualizar o userRole quando o cachedRole mudar
+  useEffect(() => {
+    if (cachedRole && userRole?.role !== cachedRole) {
+      setUserRole({
+        id: '',
+        user_id: session?.user?.id || '',
+        role: cachedRole as any
+      });
+    }
+  }, [cachedRole, userRole?.role, session?.user?.id, setUserRole]);
   
   // Se não há sessão, o usuário não tem função
   if (!session) {

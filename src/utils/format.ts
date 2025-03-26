@@ -1,31 +1,22 @@
 
-/**
- * Format currency values to BRL format
- * @param value Number to format
- * @returns Formatted currency string
- */
-export function formatCurrency(value: number): string {
+export function formatCurrency(value: number | string): string {
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
-    currency: 'BRL'
-  }).format(value);
+    currency: 'BRL',
+  }).format(numValue);
 }
 
-/**
- * Format date to Brazilian format
- * @param dateString Date string to format
- * @returns Formatted date string (DD/MM/YYYY)
- */
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat('pt-BR').format(date);
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date);
 }
 
-/**
- * Format date and time to Brazilian format
- * @param dateString Date string to format
- * @returns Formatted date and time string (DD/MM/YYYY HH:MM)
- */
 export function formatDateTime(dateString: string): string {
   const date = new Date(dateString);
   return new Intl.DateTimeFormat('pt-BR', {
@@ -33,38 +24,35 @@ export function formatDateTime(dateString: string): string {
     month: '2-digit',
     year: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   }).format(date);
 }
 
-/**
- * Format date range for event display
- * @param startDate Start date string
- * @param endDate End date string
- * @returns Formatted date range string
- */
-export function formatDateRange(startDate: string, endDate: string): string {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+export function formatPhoneNumber(phone: string): string {
+  if (!phone) return '';
   
-  // Same day
-  if (start.toDateString() === end.toDateString()) {
-    return `${formatDate(startDate)} · ${formatTime(startDate)} - ${formatTime(endDate)}`;
+  // Remove todos os caracteres não numéricos
+  const numbers = phone.replace(/\D/g, '');
+  
+  // Formata como (99) 99999-9999
+  if (numbers.length === 11) {
+    return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
   }
   
-  // Different days
-  return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+  // Formata como (99) 9999-9999
+  if (numbers.length === 10) {
+    return numbers.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+  }
+  
+  return phone;
 }
 
-/**
- * Format time only from date string
- * @param dateString Date string to extract time from
- * @returns Formatted time string (HH:MM)
- */
-export function formatTime(dateString: string): string {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date);
+export function formatCPF(cpf: string): string {
+  if (!cpf) return '';
+  
+  // Remove todos os caracteres não numéricos
+  const numbers = cpf.replace(/\D/g, '');
+  
+  // Formata como 999.999.999-99
+  return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
 }

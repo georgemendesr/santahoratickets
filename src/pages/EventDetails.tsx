@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
+import { useEventDetails } from "@/hooks/useEventDetails";
 import { useReferrals } from "@/hooks/useReferrals";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
@@ -15,59 +16,27 @@ const EventDetails = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const refCode = searchParams.get("ref") || undefined;
-  const { session, userProfile } = useAuthStore();
+  const { session, userProfile, isAdmin } = useAuthStore();
   
-  // Pass the ID parameter to useReferrals 
-  const { referralCode, createReferral, useGetReferrer } = useReferrals(id);
-  
-  // Use the useGetReferrer hook
-  const { referrer, isLoading: loadingReferrer } = useGetReferrer(refCode);
-  
-  const [isLoading, setIsLoading] = useState(true);
-  const [event, setEvent] = useState(null);
-  const [batches, setBatches] = useState([]);
-  const [error, setError] = useState(null);
-  const [showProfileDialog, setShowProfileDialog] = useState(false);
-  
-  useEffect(() => {
-    // Fetch event details
-    const fetchEventDetails = async () => {
-      try {
-        // Replace with your actual fetching logic
-        setIsLoading(true);
-        // Mock data for now
-        setEvent({
-          id,
-          title: "Evento de Exemplo",
-          description: "Descrição do evento",
-          image_url: "/placeholder.svg",
-          date: new Date().toISOString(),
-          location: "Localização do evento",
-        });
-        setBatches([
-          {
-            id: "1",
-            name: "Lote 1",
-            price: 50,
-            available_tickets: 100,
-            start_date: new Date().toISOString(),
-            end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          }
-        ]);
-        setIsLoading(false);
-      } catch (err) {
-        setError(err);
-        setIsLoading(false);
-      }
-    };
-    
-    fetchEventDetails();
-  }, [id]);
-  
-  useEffect(() => {
-    const hasIncompleteProfile = !!session && (!userProfile?.name || !userProfile?.cpf || !userProfile?.phone);
-    setShowProfileDialog(hasIncompleteProfile);
-  }, [session, userProfile]);
+  // Use o hook useEventDetails
+  const {
+    event,
+    batches,
+    profile,
+    referrer,
+    referralCode,
+    showProfileDialog,
+    setShowProfileDialog,
+    cpf,
+    setCpf,
+    birthDate,
+    setBirthDate,
+    phone,
+    setPhone,
+    createProfileMutation,
+    createReferralMutation,
+    isLoading
+  } = useEventDetails(id);
   
   // Handle back navigation
   const handleBack = () => {
@@ -91,7 +60,7 @@ const EventDetails = () => {
   
   const handlePurchase = (batchId: string, quantity: number) => {
     if (!session) {
-      navigate(`/auth?redirect=/eventos/${id}`);
+      navigate(`/auth?redirect=/event/${id}`);
       return;
     }
     
@@ -114,7 +83,7 @@ const EventDetails = () => {
     );
   }
   
-  if (error || !event) {
+  if (!event) {
     return (
       <div className="container max-w-5xl mx-auto py-4">
         <Button variant="ghost" onClick={handleBack} className="mb-4">
@@ -140,11 +109,11 @@ const EventDetails = () => {
       
       <EventDetailsContent
         event={event}
-        batches={batches}
-        isAdmin={useAuthStore.getState().isAdmin}
+        batches={batches || []}
+        isAdmin={isAdmin}
         profile={userProfile}
         referrer={referrer}
-        referralCode={userProfile?.referral_code || null}
+        referralCode={referralCode}
         onShare={handleShare}
         onPurchase={handlePurchase}
         isLoggedIn={!!session}
@@ -159,14 +128,37 @@ const EventDetails = () => {
           </p>
           <div className="space-y-4">
             <label className="block">
-              <span className="text-gray-700">Nome completo</span>
-              <input type="text" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+              <span className="text-gray-700">CPF</span>
+              <input 
+                type="text" 
+                value={cpf} 
+                onChange={(e) => setCpf(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" 
+              />
+            </label>
+            <label className="block">
+              <span className="text-gray-700">Data de Nascimento</span>
+              <input 
+                type="date" 
+                value={birthDate} 
+                onChange={(e) => setBirthDate(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" 
+              />
             </label>
             <label className="block">
               <span className="text-gray-700">Telefone</span>
-              <input type="tel" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+              <input 
+                type="tel" 
+                value={phone} 
+                onChange={(e) => setPhone(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" 
+              />
             </label>
-            <Button className="w-full" onClick={() => setShowProfileDialog(false)}>
+            <Button 
+              className="w-full" 
+              onClick={() => createProfileMutation.mutate()}
+              isLoading={createProfileMutation.isLoading}
+            >
               Salvar perfil
             </Button>
           </div>

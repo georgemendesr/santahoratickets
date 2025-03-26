@@ -50,6 +50,7 @@ export function CheckoutProButton({
     }
 
     try {
+      console.log("Iniciando checkout com Mercado Pago para o evento:", eventId);
       setIsLoading(true);
       const toastId = toast.loading("Processando pagamento...");
 
@@ -62,6 +63,8 @@ export function CheckoutProButton({
       );
 
       toast.dismiss(toastId);
+      
+      console.log("Checkout URL recebida:", checkoutUrl);
       
       // Redirecionar para a página de checkout do Mercado Pago
       window.location.href = checkoutUrl;

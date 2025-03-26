@@ -102,7 +102,7 @@ export function EventDetailsContent({
                     <>
                       <Button
                         variant="outline"
-                        onClick={handlePurchase}
+                        onClick={() => navigate(`/auth?redirect=/event/${event.id}`)}
                       >
                         Comprar com Cadastro
                       </Button>

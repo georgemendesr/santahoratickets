@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -46,8 +47,12 @@ const EventDetails = () => {
     if (!eventId) return;
     
     try {
+      // Instead of using RPC, we'll update the view count directly with an update query
       const { data, error } = await supabase
-        .rpc('increment_event_view_count', { event_id: eventId });
+        .from('events')
+        .update({ view_count: (event?.view_count || 0) + 1 })
+        .eq('id', eventId)
+        .select();
         
       if (error) {
         console.error("Erro ao incrementar visualização:", error);
@@ -55,9 +60,9 @@ const EventDetails = () => {
         console.log("Visualização incrementada com sucesso");
       }
     } catch (err) {
-      console.error("Erro ao chamar função para incrementar visualização:", err);
+      console.error("Erro ao atualizar contagem de visualizações:", err);
     }
-  }, [eventId]);
+  }, [eventId, event?.view_count]);
   
   useEffect(() => {
     fetchEventViewCount();
@@ -80,12 +85,18 @@ const EventDetails = () => {
       <EventDetailsContent 
         event={event as Event}
         referralCode={referralCode}
-        generatedReferral={generatedReferral}
         onGenerateReferral={handleGenerateReferral}
         isModalOpen={isModalOpen}
         setIsModalOpen={setIsModalOpen}
         isShareModalOpen={isShareModalOpen}
         setIsShareModalOpen={setIsShareModalOpen}
+        batches={[]}
+        isAdmin={false}
+        profile={null}
+        referrer={null}
+        onShare={() => setIsShareModalOpen(true)}
+        onPurchase={() => {}}
+        isLoggedIn={!!userProfile}
       />
     </MainLayout>
   );

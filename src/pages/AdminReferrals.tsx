@@ -9,7 +9,7 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { Users, Gift, Share2 } from "lucide-react";
+import { Users, Gift, Share2, Settings } from "lucide-react";
 import { useState } from "react";
 
 const AdminReferrals = () => {

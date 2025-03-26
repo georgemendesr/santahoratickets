@@ -24,6 +24,8 @@ interface EventDetailsContentProps {
   onEdit?: () => void;
   isLoggedIn: boolean;
   session?: Session | null;
+  generatedReferral?: string | null;
+  onGenerateReferral?: () => Promise<void>;
 }
 
 export function EventDetailsContent({
@@ -37,7 +39,9 @@ export function EventDetailsContent({
   onPurchase,
   onEdit,
   isLoggedIn,
-  session
+  session,
+  generatedReferral,
+  onGenerateReferral
 }: EventDetailsContentProps) {
   const navigate = useNavigate();
   

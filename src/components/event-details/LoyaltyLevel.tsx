@@ -1,36 +1,35 @@
 
-import { Star } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 interface LoyaltyLevelProps {
   points: number;
 }
 
-export const LoyaltyLevel = ({ points }: LoyaltyLevelProps) => {
-  // Determinar o nível de fidelidade com base nos pontos
-  const getLoyaltyLevel = () => {
-    if (points >= 1000) return { name: 'VIP Platinum', level: 4 };
-    if (points >= 500) return { name: 'VIP Gold', level: 3 };
-    if (points >= 200) return { name: 'Frequentador', level: 2 };
-    return { name: 'Fã', level: 1 };
+export function LoyaltyLevel({ points }: LoyaltyLevelProps) {
+  // Lógica para determinar o nível com base nos pontos
+  const getLevel = () => {
+    if (points >= 1000) return { name: "Diamante", color: "bg-blue-500" };
+    if (points >= 500) return { name: "Ouro", color: "bg-amber-500" };
+    if (points >= 200) return { name: "Prata", color: "bg-gray-400" };
+    return { name: "Bronze", color: "bg-amber-700" };
   };
 
-  const level = getLoyaltyLevel();
-
-  // Renderiza estrelas baseadas no nível
-  const renderStars = () => {
-    const stars = [];
-    for (let i = 0; i < level.level; i++) {
-      stars.push(<Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />);
-    }
-    return stars;
-  };
+  const level = getLevel();
+  const progress = Math.min(100, points / 10); // Exemplo: 100 pontos = 100%
 
   return (
-    <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-full shadow-sm">
-      <span className="text-sm font-medium text-purple-700">{level.name}</span>
-      <div className="flex items-center ml-1">
-        {renderStars()}
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium">{level.name}</span>
+        <ChevronRight className="h-3 w-3 text-muted-foreground" />
+      </div>
+      
+      <div className="h-1.5 w-full rounded-full bg-gray-200">
+        <div 
+          className={`h-1.5 rounded-full ${level.color}`} 
+          style={{ width: `${progress}%` }}
+        />
       </div>
     </div>
   );
-};
+}

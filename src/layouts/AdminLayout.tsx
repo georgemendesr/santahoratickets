@@ -31,6 +31,7 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
   const [loadingMessage, setLoadingMessage] = useState("Verificando autenticação...");
   const [loadingStage, setLoadingStage] = useState(0);
   
+  // Debug authentication state on mount
   useEffect(() => {
     const debug = async () => {
       console.log("AdminLayout - Debugging auth state");
@@ -41,6 +42,7 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
     debug();
   }, [debugAuth]);
   
+  // Show different loading messages
   useEffect(() => {
     if (authLoading || roleLoading || !initialized) {
       const stages = [
@@ -62,6 +64,7 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
     }
   }, [authLoading, roleLoading, initialized]);
   
+  // Timeout for verification
   useEffect(() => {
     let verificationTimeoutId: NodeJS.Timeout;
     
@@ -70,7 +73,7 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
         console.error("AdminLayout - TIMEOUT: Verificação de permissões demorou demais");
         setVerificationTimeoutOccurred(true);
         setIsVerifying(false);
-      }, 5000); // 5-second timeout (reduzido de 8s)
+      }, 10000); // Increased from 5s to 10s
     }
     
     return () => {
@@ -78,6 +81,7 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
     };
   }, [authLoading, roleLoading, initialized]);
   
+  // Handle redirect for non-admin users
   useEffect(() => {
     if (!authLoading && !roleLoading && initialized) {
       console.log("AdminLayout - Autenticação inicializada. isAdmin:", isAdmin, "requiresAdmin:", requiresAdmin);
@@ -85,16 +89,23 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
       
       if (requiresAdmin && !isAdmin) {
         console.log("AdminLayout - Usuário não autorizado, redirecionando");
-        toast("Acesso restrito. Você não tem permissão para acessar esta página.", {
+        toast.error("Acesso restrito. Você não tem permissão para acessar esta página.", {
           description: "Redirecionando para a página inicial...",
           duration: 5000,
         });
         navigate('/');
+      } else if (!session) {
+        console.log("AdminLayout - Usuário não autenticado, redirecionando");
+        toast.error("Você precisa estar logado para acessar esta página.", {
+          description: "Redirecionando para a página de login...",
+          duration: 5000,
+        });
+        navigate('/auth');
       } else {
         console.log("AdminLayout - Usuário autorizado, carregando dashboard");
       }
     }
-  }, [authLoading, roleLoading, initialized, isAdmin, requiresAdmin, navigate]);
+  }, [authLoading, roleLoading, initialized, isAdmin, requiresAdmin, navigate, session]);
   
   if (authLoading || roleLoading || isVerifying) {
     const showEmergencyButton = authTimeoutOccurred || verificationTimeoutOccurred;

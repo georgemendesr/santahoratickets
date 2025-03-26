@@ -38,9 +38,11 @@ export function useAuth() {
         clearTimeout(timeoutId);
         
         if (data.session) {
+          console.log("useAuth - Sessão encontrada:", data.session.user.id);
           setSession(data.session);
           return data.session;
         }
+        console.log("useAuth - Nenhuma sessão encontrada");
         return null;
       } catch (err) {
         console.error("useAuth - Erro ao verificar sessão:", err);
@@ -65,7 +67,7 @@ export function useAuth() {
             setAuthTimeoutOccurred(true);
             setAuthInitialized(true); // Mark as initialized to prevent further attempts
             toast.error("Tempo limite de autenticação excedido. Tente novamente mais tarde.");
-          }, 7000); // 7-second timeout
+          }, 10000); // Increased from 7s to 10s timeout
           
           await initialize();
           

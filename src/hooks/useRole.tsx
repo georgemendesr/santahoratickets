@@ -43,6 +43,7 @@ export function useRole(session: Session | null): UseRoleResult {
         }
         
         // Default role
+        console.log("useRole - Nenhuma função encontrada, definindo como usuário padrão");
         setRoleState("user");
         return "user";
       } catch (err) {

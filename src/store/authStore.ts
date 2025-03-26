@@ -49,10 +49,65 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   
   initialize: async () => {
+    // Prevenir múltiplas inicializações simultâneas
+    if (get().initialized) {
+      set({ isLoading: false });
+      return;
+    }
+    
     try {
       set({ isLoading: true, error: null });
       
-      // Get the current session
+      // Configurar listener de autenticação primeiro
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, newSession) => {
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            get().setSession(newSession);
+            
+            // Buscar perfil e papel ao fazer login
+            if (newSession?.user?.id) {
+              supabase
+                .from('user_profiles')
+                .select('*')
+                .eq('id', newSession.user.id)
+                .single()
+                .then(({ data }) => {
+                  if (data) get().setUserProfile(data as UserProfile);
+                });
+                
+              supabase
+                .from('user_roles')
+                .select('*')
+                .eq('user_id', newSession.user.id)
+                .single()
+                .then(({ data }) => {
+                  if (data) {
+                    const userRole: UserRole = {
+                      id: data.id,
+                      user_id: data.user_id,
+                      role: data.role as UserRoleType,
+                      created_at: data.created_at
+                    };
+                    get().setUserRole(userRole);
+                  } else {
+                    // Default role is 'user' if no role is set
+                    get().setUserRole({
+                      id: '',
+                      user_id: newSession.user.id,
+                      role: 'user'
+                    });
+                  }
+                });
+            }
+          } else if (event === 'SIGNED_OUT') {
+            get().setSession(null);
+            get().setUserProfile(null);
+            get().setUserRole(null);
+          }
+        }
+      );
+      
+      // Verificar sessão existente
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -62,31 +117,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       
       get().setSession(session);
       
-      // Fetch the user profile
-      const { data: profile } = await supabase
+      // Carregar apenas o necessário assincronamente
+      const profilePromise = supabase
         .from('user_profiles')
         .select('*')
         .eq('id', session.user.id)
         .single();
         
-      if (profile) {
-        get().setUserProfile(profile as UserProfile);
-      }
-      
-      // Fetch the user role
-      const { data: roleData } = await supabase
+      const rolePromise = supabase
         .from('user_roles')
         .select('*')
         .eq('user_id', session.user.id)
         .single();
       
-      if (roleData) {
+      // Processar resultados em paralelo
+      const [profileResult, roleResult] = await Promise.all([profilePromise, rolePromise]);
+      
+      if (profileResult.data) {
+        get().setUserProfile(profileResult.data as UserProfile);
+      }
+      
+      if (roleResult.data) {
         // Ensure we're using the UserRole type
         const userRole: UserRole = {
-          id: roleData.id,
-          user_id: roleData.user_id,
-          role: roleData.role as UserRoleType,
-          created_at: roleData.created_at
+          id: roleResult.data.id,
+          user_id: roleResult.data.user_id,
+          role: roleResult.data.role as UserRoleType,
+          created_at: roleResult.data.created_at
         };
         get().setUserRole(userRole);
       } else {
@@ -97,18 +154,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           role: 'user'
         });
       }
-      
-      // Set up authentication state listener
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (event, newSession) => {
-          get().setSession(newSession);
-          
-          if (event === 'SIGNED_OUT') {
-            get().setUserProfile(null);
-            get().setUserRole(null);
-          }
-        }
-      );
       
       set({ initialized: true, isLoading: false });
     } catch (error) {

@@ -10,8 +10,9 @@ export function useRole(session: Session | null) {
   const [roleChecked, setRoleChecked] = useState(false);
   
   // Verificação de segurança adicional para confirmar o papel do usuário
+  // apenas se ainda não foi verificado
   useEffect(() => {
-    if (session && !roleChecked && !isCheckingRole) {
+    if (session && !roleChecked && !isCheckingRole && !userRole) {
       setIsCheckingRole(true);
       
       const verifyUserRole = async () => {
@@ -39,8 +40,11 @@ export function useRole(session: Session | null) {
       };
       
       verifyUserRole();
+    } else if (userRole) {
+      // Se já temos o userRole, marcar como verificado
+      setRoleChecked(true);
     }
-  }, [session, roleChecked, isCheckingRole]);
+  }, [session, roleChecked, isCheckingRole, userRole]);
   
   // Se não há sessão, o usuário não tem função
   if (!session) {

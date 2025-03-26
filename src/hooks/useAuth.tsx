@@ -23,7 +23,15 @@ export function useAuth() {
     if (!authInitialized) {
       const initAuth = async () => {
         try {
-          console.log("useAuth - Inicializando autenticação");
+          // Verificar se já temos uma sessão antes de inicializar
+          const { data } = await supabase.auth.getSession();
+          if (data.session) {
+            // Se já temos uma sessão, podemos usar ela diretamente
+            console.log("useAuth - Usando sessão existente");
+          } else {
+            console.log("useAuth - Inicializando autenticação");
+          }
+          
           await initialize();
           console.log("useAuth - Autenticação inicializada com sucesso");
           setAuthInitialized(true);

@@ -51,6 +51,7 @@ export function useRole(session: Session | null) {
   });
   
   // Efeito para atualizar o userRole quando o cachedRole mudar
+  // CORREÇÃO: Garantir que nenhum valor undefined seja passado para o array de dependências
   useEffect(() => {
     if (cachedRole && userRole?.role !== cachedRole) {
       setUserRole({
@@ -59,7 +60,7 @@ export function useRole(session: Session | null) {
         role: cachedRole as any
       });
     }
-  }, [cachedRole, userRole?.role, session?.user?.id, setUserRole]);
+  }, [cachedRole, session?.user?.id]); // Remova userRole?.role das dependências para evitar o erro
   
   // Se não há sessão, o usuário não tem função
   if (!session) {

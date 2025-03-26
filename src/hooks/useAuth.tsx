@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,7 +49,6 @@ export function useAuth() {
     staleTime: 1000 * 60 * 2, // Cache por 2 minutos
     retry: 1,
     enabled: !authInitialized,
-    // Fix: removed onSuccess callback and moved it to useEffect below
   });
 
   // Use useEffect to handle success case

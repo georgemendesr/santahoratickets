@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
@@ -19,17 +18,16 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps) {
-  // Correct destructuring of isLoading from useRole
   const auth = useAuth();
-  const { isAdmin, isLoading: roleLoading, role } = auth.session ? useRole(auth.session) : { isAdmin: false, isLoading: false, role: null };
-  const { loading: authLoading, initialized, session, debugAuth, resetAuth, authTimeoutOccurred } = useAuth();
+  const roleData = auth.session ? useRole(auth.session) : { isAdmin: false, isLoading: false, role: null };
+  const { isAdmin, isLoading: roleLoading } = roleData;
+  const { loading: authLoading, initialized, session, debugAuth, resetAuth, authTimeoutOccurred } = auth;
   const navigate = useNavigate();
   const [isVerifying, setIsVerifying] = useState(true);
   const [verificationTimeoutOccurred, setVerificationTimeoutOccurred] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Verificando autenticação...");
   const [loadingStage, setLoadingStage] = useState(0);
   
-  // Debug authentication on component mount
   useEffect(() => {
     const debug = async () => {
       console.log("AdminLayout - Debugging auth state");
@@ -40,7 +38,6 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
     debug();
   }, [debugAuth]);
   
-  // Atualizar mensagens de carregamento para informar o usuário
   useEffect(() => {
     if (authLoading || roleLoading || !initialized) {
       const stages = [
@@ -62,7 +59,6 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
     }
   }, [authLoading, roleLoading, initialized]);
   
-  // Set up verification timeout - reduzido para 5 segundos
   useEffect(() => {
     let verificationTimeoutId: NodeJS.Timeout;
     
@@ -79,10 +75,9 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
     };
   }, [authLoading, roleLoading, initialized]);
   
-  // Verificar permissões após inicialização da autenticação
   useEffect(() => {
     if (!authLoading && !roleLoading && initialized) {
-      console.log("AdminLayout - Autenticação inicializada. isAdmin:", isAdmin, "requiresAdmin:", requiresAdmin, "role:", role);
+      console.log("AdminLayout - Autenticação inicializada. isAdmin:", isAdmin, "requiresAdmin:", requiresAdmin, "role:", roleData.role);
       setIsVerifying(false);
       
       if (requiresAdmin && !isAdmin) {
@@ -96,9 +91,8 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
         console.log("AdminLayout - Usuário autorizado, carregando dashboard");
       }
     }
-  }, [authLoading, roleLoading, initialized, isAdmin, requiresAdmin, navigate, role]);
+  }, [authLoading, roleLoading, initialized, isAdmin, requiresAdmin, navigate, roleData.role]);
   
-  // Mostrar estado de carregamento ou tela de emergência quando timeout ocorreu
   if (authLoading || roleLoading || isVerifying) {
     const showEmergencyButton = authTimeoutOccurred || verificationTimeoutOccurred;
     
@@ -108,7 +102,6 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
           <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-amber-500"></div>
           <span className="mt-4 text-gray-600 font-medium">{loadingMessage}</span>
           
-          {/* Barra de progresso visual */}
           <div className="w-full mt-4 bg-gray-200 rounded-full h-2.5">
             <div 
               className="bg-amber-500 h-2.5 rounded-full transition-all duration-300" 
@@ -116,7 +109,6 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
             ></div>
           </div>
           
-          {/* Mostrar componentes de loading skeleton para indicar progresso */}
           <div className="w-full mt-6 space-y-3">
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-3/4" />
@@ -141,7 +133,6 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
     );
   }
   
-  // Se o usuário não tem permissão de administrador
   if (requiresAdmin && !isAdmin) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -177,7 +168,6 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
   );
 }
 
-// Higher-Order Component (HOC) to add AdminLayout to a component
 export function withAdminLayout<P extends object>(
   Component: React.ComponentType<P>,
   layoutProps: Omit<AdminLayoutProps, 'children'> = {}

@@ -80,6 +80,7 @@ export function EventDetailsContent({
       <EventInfo 
         event={event} 
         getLowStockAlert={getLowStockAlert}
+        soldOut={event.available_tickets === 0}
       />
       
       <div className="grid gap-6 md:grid-cols-3">

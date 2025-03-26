@@ -53,12 +53,11 @@ export const useEventDetails = (eventId: string | undefined) => {
         return data as Event;
       } catch (error) {
         console.error("Erro ao buscar evento:", error);
-        toast.error("Erro ao carregar detalhes do evento");
         throw error;
       }
     },
-    retry: 2,
-    retryDelay: 1000,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     enabled: !!eventId,
   });
 
@@ -86,11 +85,11 @@ export const useEventDetails = (eventId: string | undefined) => {
         return data as Batch[];
       } catch (error) {
         console.error("Erro ao buscar lotes:", error);
-        return [];
+        throw error;
       }
     },
-    retry: 2,
-    retryDelay: 1000,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     enabled: !!eventId && !!event,
   });
 
@@ -163,8 +162,10 @@ export const useEventDetails = (eventId: string | undefined) => {
 
   // Função para recarregar os dados
   const refreshData = () => {
+    console.log("Recarregando dados do evento e lotes...");
     refetchEvent();
     refetchBatches();
+    toast.info("Recarregando informações do evento...");
   };
 
   return {

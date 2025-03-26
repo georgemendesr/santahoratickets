@@ -45,7 +45,7 @@ const EventDetails = () => {
   
   // Tentativa automática de recarga em caso de erro
   useEffect(() => {
-    if (hasError && retryCount < 2) {
+    if (hasError && retryCount < 3) {
       const timer = setTimeout(() => {
         console.log(`Tentativa automática ${retryCount + 1} de recarregar o evento...`);
         refreshData();
@@ -58,7 +58,7 @@ const EventDetails = () => {
   
   // Handle back navigation
   const handleBack = () => {
-    window.history.back();
+    navigate(-1);
   };
   
   const handleShare = () => {
@@ -92,6 +92,7 @@ const EventDetails = () => {
   
   const handleRefresh = () => {
     refreshData();
+    setRetryCount(0);
     toast.info("Recarregando informações do evento...");
   };
   
@@ -121,7 +122,7 @@ const EventDetails = () => {
         <Card>
           <CardContent className="text-center py-8">
             <h3 className="text-lg font-medium">Não foi possível carregar o evento</h3>
-            <p className="text-gray-500 mb-4">Tente novamente mais tarde</p>
+            <p className="text-gray-500 mb-4">Ocorreu um erro ao buscar as informações do evento</p>
             
             <Button 
               onClick={handleRefresh}

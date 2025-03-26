@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { Batch } from "@/types";
 import { formatCurrency } from "@/utils/format";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
@@ -23,7 +22,6 @@ export function BatchesTable({
   isLoggedIn, 
   onQuantityChange 
 }: BatchesTableProps) {
-  const navigate = useNavigate();
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   
   // Inicializar quantidades para cada lote
@@ -73,6 +71,7 @@ export function BatchesTable({
     try {
       return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR });
     } catch (e) {
+      console.error("Erro ao formatar data:", e, dateString);
       return dateString;
     }
   };
@@ -110,12 +109,15 @@ export function BatchesTable({
           </TableHeader>
           <TableBody>
             {batches.map(batch => {
-              const isSoldOut = batch.status === 'sold_out' || batch.available_tickets <= 0;
+              const isSoldOut = batch.status === 'sold_out' || (batch.available_tickets !== undefined && batch.available_tickets <= 0);
               const isActive = batch.status === 'active';
               const isUpcoming = batch.status === 'upcoming';
               const canBuy = isActive && !isSoldOut;
               const quantity = quantities[batch.id] || 0;
-              const maxPurchase = batch.max_purchase || batch.available_tickets;
+              const maxPurchase = Math.min(
+                batch.max_purchase || 10, 
+                batch.available_tickets || 0
+              );
               
               return (
                 <TableRow key={batch.id}>
@@ -125,7 +127,7 @@ export function BatchesTable({
                       {batch.description && (
                         <p className="text-xs text-muted-foreground">{batch.description}</p>
                       )}
-                      {isUpcoming && (
+                      {isUpcoming && batch.start_date && (
                         <p className="text-xs text-muted-foreground">
                           Inicia em {formatDate(batch.start_date)}
                         </p>
@@ -136,10 +138,10 @@ export function BatchesTable({
                     {isSoldOut ? (
                       <span className="text-destructive">Esgotado</span>
                     ) : (
-                      batch.available_tickets
+                      batch.available_tickets !== undefined ? batch.available_tickets : '—'
                     )}
                   </TableCell>
-                  <TableCell>{formatCurrency(batch.price)}</TableCell>
+                  <TableCell>{formatCurrency(batch.price || 0)}</TableCell>
                   <TableCell>
                     {canBuy && (
                       <div className="flex items-center space-x-2">

@@ -3,11 +3,10 @@ import { useState, useEffect } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { EventDetailsContent } from "@/components/event-details/EventDetailsContent";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ProfileDialog } from "@/components/event-details/ProfileDialog";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
 import { useEventDetails } from "@/hooks/useEventDetails";
-import { useReferrals } from "@/hooks/useReferrals";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 
@@ -67,6 +66,11 @@ const EventDetails = () => {
     navigate(`/checkout/${id}/finish?batch=${batchId}&quantity=${quantity}`);
   };
   
+  const handleSubmitProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    createProfileMutation.mutate();
+  };
+  
   if (isLoading) {
     return (
       <div className="container max-w-5xl mx-auto py-4">
@@ -120,50 +124,18 @@ const EventDetails = () => {
         session={session}
       />
       
-      <Dialog open={showProfileDialog} onOpenChange={setShowProfileDialog}>
-        <DialogContent className="max-w-md">
-          <h2 className="text-xl font-semibold mb-4">Complete seu perfil</h2>
-          <p className="text-muted-foreground mb-4">
-            Para continuar, precisamos de algumas informações adicionais.
-          </p>
-          <div className="space-y-4">
-            <label className="block">
-              <span className="text-gray-700">CPF</span>
-              <input 
-                type="text" 
-                value={cpf} 
-                onChange={(e) => setCpf(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" 
-              />
-            </label>
-            <label className="block">
-              <span className="text-gray-700">Data de Nascimento</span>
-              <input 
-                type="date" 
-                value={birthDate} 
-                onChange={(e) => setBirthDate(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" 
-              />
-            </label>
-            <label className="block">
-              <span className="text-gray-700">Telefone</span>
-              <input 
-                type="tel" 
-                value={phone} 
-                onChange={(e) => setPhone(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" 
-              />
-            </label>
-            <Button 
-              className="w-full" 
-              onClick={() => createProfileMutation.mutate()}
-              isLoading={createProfileMutation.isLoading}
-            >
-              Salvar perfil
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ProfileDialog
+        open={showProfileDialog}
+        onOpenChange={setShowProfileDialog}
+        cpf={cpf}
+        birthDate={birthDate}
+        phone={phone}
+        onCpfChange={setCpf}
+        onBirthDateChange={setBirthDate}
+        onPhoneChange={setPhone}
+        onSubmit={handleSubmitProfile}
+        isPending={createProfileMutation.isPending}
+      />
     </div>
   );
 };

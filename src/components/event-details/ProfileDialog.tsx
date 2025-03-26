@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 
 interface ProfileDialogProps {
   open: boolean;
@@ -75,7 +76,14 @@ export function ProfileDialog({
             disabled={isPending}
             className="w-full"
           >
-            {isPending ? "Salvando..." : "Salvar Perfil"}
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              "Salvar Perfil"
+            )}
           </Button>
         </form>
       </DialogContent>

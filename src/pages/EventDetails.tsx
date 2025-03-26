@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { EventDetailsContent } from "@/components/event-details/EventDetailsContent";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
 import { useEventDetails } from "@/hooks/useEventDetails";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft, RefreshCw, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+
+const MAX_AUTO_RETRY = 3;
 
 const EventDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -37,24 +39,27 @@ const EventDetails = () => {
     createReferralMutation,
     refreshData,
     isLoading,
-    hasError
+    hasError,
+    retryAttempt
   } = useEventDetails(id);
   
-  // Contagem de tentativas
-  const [retryCount, setRetryCount] = useState(0);
+  // Contagem de tentativas automáticas
+  const [autoRetryCount, setAutoRetryCount] = useState(0);
   
   // Tentativa automática de recarga em caso de erro
   useEffect(() => {
-    if (hasError && retryCount < 3) {
+    if (hasError && autoRetryCount < MAX_AUTO_RETRY) {
       const timer = setTimeout(() => {
-        console.log(`Tentativa automática ${retryCount + 1} de recarregar o evento...`);
+        console.log(`Tentativa automática ${autoRetryCount + 1} de ${MAX_AUTO_RETRY} para recarregar o evento...`);
         refreshData();
-        setRetryCount(prev => prev + 1);
-      }, 2000);
+        setAutoRetryCount(prev => prev + 1);
+      }, 3000);
       
       return () => clearTimeout(timer);
+    } else if (hasError && autoRetryCount >= MAX_AUTO_RETRY) {
+      console.log("Número máximo de tentativas automáticas atingido:", MAX_AUTO_RETRY);
     }
-  }, [hasError, retryCount, refreshData]);
+  }, [hasError, autoRetryCount, refreshData]);
   
   // Handle back navigation
   const handleBack = () => {
@@ -78,7 +83,7 @@ const EventDetails = () => {
   
   const handlePurchase = (batchId: string, quantity: number) => {
     if (!session) {
-      navigate(`/auth?redirect=/event/${id}`);
+      navigate(`/auth?redirect=/eventos/${id}`);
       return;
     }
     
@@ -90,11 +95,11 @@ const EventDetails = () => {
     createProfileMutation.mutate();
   };
   
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     refreshData();
-    setRetryCount(0);
+    setAutoRetryCount(0);
     toast.info("Recarregando informações do evento...");
-  };
+  }, [refreshData]);
   
   if (isLoading) {
     return (
@@ -112,7 +117,7 @@ const EventDetails = () => {
     );
   }
   
-  if (!event) {
+  if (!event || hasError) {
     return (
       <div className="container max-w-5xl mx-auto py-4">
         <Button variant="ghost" onClick={handleBack} className="mb-4">
@@ -121,17 +126,31 @@ const EventDetails = () => {
         </Button>
         <Card>
           <CardContent className="text-center py-8">
+            <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-2" />
             <h3 className="text-lg font-medium">Não foi possível carregar o evento</h3>
-            <p className="text-gray-500 mb-4">Ocorreu um erro ao buscar as informações do evento</p>
+            <p className="text-gray-500 mb-6">
+              Ocorreu um erro ao buscar as informações do evento. 
+              {autoRetryCount >= MAX_AUTO_RETRY ? " Tentativas automáticas esgotadas." : ""}
+            </p>
             
-            <Button 
-              onClick={handleRefresh}
-              variant="outline"
-              className="mx-auto"
-            >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Tentar novamente
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button 
+                onClick={handleRefresh}
+                className="flex items-center justify-center"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Tentar novamente
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={handleBack}
+                className="flex items-center justify-center"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Voltar para eventos
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

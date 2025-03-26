@@ -102,7 +102,7 @@ export function EventDetailsContent({
                     <>
                       <Button
                         variant="outline"
-                        onClick={() => navigate(`/auth?redirect=/event/${event.id}`)}
+                        onClick={() => navigate(`/auth?redirect=/eventos/${event.id}`)}
                       >
                         Comprar com Cadastro
                       </Button>
@@ -157,7 +157,7 @@ export function EventDetailsContent({
           {isLoggedIn && hasLoyaltyEnabled && referralCode && (
             <ReferralCard 
               referralCode={referralCode}
-              eventUrl={`${window.location.origin}/event/${event.id}`}
+              eventUrl={`${window.location.origin}/eventos/${event.id}`}
             />
           )}
         </div>

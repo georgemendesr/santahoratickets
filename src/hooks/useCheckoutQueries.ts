@@ -9,18 +9,36 @@ export function useCheckoutQueries(eventId: string | null) {
     queryFn: async () => {
       if (!eventId) return null;
 
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .eq("id", eventId)
-        .single();
+      try {
+        console.log(`[${new Date().toISOString()}] Buscando evento para checkout:`, eventId);
+        
+        const { data, error } = await supabase
+          .from("events")
+          .select("*")
+          .eq("id", eventId)
+          .maybeSingle();
 
-      if (error) throw error;
-      return data as Event;
+        if (error) {
+          console.error(`[${new Date().toISOString()}] Erro ao buscar evento para checkout:`, error);
+          throw error;
+        }
+        
+        if (!data) {
+          console.error(`[${new Date().toISOString()}] Evento para checkout não encontrado:`, eventId);
+          throw new Error("Evento não encontrado");
+        }
+        
+        console.log(`[${new Date().toISOString()}] Evento para checkout encontrado:`, data.title);
+        return data as Event;
+      } catch (error) {
+        console.error(`[${new Date().toISOString()}] Exceção ao buscar evento para checkout:`, error);
+        throw error;
+      }
     },
     enabled: !!eventId,
-    staleTime: 10000, // 10 segundos
-    refetchInterval: 30000, // 30 segundos
+    staleTime: 30000, // 30 segundos
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 
   const batchQuery = useQuery({
@@ -28,21 +46,39 @@ export function useCheckoutQueries(eventId: string | null) {
     queryFn: async () => {
       if (!eventId) return null;
 
-      const { data, error } = await supabase
-        .from("batches")
-        .select("*")
-        .eq("event_id", eventId)
-        .eq("status", "active")
-        .order("order_number", { ascending: true })
-        .limit(1)
-        .single();
+      try {
+        console.log(`[${new Date().toISOString()}] Buscando lote ativo para evento:`, eventId);
+        
+        const { data, error } = await supabase
+          .from("batches")
+          .select("*")
+          .eq("event_id", eventId)
+          .eq("status", "active")
+          .order("order_number", { ascending: true })
+          .limit(1)
+          .maybeSingle();
 
-      if (error) throw error;
-      return data as Batch;
+        if (error) {
+          console.error(`[${new Date().toISOString()}] Erro ao buscar lote ativo:`, error);
+          throw error;
+        }
+
+        if (!data) {
+          console.warn(`[${new Date().toISOString()}] Nenhum lote ativo encontrado para evento:`, eventId);
+          return null;
+        }
+        
+        console.log(`[${new Date().toISOString()}] Lote ativo encontrado:`, data.title);
+        return data as Batch;
+      } catch (error) {
+        console.error(`[${new Date().toISOString()}] Exceção ao buscar lote ativo:`, error);
+        throw error;
+      }
     },
     enabled: !!eventId,
-    staleTime: 10000, // 10 segundos
-    refetchInterval: 30000, // 30 segundos
+    staleTime: 30000, // 30 segundos
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 
   return {

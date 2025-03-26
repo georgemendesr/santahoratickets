@@ -8,48 +8,20 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import { ArrowUpRight, Settings, Users, BarChart3 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { Link } from "react-router-dom";
+import { Users, Gift, Share2 } from "lucide-react";
+import { useState } from "react";
 
 const AdminReferrals = () => {
-  const { data: referralStats } = useQuery({
-    queryKey: ["referral-stats"],
-    queryFn: async () => {
-      // Mock data - In a real application, fetch from Supabase
-      return {
-        totalReferrals: 128,
-        conversionRate: 68,
-        pointsAwarded: 4350,
-        topReferrer: "João Silva",
-        referralsByMonth: [
-          { month: 'Jan', referrals: 12 },
-          { month: 'Feb', referrals: 19 },
-          { month: 'Mar', referrals: 8 },
-          { month: 'Apr', referrals: 22 },
-          { month: 'May', referrals: 16 },
-          { month: 'Jun', referrals: 25 },
-        ]
-      };
-    },
-  });
+  const [activeTab, setActiveTab] = useState('overview');
 
   return (
     <AdminLayout>
       <div className="container max-w-7xl mx-auto py-4">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold">Sistema de Referral</h1>
-            <p className="text-muted-foreground mt-1">Gerencie e acompanhe o programa de indicações</p>
+            <h1 className="text-3xl font-bold">Sistema de Indicações</h1>
+            <p className="text-muted-foreground mt-1">Gerencie o programa de indicações e afiliados</p>
           </div>
           <Button variant="outline">
             <Settings className="h-4 w-4 mr-2" />
@@ -57,105 +29,49 @@ const AdminReferrals = () => {
           </Button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total de Indicações
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {referralStats?.totalReferrals || 0}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Taxa de Conversão
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {referralStats?.conversionRate || 0}%
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Pontos Concedidos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {referralStats?.pointsAwarded || 0}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Maior Indicador
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold truncate">
-                {referralStats?.topReferrer || "-"}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Chart and Management Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle>Indicações por Mês</CardTitle>
-              <CardDescription>
-                Evolução de indicações nos últimos 6 meses
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={referralStats?.referralsByMonth}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="referrals" name="Indicações" fill="#8B5CF6" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardHeader>
-              <CardTitle>Gerenciamento</CardTitle>
-              <CardDescription>Opções de gerenciamento do programa</CardDescription>
+              <CardTitle>Campanhas de Indicação</CardTitle>
+              <CardDescription>Gerencie suas campanhas de indicação ativas</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col gap-3">
+            <CardContent className="flex flex-col items-center">
+              <Gift className="h-16 w-16 text-primary mb-4" />
+              <Link to="/admin/referrals/campaigns">
                 <Button className="w-full">
-                  <Users className="h-4 w-4 mr-2" />
+                  Gerenciar Campanhas
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Indicadores</CardTitle>
+              <CardDescription>Visualize os usuários que mais indicaram</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center">
+              <Users className="h-16 w-16 text-primary mb-4" />
+              <Link to="/admin/referrals/users">
+                <Button className="w-full">
                   Ver Indicadores
                 </Button>
-                <Button className="w-full" variant="outline">
-                  <ArrowUpRight className="h-4 w-4 mr-2" />
-                  Ver Códigos de Indicação
+              </Link>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Relatórios</CardTitle>
+              <CardDescription>Visualize estatísticas e métricas do programa</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center">
+              <Share2 className="h-16 w-16 text-primary mb-4" />
+              <Link to="/admin/referrals/reports">
+                <Button className="w-full">
+                  Ver Relatórios
                 </Button>
-                <Button className="w-full" variant="outline">
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Relatório Detalhado
-                </Button>
-              </div>
+              </Link>
             </CardContent>
           </Card>
         </div>

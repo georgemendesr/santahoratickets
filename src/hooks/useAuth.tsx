@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +21,7 @@ export function useAuth() {
   const [authInitialized, setAuthInitialized] = useState(false);
   const [authTimeoutOccurred, setAuthTimeoutOccurred] = useState(false);
 
-  // Utilizando React Query para verificar a sessão de forma eficiente
+  // Using React Query for session check with simpler pattern
   const { isLoading: isSessionLoading } = useQuery({
     queryKey: ['authSession'],
     queryFn: async () => {
@@ -49,17 +50,16 @@ export function useAuth() {
     staleTime: 1000 * 60 * 2, // Cache por 2 minutos
     retry: 1,
     enabled: !authInitialized,
-  });
-
-  // Use useEffect to handle success case
-  useEffect(() => {
-    if (!authInitialized && !isSessionLoading) {
-      initialize().then(() => {
-        setAuthInitialized(true);
-        console.log("useAuth - Autenticação inicializada com sucesso");
-      });
+    onSuccess: () => {
+      // Safe initialization in onSuccess
+      if (!authInitialized) {
+        initialize().then(() => {
+          setAuthInitialized(true);
+          console.log("useAuth - Autenticação inicializada com sucesso");
+        });
+      }
     }
-  }, [authInitialized, initialize, isSessionLoading]);
+  });
 
   // Initialize authentication on first render with timeout protection
   useEffect(() => {
@@ -74,7 +74,7 @@ export function useAuth() {
             setAuthTimeoutOccurred(true);
             setAuthInitialized(true); // Mark as initialized to prevent further attempts
             toast.error("Tempo limite de autenticação excedido. Tente novamente mais tarde.");
-          }, 7000); // 7-second timeout (reduzido de 10s)
+          }, 7000); // 7-second timeout
           
           await initialize();
           

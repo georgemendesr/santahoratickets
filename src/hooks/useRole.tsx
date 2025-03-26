@@ -1,21 +1,28 @@
 
-import { useEffect, useState, useCallback } from "react";
-import { useAuthStore } from "@/store/authStore";
+import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { UserRoleType } from "@/types/user.types";
 
-export function useRole(session: Session | null) {
-  const { userRole, isAdmin, setUserRole } = useAuthStore();
-  const [roleVerified, setRoleVerified] = useState(false);
+// Simple interface for the hook return type
+interface UseRoleResult {
+  role: UserRoleType | string;
+  isAdmin: boolean;
+  isLoading: boolean;
+}
+
+export function useRole(session: Session | null): UseRoleResult {
+  // Local state that doesn't depend on Zustand
+  const [roleState, setRoleState] = useState<UserRoleType | string>("user");
   
-  // Utilizar React Query para cache eficiente das verificações de função
-  const { data: cachedRole, isLoading: isCheckingRole } = useQuery({
+  // Use React Query for caching but with simplified pattern
+  const { isLoading } = useQuery({
     queryKey: ['userRole', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      console.log("useRole - Verificando função do usuário via React Query", session.user.id);
+      console.log("useRole - Verificando função do usuário", session.user.id);
       
       try {
         const { data, error } = await supabase
@@ -30,38 +37,27 @@ export function useRole(session: Session | null) {
         }
         
         if (data) {
-          console.log("useRole - Função verificada via React Query:", data.role);
-          // Atualizar o estado global quando verificado com sucesso
-          if (!roleVerified) {
-            setRoleVerified(true);
-          }
+          console.log("useRole - Função verificada:", data.role);
+          setRoleState(data.role);
           return data.role;
         }
         
-        return 'user'; // Default role
+        // Default role
+        setRoleState("user");
+        return "user";
       } catch (err) {
         console.error("useRole - Exceção ao verificar função:", err);
-        return 'user'; // Default em caso de erro
+        setRoleState("user");
+        return "user";
       }
     },
-    enabled: !!session?.user?.id && !roleVerified,
+    enabled: !!session?.user?.id,
     staleTime: 1000 * 60 * 5, // Cache por 5 minutos
     gcTime: 1000 * 60 * 10, // Manter no cache por 10 minutos
-    retry: 1 // Limitar tentativas de retry para evitar loops
+    retry: 1 // Limitar tentativas de retry
   });
   
-  // Efeito para atualizar o userRole quando o cachedRole mudar
-  useEffect(() => {
-    if (cachedRole && session?.user?.id) {
-      setUserRole({
-        id: '',
-        user_id: session.user.id,
-        role: cachedRole as any
-      });
-    }
-  }, [cachedRole, session?.user?.id, setUserRole]);
-  
-  // Se não há sessão, o usuário não tem função
+  // Default when no session exists
   if (!session) {
     return {
       role: "user",
@@ -71,8 +67,8 @@ export function useRole(session: Session | null) {
   }
   
   return {
-    role: userRole?.role || cachedRole || "user",
-    isAdmin: Boolean(isAdmin),
-    isLoading: isCheckingRole
+    role: roleState,
+    isAdmin: roleState === "admin",
+    isLoading
   };
 }

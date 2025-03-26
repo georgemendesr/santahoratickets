@@ -19,8 +19,10 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps) {
   const auth = useAuth();
-  const roleData = auth.session ? useRole(auth.session) : { isAdmin: false, isLoading: false, role: "user" };
-  const { isAdmin, isLoading: roleLoading } = roleData;
+  const { isAdmin, isLoading: roleLoading } = auth.session ? 
+    useRole(auth.session) : 
+    { isAdmin: false, isLoading: false, role: "user" };
+    
   const { loading: authLoading, initialized, session, debugAuth, resetAuth, authTimeoutOccurred } = auth;
   const navigate = useNavigate();
   const [isVerifying, setIsVerifying] = useState(true);
@@ -77,7 +79,7 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
   
   useEffect(() => {
     if (!authLoading && !roleLoading && initialized) {
-      console.log("AdminLayout - Autenticação inicializada. isAdmin:", isAdmin, "requiresAdmin:", requiresAdmin, "role:", roleData.role);
+      console.log("AdminLayout - Autenticação inicializada. isAdmin:", isAdmin, "requiresAdmin:", requiresAdmin);
       setIsVerifying(false);
       
       if (requiresAdmin && !isAdmin) {
@@ -91,7 +93,7 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
         console.log("AdminLayout - Usuário autorizado, carregando dashboard");
       }
     }
-  }, [authLoading, roleLoading, initialized, isAdmin, requiresAdmin, navigate, roleData.role]);
+  }, [authLoading, roleLoading, initialized, isAdmin, requiresAdmin, navigate]);
   
   if (authLoading || roleLoading || isVerifying) {
     const showEmergencyButton = authTimeoutOccurred || verificationTimeoutOccurred;
@@ -128,17 +130,6 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
               </Button>
             </div>
           )}
-        </div>
-      </div>
-    );
-  }
-  
-  if (requiresAdmin && !isAdmin) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <p className="text-red-500 text-xl mb-2">Acesso não autorizado</p>
-          <p className="text-gray-500">Redirecionando...</p>
         </div>
       </div>
     );

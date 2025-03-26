@@ -24,11 +24,23 @@ export function BatchesTable({
 }: BatchesTableProps) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   
+  console.log("BatchesTable rendering with batches:", batches);
+  
   // Inicializar quantidades para cada lote
   useEffect(() => {
+    if (!batches || batches.length === 0) {
+      console.log("Nenhum lote disponível para inicializar quantidades");
+      return;
+    }
+    
+    console.log("Inicializando quantidades para", batches.length, "lotes");
     const initialQuantities: Record<string, number> = {};
     batches.forEach(batch => {
-      initialQuantities[batch.id] = 0;
+      if (batch && batch.id) {
+        initialQuantities[batch.id] = 0;
+      } else {
+        console.warn("Lote inválido encontrado:", batch);
+      }
     });
     setQuantities(initialQuantities);
   }, [batches]);
@@ -68,6 +80,8 @@ export function BatchesTable({
   };
   
   const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    
     try {
       return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR });
     } catch (e) {
@@ -109,6 +123,11 @@ export function BatchesTable({
           </TableHeader>
           <TableBody>
             {batches.map(batch => {
+              if (!batch || !batch.id) {
+                console.warn("Lote inválido encontrado na renderização:", batch);
+                return null;
+              }
+              
               const isSoldOut = batch.status === 'sold_out' || (batch.available_tickets !== undefined && batch.available_tickets <= 0);
               const isActive = batch.status === 'active';
               const isUpcoming = batch.status === 'upcoming';

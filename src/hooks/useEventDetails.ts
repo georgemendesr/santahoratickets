@@ -24,9 +24,10 @@ export const useEventDetails = (eventId: string | undefined) => {
   const [referralCode, setReferralCode] = useState<string | null>(() => searchParams.get('ref'));
   const [referrer, setReferrer] = useState<{ name: string } | null>(null);
   const [retryAttempt, setRetryAttempt] = useState(0);
+  const [error, setError] = useState<Error | null>(null);
 
   // Buscar detalhes do evento com melhor tratamento de erros
-  const { data: event, isLoading: isLoadingEvent, error: eventError, refetch: refetchEvent } = useQuery({
+  const { data: event, isLoading: isLoadingEvent, error: eventError, refetch: refetchEvent, isError: isEventError } = useQuery({
     queryKey: ["event", eventId, retryAttempt],
     queryFn: async () => {
       if (!eventId) {
@@ -40,11 +41,11 @@ export const useEventDetails = (eventId: string | undefined) => {
           .from("events")
           .select("*")
           .eq("id", eventId)
-          .maybeSingle();
+          .single();
 
         if (error) {
           console.error(`[${new Date().toISOString()}] Erro ao buscar evento:`, error);
-          throw error;
+          throw new Error(`Erro ao buscar evento: ${error.message}`);
         }
         
         if (!data) {
@@ -54,8 +55,9 @@ export const useEventDetails = (eventId: string | undefined) => {
         
         console.log(`[${new Date().toISOString()}] Evento encontrado com sucesso:`, data);
         return data as Event;
-      } catch (error) {
+      } catch (error: any) {
         console.error(`[${new Date().toISOString()}] Exceção ao buscar evento:`, error);
+        setError(error);
         throw error;
       }
     },
@@ -67,7 +69,7 @@ export const useEventDetails = (eventId: string | undefined) => {
   });
 
   // Buscar lotes com melhor tratamento de erros
-  const { data: batches, isLoading: isLoadingBatches, error: batchesError, refetch: refetchBatches } = useQuery({
+  const { data: batches, isLoading: isLoadingBatches, error: batchesError, refetch: refetchBatches, isError: isBatchesError } = useQuery({
     queryKey: ["batches", eventId, retryAttempt],
     queryFn: async () => {
       if (!eventId) {
@@ -86,13 +88,14 @@ export const useEventDetails = (eventId: string | undefined) => {
 
         if (error) {
           console.error(`[${new Date().toISOString()}] Erro ao buscar lotes:`, error);
-          throw error;
+          throw new Error(`Erro ao buscar lotes: ${error.message}`);
         }
 
         console.log(`[${new Date().toISOString()}] Lotes encontrados:`, data?.length || 0);
         return data as Batch[];
-      } catch (error) {
+      } catch (error: any) {
         console.error(`[${new Date().toISOString()}] Exceção ao buscar lotes:`, error);
+        setError(error);
         throw error;
       }
     },
@@ -100,7 +103,7 @@ export const useEventDetails = (eventId: string | undefined) => {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 15000),
     staleTime: 60 * 1000, // 1 minuto
     refetchOnWindowFocus: false,
-    enabled: !!eventId && !!event,
+    enabled: !!eventId,
   });
 
   // Buscar informações de referência se houver código ref
@@ -184,19 +187,19 @@ export const useEventDetails = (eventId: string | undefined) => {
   // Função para forçar o recarregamento dos dados com incremento do contador de tentativas
   const refreshData = () => {
     console.log(`[${new Date().toISOString()}] Forçando recarregamento dos dados, nova tentativa: ${retryAttempt + 1}`);
+    setError(null);
     setRetryAttempt(prev => prev + 1);
     
     // Também podemos chamar diretamente as funções de refetch para garantir
     refetchEvent();
     refetchBatches();
-    
-    toast.info("Recarregando informações do evento...");
   };
 
   // Verificar se temos erro de evento mas não de lotes, ou vice-versa
   useEffect(() => {
-    if ((eventError && !batchesError) || (!eventError && batchesError)) {
-      console.log(`[${new Date().toISOString()}] Detectado erro parcial: Evento=${!!eventError}, Lotes=${!!batchesError}`);
+    if (eventError || batchesError) {
+      console.log(`[${new Date().toISOString()}] Detectados erros: Evento=${!!eventError}, Lotes=${!!batchesError}`);
+      setError(eventError || batchesError);
     }
   }, [eventError, batchesError]);
 
@@ -218,7 +221,8 @@ export const useEventDetails = (eventId: string | undefined) => {
     createReferralMutation,
     refreshData,
     isLoading: isLoadingEvent || isLoadingBatches,
-    hasError: !!eventError || !!batchesError,
-    retryAttempt
+    hasError: isEventError || isBatchesError,
+    retryAttempt,
+    error
   };
 };

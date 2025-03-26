@@ -9,7 +9,7 @@ import { Event, Batch, UserProfile } from "@/types";
 import { CheckoutProButton } from "../payment/CheckoutProButton";
 import { Session } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface EventDetailsContentProps {
   event: Event;
@@ -39,11 +39,26 @@ export function EventDetailsContent({
   session
 }: EventDetailsContentProps) {
   const navigate = useNavigate();
+  
+  // Encontrar lote ativo
   const activeBatch = batches?.find(batch => batch.status === 'active') || null;
   const hasLoyaltyEnabled = true; // TODO: Verificar configuração de lealdade do evento
   const [selectedQuantities, setSelectedQuantities] = useState<Record<string, number>>({});
   
+  console.log("EventDetailsContent rendering with event:", event.title, "batches:", batches.length);
+  
+  useEffect(() => {
+    // Log para depuração
+    console.log("EventDetailsContent montado com:", {
+      eventId: event?.id,
+      eventTitle: event?.title,
+      batchesCount: batches?.length,
+      activeBatch: activeBatch?.id
+    });
+  }, [event, batches, activeBatch]);
+  
   const handleQuantityChange = (quantities: Record<string, number>) => {
+    console.log("Quantidades alteradas:", quantities);
     setSelectedQuantities(quantities);
   };
   
@@ -62,6 +77,7 @@ export function EventDetailsContent({
     // Encontre o lote e quantidade selecionados
     for (const [batchId, quantity] of Object.entries(selectedQuantities)) {
       if (quantity > 0) {
+        console.log("Iniciando compra:", { batchId, quantity });
         onPurchase(batchId, quantity);
         return;
       }
@@ -79,7 +95,7 @@ export function EventDetailsContent({
         <div className="md:col-span-2">
           <div className="space-y-6">
             <BatchesTable 
-              batches={batches || []} 
+              batches={batches} 
               onPurchase={onPurchase}
               isLoggedIn={isLoggedIn}
               onQuantityChange={handleQuantityChange}

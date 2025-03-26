@@ -40,17 +40,21 @@ const EventDetails = () => {
     refreshData,
     isLoading,
     hasError,
-    retryAttempt
+    retryAttempt,
+    error: eventError
   } = useEventDetails(id);
   
   // Contagem de tentativas automáticas
   const [autoRetryCount, setAutoRetryCount] = useState(0);
   
+  console.log("EventDetails rendering with event:", event, "batches:", batches, "hasError:", hasError, "error:", eventError);
+  
   // Tentativa automática de recarga em caso de erro
   useEffect(() => {
     if (hasError && autoRetryCount < MAX_AUTO_RETRY) {
+      console.log(`Iniciando tentativa automática ${autoRetryCount + 1} de ${MAX_AUTO_RETRY} para recarregar o evento...`);
       const timer = setTimeout(() => {
-        console.log(`Tentativa automática ${autoRetryCount + 1} de ${MAX_AUTO_RETRY} para recarregar o evento...`);
+        console.log(`Executando tentativa automática ${autoRetryCount + 1} de ${MAX_AUTO_RETRY} para recarregar o evento...`);
         refreshData();
         setAutoRetryCount(prev => prev + 1);
       }, 3000);
@@ -63,7 +67,7 @@ const EventDetails = () => {
   
   // Handle back navigation
   const handleBack = () => {
-    navigate(-1);
+    navigate("/eventos");
   };
   
   const handleShare = () => {
@@ -96,6 +100,7 @@ const EventDetails = () => {
   };
   
   const handleRefresh = useCallback(() => {
+    console.log("Forçando recarregamento manual dos dados do evento");
     refreshData();
     setAutoRetryCount(0);
     toast.info("Recarregando informações do evento...");
@@ -118,6 +123,8 @@ const EventDetails = () => {
   }
   
   if (!event || hasError) {
+    console.error("Erro ao carregar evento:", eventError);
+    
     return (
       <div className="container max-w-5xl mx-auto py-4">
         <Button variant="ghost" onClick={handleBack} className="mb-4">
@@ -156,6 +163,8 @@ const EventDetails = () => {
       </div>
     );
   }
+  
+  console.log("Renderizando EventDetailsContent com dados válidos");
   
   return (
     <div className="container max-w-5xl mx-auto py-4">

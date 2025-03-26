@@ -3,7 +3,7 @@ import { ROUTES } from "@/routes";
 import { generatePath } from "react-router-dom";
 
 // Tipos para parâmetros de rota
-export type EventIdParam = { eventId: string };
+export type EventIdParam = { eventId: string };  // Garantindo consistência no nome do parâmetro
 export type BatchIdParam = { batchId: string };
 export type OrderIdParam = { orderId: string };
 

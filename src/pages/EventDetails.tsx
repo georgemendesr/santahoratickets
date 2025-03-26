@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { EventDetailsContent } from "@/components/event-details/EventDetailsContent";
@@ -14,15 +13,14 @@ import { toast } from "sonner";
 const MAX_AUTO_RETRY = 3;
 
 const EventDetails = () => {
-  const { id } = useParams<{ id: string }>();
+  const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const refCode = searchParams.get("ref") || undefined;
   const { session, userProfile, isAdmin } = useAuthStore();
   
-  console.log(`[EventDetails] Page loaded for event ID: ${id}`);
+  console.log(`[EventDetails] Page loaded for event ID: ${eventId}`);
   
-  // Use the useEventDetails hook
   const {
     event,
     batches,
@@ -44,9 +42,8 @@ const EventDetails = () => {
     hasError,
     retryAttempt,
     error: eventError
-  } = useEventDetails(id);
+  } = useEventDetails(eventId);
   
-  // Auto-retry count
   const [autoRetryCount, setAutoRetryCount] = useState(0);
   
   console.log(`[EventDetails] Rendering page with:`, {
@@ -57,7 +54,6 @@ const EventDetails = () => {
     errorMessage: eventError?.message || 'none'
   });
   
-  // Automatic retry attempt on error
   useEffect(() => {
     if (hasError && autoRetryCount < MAX_AUTO_RETRY) {
       console.log(`[EventDetails] Starting automatic retry ${autoRetryCount + 1} of ${MAX_AUTO_RETRY}...`);
@@ -73,7 +69,6 @@ const EventDetails = () => {
     }
   }, [hasError, autoRetryCount, refreshData]);
   
-  // Handle back navigation
   const handleBack = () => {
     navigate("/eventos");
   };
@@ -95,11 +90,11 @@ const EventDetails = () => {
   
   const handlePurchase = (batchId: string, quantity: number) => {
     if (!session) {
-      navigate(`/auth?redirect=/eventos/${id}`);
+      navigate(`/auth?redirect=/eventos/${eventId}`);
       return;
     }
     
-    navigate(`/checkout/${id}/finish?batch=${batchId}&quantity=${quantity}`);
+    navigate(`/checkout/${eventId}/finish?batch=${batchId}&quantity=${quantity}`);
   };
   
   const handleSubmitProfile = (e: React.FormEvent) => {
@@ -113,6 +108,34 @@ const EventDetails = () => {
     setAutoRetryCount(0);
     toast.info("Recarregando informações do evento...");
   }, [refreshData]);
+  
+  if (!eventId) {
+    return (
+      <div className="container max-w-5xl mx-auto py-4">
+        <Button variant="ghost" onClick={handleBack} className="mb-4">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar
+        </Button>
+        <Card>
+          <CardContent className="text-center py-8">
+            <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-2" />
+            <h3 className="text-lg font-medium">ID do evento não encontrado na URL</h3>
+            <p className="text-gray-500 mb-6">
+              O identificador do evento não foi encontrado na URL atual.
+            </p>
+            <Button 
+              variant="outline" 
+              onClick={handleBack}
+              className="flex items-center justify-center"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar para eventos
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   
   if (isLoading) {
     return (

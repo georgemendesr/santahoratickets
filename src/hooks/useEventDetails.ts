@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -10,6 +9,12 @@ import { useProfile } from "@/hooks/useProfile";
 import { useReferrals } from "@/hooks/useReferrals";
 
 export const useEventDetails = (eventId: string | undefined) => {
+  if (!eventId) {
+    console.error("[useEventDetails] No event ID provided");
+  } else {
+    console.log(`[useEventDetails] Hook initialized with event ID: ${eventId}`);
+  }
+
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -30,7 +35,6 @@ export const useEventDetails = (eventId: string | undefined) => {
     return new Date().toISOString();
   };
 
-  // Fetch event details with better error handling
   const { 
     data: event, 
     isLoading: isLoadingEvent, 
@@ -76,10 +80,9 @@ export const useEventDetails = (eventId: string | undefined) => {
     staleTime: 60 * 1000, // 1 minute
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    enabled: !!eventId,
+    enabled: !!eventId
   });
 
-  // Fetch batches with better error handling
   const { 
     data: batches, 
     isLoading: isLoadingBatches, 
@@ -108,7 +111,6 @@ export const useEventDetails = (eventId: string | undefined) => {
           throw new Error(`Erro ao buscar lotes: ${error.message}`);
         }
 
-        // Add extra validation to ensure all batch data is valid
         const validBatches = (data || []).filter(batch => batch && batch.id);
         
         if (validBatches.length !== (data || []).length) {
@@ -128,10 +130,9 @@ export const useEventDetails = (eventId: string | undefined) => {
     staleTime: 60 * 1000, // 1 minute
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    enabled: !!eventId,
+    enabled: !!eventId
   });
 
-  // Fetch referrer information if there's a ref code
   useQuery({
     queryKey: ["referrer", referralCode, retryAttempt],
     queryFn: async () => {
@@ -170,7 +171,7 @@ export const useEventDetails = (eventId: string | undefined) => {
       }
     },
     retry: 1,
-    enabled: !!referralCode,
+    enabled: !!referralCode
   });
 
   const createProfileMutation = useMutation({
@@ -209,21 +210,18 @@ export const useEventDetails = (eventId: string | undefined) => {
     },
   });
 
-  // Function to force reloading data with retry counter increment
   const refreshData = useCallback(() => {
     const newRetryAttempt = retryAttempt + 1;
     console.log(`[${timestamp()}] Forcing data reload, new attempt: ${newRetryAttempt}`);
     setError(null);
     setRetryAttempt(newRetryAttempt);
     
-    // Also directly call refetch functions to ensure immediate action
     setTimeout(() => {
       refetchEvent();
       refetchBatches();
     }, 500);
   }, [retryAttempt, refetchEvent, refetchBatches]);
 
-  // Check if we have event error but not batches error, or vice versa
   useEffect(() => {
     if (eventError || batchesError) {
       console.log(`[${timestamp()}] Detected errors: Event=${!!eventError}, Batches=${!!batchesError}`);
@@ -231,7 +229,6 @@ export const useEventDetails = (eventId: string | undefined) => {
     }
   }, [eventError, batchesError]);
 
-  // Log when data is successfully loaded
   useEffect(() => {
     if (event && batches) {
       console.log(`[${timestamp()}] Successfully loaded event and batches data:`, {

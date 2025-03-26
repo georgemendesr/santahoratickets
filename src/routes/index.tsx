@@ -1,4 +1,3 @@
-
 import { lazy } from "react";
 
 // Use lazy loading para evitar circular dependencies
@@ -65,7 +64,6 @@ export const routes = [
     private: true,
     adminOnly: true
   },
-  // Adicionando rotas de checkout
   {
     path: '/checkout/:id',
     component: Checkout,

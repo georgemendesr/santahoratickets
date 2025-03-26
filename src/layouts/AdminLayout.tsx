@@ -19,7 +19,7 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps) {
   const auth = useAuth();
-  const roleData = auth.session ? useRole(auth.session) : { isAdmin: false, isLoading: false, role: null };
+  const roleData = auth.session ? useRole(auth.session) : { isAdmin: false, isLoading: false, role: "user" };
   const { isAdmin, isLoading: roleLoading } = roleData;
   const { loading: authLoading, initialized, session, debugAuth, resetAuth, authTimeoutOccurred } = auth;
   const navigate = useNavigate();

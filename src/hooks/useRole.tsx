@@ -46,21 +46,20 @@ export function useRole(session: Session | null) {
     },
     enabled: !!session?.user?.id && !roleVerified,
     staleTime: 1000 * 60 * 5, // Cache por 5 minutos
-    gcTime: 1000 * 60 * 10, // Manter no cache por 10 minutos (substituto do cacheTime)
+    gcTime: 1000 * 60 * 10, // Manter no cache por 10 minutos
     retry: 1 // Limitar tentativas de retry para evitar loops
   });
   
   // Efeito para atualizar o userRole quando o cachedRole mudar
-  // CORREÇÃO: Garantir que nenhum valor undefined seja passado para o array de dependências
   useEffect(() => {
-    if (cachedRole && userRole?.role !== cachedRole) {
+    if (cachedRole && session?.user?.id) {
       setUserRole({
         id: '',
-        user_id: session?.user?.id || '',
+        user_id: session.user.id,
         role: cachedRole as any
       });
     }
-  }, [cachedRole, session?.user?.id]); // Remova userRole?.role das dependências para evitar o erro
+  }, [cachedRole, session?.user?.id, setUserRole]);
   
   // Se não há sessão, o usuário não tem função
   if (!session) {

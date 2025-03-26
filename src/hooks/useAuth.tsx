@@ -49,19 +49,10 @@ export function useAuth() {
     },
     staleTime: 1000 * 60 * 2, // Cache por 2 minutos
     retry: 1,
-    enabled: !authInitialized,
-    onSuccess: () => {
-      // Safe initialization in onSuccess
-      if (!authInitialized) {
-        initialize().then(() => {
-          setAuthInitialized(true);
-          console.log("useAuth - Autenticação inicializada com sucesso");
-        });
-      }
-    }
+    enabled: !authInitialized
   });
 
-  // Initialize authentication on first render with timeout protection
+  // Initialize authentication when query completes
   useEffect(() => {
     if (!authInitialized && !isSessionLoading) {
       const initAuth = async () => {

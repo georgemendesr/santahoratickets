@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
@@ -21,7 +22,7 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
   const auth = useAuth();
   const { isAdmin, isLoading: roleLoading } = auth.session ? 
     useRole(auth.session) : 
-    { isAdmin: false, isLoading: false, role: "user" };
+    { isAdmin: false, isLoading: false };
     
   const { loading: authLoading, initialized, session, debugAuth, resetAuth, authTimeoutOccurred } = auth;
   const navigate = useNavigate();

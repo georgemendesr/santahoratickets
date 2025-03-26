@@ -7,9 +7,11 @@ import { MainFooter } from '@/components/layout/MainFooter';
 import { LogoHeader } from '@/components/layout/LogoHeader';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { useAuth } from '@/hooks/useAuth';
+import { useRole } from '@/hooks/useRole';
 import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -17,10 +19,13 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps) {
-  const { isAdmin, loading, initialized, session, debugAuth, resetAuth, authTimeoutOccurred } = useAuth();
+  const { isAdmin, loading: roleLoading, role } = useAuth().session ? useRole(useAuth().session) : { isAdmin: false, loading: false, role: null };
+  const { loading: authLoading, initialized, session, debugAuth, resetAuth, authTimeoutOccurred } = useAuth();
   const navigate = useNavigate();
   const [isVerifying, setIsVerifying] = useState(true);
   const [verificationTimeoutOccurred, setVerificationTimeoutOccurred] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Verificando autenticação...");
+  const [loadingStage, setLoadingStage] = useState(0);
   
   // Debug authentication on component mount
   useEffect(() => {
@@ -33,27 +38,49 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
     debug();
   }, [debugAuth]);
   
-  // Set up verification timeout
+  // Atualizar mensagens de carregamento para informar o usuário
+  useEffect(() => {
+    if (authLoading || roleLoading || !initialized) {
+      const stages = [
+        "Verificando autenticação...",
+        "Carregando perfil de usuário...",
+        "Verificando permissões...",
+        "Finalizando carregamento..."
+      ];
+      
+      const interval = setInterval(() => {
+        setLoadingStage(prev => {
+          const newStage = prev < stages.length - 1 ? prev + 1 : prev;
+          setLoadingMessage(stages[newStage]);
+          return newStage;
+        });
+      }, 1000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [authLoading, roleLoading, initialized]);
+  
+  // Set up verification timeout - reduzido para 5 segundos
   useEffect(() => {
     let verificationTimeoutId: NodeJS.Timeout;
     
-    if (loading || !initialized) {
+    if (authLoading || roleLoading || !initialized) {
       verificationTimeoutId = setTimeout(() => {
         console.error("AdminLayout - TIMEOUT: Verificação de permissões demorou demais");
         setVerificationTimeoutOccurred(true);
         setIsVerifying(false);
-      }, 8000); // 8-second timeout
+      }, 5000); // 5-second timeout (reduzido de 8s)
     }
     
     return () => {
       if (verificationTimeoutId) clearTimeout(verificationTimeoutId);
     };
-  }, [loading, initialized]);
+  }, [authLoading, roleLoading, initialized]);
   
   // Verificar permissões após inicialização da autenticação
   useEffect(() => {
-    if (!loading && initialized) {
-      console.log("AdminLayout - Autenticação inicializada. isAdmin:", isAdmin, "requiresAdmin:", requiresAdmin);
+    if (!authLoading && !roleLoading && initialized) {
+      console.log("AdminLayout - Autenticação inicializada. isAdmin:", isAdmin, "requiresAdmin:", requiresAdmin, "role:", role);
       setIsVerifying(false);
       
       if (requiresAdmin && !isAdmin) {
@@ -67,20 +94,32 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
         console.log("AdminLayout - Usuário autorizado, carregando dashboard");
       }
     }
-  }, [loading, initialized, isAdmin, requiresAdmin, navigate]);
+  }, [authLoading, roleLoading, initialized, isAdmin, requiresAdmin, navigate, role]);
   
   // Mostrar estado de carregamento ou tela de emergência quando timeout ocorreu
-  if (loading || isVerifying) {
+  if (authLoading || roleLoading || isVerifying) {
     const showEmergencyButton = authTimeoutOccurred || verificationTimeoutOccurred;
     
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center max-w-md w-full p-6">
           <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-amber-500"></div>
-          <span className="mt-4 text-gray-600">Verificando permissões...</span>
-          <span className="mt-2 text-sm text-gray-400">
-            {loading ? "Carregando autenticação..." : "Verificando perfil de administrador..."}
-          </span>
+          <span className="mt-4 text-gray-600 font-medium">{loadingMessage}</span>
+          
+          {/* Barra de progresso visual */}
+          <div className="w-full mt-4 bg-gray-200 rounded-full h-2.5">
+            <div 
+              className="bg-amber-500 h-2.5 rounded-full transition-all duration-300" 
+              style={{ width: `${Math.min((loadingStage + 1) * 25, 100)}%` }}
+            ></div>
+          </div>
+          
+          {/* Mostrar componentes de loading skeleton para indicar progresso */}
+          <div className="w-full mt-6 space-y-3">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
           
           {showEmergencyButton && (
             <div className="mt-8 flex flex-col items-center">

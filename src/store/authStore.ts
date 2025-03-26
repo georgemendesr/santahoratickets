@@ -45,6 +45,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   
   setUserRole: (role: UserRole | null) => {
     const isAdmin = role?.role === 'admin';
+    console.log("AuthStore - Atualizando role para:", role?.role, "isAdmin:", isAdmin);
     set({ userRole: role, isAdmin });
   },
   
@@ -84,46 +85,47 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.log("AuthStore - Sessão encontrada, configurando usuário");
       get().setSession(session);
       
-      // Fetch the user profile
+      // Fetch the user profile (usando Promise.all para paralelizar requisições)
+      console.log("AuthStore - Buscando dados do usuário em paralelo");
+      
       try {
-        console.log("AuthStore - Buscando perfil do usuário");
-        const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .maybeSingle();
+        const [profileResult, roleResult] = await Promise.all([
+          // Busca perfil
+          supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle(),
+            
+          // Busca papel
+          supabase
+            .from('user_roles')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .maybeSingle()
+        ]);
         
-        if (profileError) {
-          console.error("AuthStore - Erro ao buscar perfil:", profileError);
-        } else if (profile) {
+        // Processa resultado do perfil
+        if (profileResult.error) {
+          console.error("AuthStore - Erro ao buscar perfil:", profileResult.error);
+        } else if (profileResult.data) {
           console.log("AuthStore - Perfil encontrado");
-          get().setUserProfile(profile as UserProfile);
+          get().setUserProfile(profileResult.data as UserProfile);
         } else {
           console.log("AuthStore - Perfil não encontrado");
         }
-      } catch (profileErr) {
-        console.error("AuthStore - Exceção ao buscar perfil:", profileErr);
-      }
-      
-      // Fetch the user role
-      try {
-        console.log("AuthStore - Buscando papel do usuário");
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
         
-        if (roleError) {
-          console.error("AuthStore - Erro ao buscar papel:", roleError);
-        } else if (roleData) {
-          console.log("AuthStore - Papel encontrado:", roleData.role);
+        // Processa resultado do papel
+        if (roleResult.error) {
+          console.error("AuthStore - Erro ao buscar papel:", roleResult.error);
+        } else if (roleResult.data) {
+          console.log("AuthStore - Papel encontrado:", roleResult.data.role);
           // Ensure we're using the UserRole type
           const userRole: UserRole = {
-            id: roleData.id,
-            user_id: roleData.user_id,
-            role: roleData.role as UserRoleType,
-            created_at: roleData.created_at
+            id: roleResult.data.id,
+            user_id: roleResult.data.user_id,
+            role: roleResult.data.role as UserRoleType,
+            created_at: roleResult.data.created_at
           };
           get().setUserRole(userRole);
         } else {
@@ -135,8 +137,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             role: 'user'
           });
         }
-      } catch (roleErr) {
-        console.error("AuthStore - Exceção ao buscar papel:", roleErr);
+      } catch (err) {
+        console.error("AuthStore - Exceção ao buscar dados do usuário:", err);
         // Set default role on error
         get().setUserRole({
           id: '',

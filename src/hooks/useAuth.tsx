@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 
 export function useAuth() {
   const { 
@@ -13,15 +14,55 @@ export function useAuth() {
     signOut, 
     refreshAuth,
     isAdmin,
-    userProfile
+    userProfile,
+    setSession
   } = useAuthStore();
   
   const [authInitialized, setAuthInitialized] = useState(false);
   const [authTimeoutOccurred, setAuthTimeoutOccurred] = useState(false);
 
+  // Utilizando React Query para verificar a sessão de forma eficiente
+  const { isLoading: isSessionLoading } = useQuery({
+    queryKey: ['authSession'],
+    queryFn: async () => {
+      if (authInitialized) return session;
+      
+      console.log("useAuth - Buscando sessão via React Query");
+      try {
+        const timeoutId = setTimeout(() => {
+          console.error("useAuth - TIMEOUT: Verificação de sessão demorou demais para responder");
+          setAuthTimeoutOccurred(true);
+        }, 5000); // 5-second timeout
+        
+        const { data } = await supabase.auth.getSession();
+        clearTimeout(timeoutId);
+        
+        if (data.session) {
+          setSession(data.session);
+          return data.session;
+        }
+        return null;
+      } catch (err) {
+        console.error("useAuth - Erro ao verificar sessão:", err);
+        return null;
+      }
+    },
+    staleTime: 1000 * 60 * 2, // Cache por 2 minutos
+    retry: 1,
+    enabled: !authInitialized,
+    onSuccess: () => {
+      if (!authInitialized) {
+        initialize().then(() => {
+          setAuthInitialized(true);
+          console.log("useAuth - Autenticação inicializada com sucesso");
+        });
+      }
+    }
+  });
+
   // Initialize authentication on first render with timeout protection
   useEffect(() => {
-    if (!authInitialized) {
+    if (!authInitialized && !isSessionLoading) {
       const initAuth = async () => {
         try {
           console.log("useAuth - Inicializando autenticação");
@@ -32,7 +73,7 @@ export function useAuth() {
             setAuthTimeoutOccurred(true);
             setAuthInitialized(true); // Mark as initialized to prevent further attempts
             toast.error("Tempo limite de autenticação excedido. Tente novamente mais tarde.");
-          }, 10000); // 10-second timeout
+          }, 7000); // 7-second timeout (reduzido de 10s)
           
           await initialize();
           
@@ -50,7 +91,7 @@ export function useAuth() {
       
       initAuth();
     }
-  }, [initialize, authInitialized]);
+  }, [initialize, authInitialized, isSessionLoading]);
 
   // Force reset authentication
   const resetAuth = useCallback(async () => {
@@ -98,7 +139,7 @@ export function useAuth() {
   return {
     session,
     user: session?.user || null,
-    loading: isLoading,
+    loading: isLoading || isSessionLoading,
     error,
     signOut,
     debugAuth,

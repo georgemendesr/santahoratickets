@@ -7,7 +7,6 @@ const Auth = lazy(() => import("@/pages/Auth"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const EventDetails = lazy(() => import("@/pages/EventDetails"));
 const EditEvent = lazy(() => import("@/pages/EditEvent"));
-const CreateEvent = lazy(() => import("@/pages/CreateEvent"));
 const Rewards = lazy(() => import("@/pages/Rewards"));
 const MyVouchers = lazy(() => import("@/pages/MyVouchers"));
 const Checkout = lazy(() => import("@/pages/Checkout"));
@@ -63,12 +62,6 @@ export const routes = [
   {
     path: '/eventos/:id/edit',
     component: EditEvent,
-    private: true,
-    adminOnly: true
-  },
-  {
-    path: '/eventos/create',
-    component: CreateEvent,
     private: true,
     adminOnly: true
   },
@@ -179,7 +172,6 @@ export const ROUTES = {
   EVENTS: {
     DETAILS: (id: string) => `/eventos/${id}`,
     EDIT: (id: string) => `/eventos/${id}/edit`,
-    CREATE: `/eventos/create`,
   },
   ADMIN: {
     DASHBOARD: '/admin',

@@ -31,10 +31,6 @@ export const useNavigation = () => {
     navigate(getEventUrl(eventId));
   }, [navigate]);
 
-  const goToCreateEvent = useCallback(() => {
-    navigate('/eventos/create');
-  }, [navigate]);
-
   const navigateTo = useCallback((path: string, options?: { replace?: boolean }) => {
     navigate(path, options);
   }, [navigate]);
@@ -46,7 +42,6 @@ export const useNavigation = () => {
     goToAdminEvents,
     goToAdminBatches,
     goToEventDetails,
-    goToCreateEvent,
     navigateTo
   };
 };

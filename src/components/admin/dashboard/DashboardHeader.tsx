@@ -13,7 +13,7 @@ export function DashboardHeader() {
         <p className="text-gray-500 mt-1">Visão geral do seu negócio</p>
       </div>
       <Button 
-        onClick={() => navigate("/eventos/create")}
+        onClick={() => navigate("/events/create")}
         className="bg-amber-500 hover:bg-amber-600 flex items-center gap-2"
       >
         <PlusCircle className="h-4 w-4" />

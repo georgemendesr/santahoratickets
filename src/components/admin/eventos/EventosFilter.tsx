@@ -1,10 +1,9 @@
 
 import { Button } from "@/components/ui/button";
-import { EventFilter } from "@/hooks/useEventsQuery";
 
 interface EventosFilterProps {
-  currentFilter: EventFilter;
-  onFilterChange: (filter: EventFilter) => void;
+  currentFilter: string;
+  onFilterChange: (filter: string) => void;
 }
 
 export const EventosFilter = ({ currentFilter, onFilterChange }: EventosFilterProps) => {

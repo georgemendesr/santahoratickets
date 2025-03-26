@@ -15,54 +15,42 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps) {
-  const { isAdmin, loading, initialized, session } = useAuth();
+  const { isAdmin, loading, initialized, session, debugAuth } = useAuth();
   const navigate = useNavigate();
   const [isVerifying, setIsVerifying] = useState(true);
   
-  // Verificar permissões após inicialização da autenticação - com timeout para evitar espera infinita
+  // Debug authentication on component mount
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (isVerifying) {
-        console.log("AdminLayout - Timeout de verificação atingido, prosseguindo");
-        setIsVerifying(false);
-        
-        if (requiresAdmin && !isAdmin) {
-          toast.error("Acesso restrito. Você não tem permissão para acessar esta página.");
-          navigate('/');
-        }
-      }
-    }, 3000); // 3 segundos de timeout
-
+    const debug = async () => {
+      console.log("AdminLayout - Debugging auth state");
+      const result = await debugAuth();
+      console.log("AdminLayout - Auth debug result:", result);
+    };
+    
+    debug();
+  }, [debugAuth]);
+  
+  // Verificar permissões após inicialização da autenticação
+  useEffect(() => {
     if (!loading && initialized) {
       console.log("AdminLayout - Autenticação inicializada. isAdmin:", isAdmin, "requiresAdmin:", requiresAdmin);
-      clearTimeout(timeoutId);
       setIsVerifying(false);
       
       if (requiresAdmin && !isAdmin) {
         console.log("AdminLayout - Usuário não autorizado, redirecionando");
-        toast.error("Acesso restrito. Você não tem permissão para acessar esta página.");
+        toast("Acesso restrito. Você não tem permissão para acessar esta página.", {
+          description: "Redirecionando para a página inicial...",
+          duration: 5000,
+        });
         navigate('/');
       } else {
         console.log("AdminLayout - Usuário autorizado, carregando dashboard");
       }
     }
-    
-    return () => clearTimeout(timeoutId);
-  }, [loading, initialized, isAdmin, requiresAdmin, navigate, isVerifying]);
-  
-  // Mostrar estado de carregamento por no máximo 2 segundos
-  const [showLoading, setShowLoading] = useState(true);
-  
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowLoading(false);
-    }, 2000);
-    
-    return () => clearTimeout(timer);
-  }, []);
+  }, [loading, initialized, isAdmin, requiresAdmin, navigate]);
   
   // Mostrar estado de carregamento
-  if (showLoading && (loading || isVerifying)) {
+  if (loading || isVerifying) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center">
@@ -77,7 +65,7 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
   }
   
   // Se o usuário não tem permissão de administrador
-  if (requiresAdmin && !isAdmin && initialized && !loading) {
+  if (requiresAdmin && !isAdmin) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">

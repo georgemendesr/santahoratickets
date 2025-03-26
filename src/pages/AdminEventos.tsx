@@ -1,6 +1,9 @@
 
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { 
   Card, 
@@ -19,18 +22,31 @@ import { EventosFilter } from "@/components/admin/eventos/EventosFilter";
 import { EventosTable } from "@/components/admin/eventos/EventosTable";
 import { EmptyEventsList } from "@/components/admin/eventos/EmptyEventsList";
 import { EventosLoading } from "@/components/admin/eventos/EventosLoading";
-import { useEventsQuery } from "@/hooks/useEventsQuery";
-import { supabase } from "@/integrations/supabase/client";
 
 const AdminEventos = () => {
+  const [filter, setFilter] = useState("todos");
   const { navigateTo, goToAdminBatches } = useNavigation();
-  const { 
-    events, 
-    isLoading, 
-    filter, 
-    handleFilterChange, 
-    refetch 
-  } = useEventsQuery();
+  
+  const { data: events, isLoading } = useQuery({
+    queryKey: ["admin-events", filter],
+    queryFn: async () => {
+      let query = supabase
+        .from("events")
+        .select("*")
+        .order("date", { ascending: true });
+      
+      if (filter === "ativos") {
+        query = query.gte("date", new Date().toISOString().split('T')[0]);
+      } else if (filter === "passados") {
+        query = query.lt("date", new Date().toISOString().split('T')[0]);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      return data as Event[];
+    },
+  });
 
   const handleViewEvent = (eventId: string) => {
     navigateTo(`/eventos/${eventId}`);
@@ -72,7 +88,6 @@ const AdminEventos = () => {
       if (error) throw error;
       
       toast.success(`Evento ${newStatus === 'published' ? 'publicado' : 'arquivado'} com sucesso`);
-      refetch(); // Refresh the events list after status change
     } catch (error) {
       console.error('Erro ao alterar status do evento:', error);
       toast.error('Erro ao alterar status do evento');
@@ -98,7 +113,7 @@ const AdminEventos = () => {
         
         <EventosFilter 
           currentFilter={filter} 
-          onFilterChange={handleFilterChange} 
+          onFilterChange={setFilter} 
         />
         
         <Card>

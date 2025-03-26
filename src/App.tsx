@@ -22,7 +22,6 @@ const EventsRedirect = () => {
 
 // Carregamento preguiçoso para as novas páginas
 const EventBatchesView = lazy(() => import("@/pages/EventBatchesView"));
-const CreateEvent = lazy(() => import("@/pages/CreateEvent"));
 
 // Função para criar as rotas com redirecionamentos apropriados
 const createRoutes = () => {

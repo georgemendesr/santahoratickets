@@ -1,10 +1,9 @@
 
 import { Button } from "@/components/ui/button";
 import { Calendar, PlusCircle } from "lucide-react";
-import { EventFilter } from "@/hooks/useEventsQuery";
 
 interface EmptyEventsListProps {
-  filter: EventFilter;
+  filter: string;
   onCreateEvent: () => void;
 }
 

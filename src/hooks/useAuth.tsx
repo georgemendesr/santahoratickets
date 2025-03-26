@@ -50,15 +50,18 @@ export function useAuth() {
     staleTime: 1000 * 60 * 2, // Cache por 2 minutos
     retry: 1,
     enabled: !authInitialized,
-    onSuccess: () => {
-      if (!authInitialized) {
-        initialize().then(() => {
-          setAuthInitialized(true);
-          console.log("useAuth - Autenticação inicializada com sucesso");
-        });
-      }
-    }
+    // Fix: removed onSuccess callback and moved it to useEffect below
   });
+
+  // Use useEffect to handle success case
+  useEffect(() => {
+    if (!authInitialized && !isSessionLoading) {
+      initialize().then(() => {
+        setAuthInitialized(true);
+        console.log("useAuth - Autenticação inicializada com sucesso");
+      });
+    }
+  }, [authInitialized, initialize, isSessionLoading]);
 
   // Initialize authentication on first render with timeout protection
   useEffect(() => {

@@ -46,7 +46,7 @@ export function useRole(session: Session | null) {
     },
     enabled: !!session?.user?.id && !roleVerified,
     staleTime: 1000 * 60 * 5, // Cache por 5 minutos
-    cacheTime: 1000 * 60 * 10, // Manter no cache por 10 minutos
+    gcTime: 1000 * 60 * 10, // Manter no cache por 10 minutos (substituto do cacheTime)
     retry: 1, // Limitar tentativas de retry para evitar loops
     onSuccess: (data) => {
       // Atualizar o estado global somente se for diferente

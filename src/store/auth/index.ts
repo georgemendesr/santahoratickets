@@ -1,11 +1,12 @@
-import { useAuthStore } from "./authStore";
+
+import { useAuthStore as useAuthStoreOriginal } from "./authStore";
 import { useSessionStore } from "./sessionStore";
 import { useProfileStore } from "./profileStore";
 import { useRoleStore } from "./roleStore";
 
 // Export a unified interface that maintains the same API as the original authStore
 export const useAuthStoreComposed = () => {
-  const authStore = useAuthStore();
+  const authStore = useAuthStoreOriginal();
   const sessionStore = useSessionStore();
   const profileStore = useProfileStore();
   const roleStore = useRoleStore();
@@ -39,5 +40,5 @@ export const useAuthStoreComposed = () => {
   };
 };
 
-// For backward compatibility, keep the same name
+// For backward compatibility, export the composed store with the same name
 export const useAuthStore = useAuthStoreComposed;

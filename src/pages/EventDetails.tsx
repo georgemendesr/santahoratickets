@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { EventDetailsContent } from "@/components/event-details/EventDetailsContent";
@@ -201,7 +202,7 @@ const EventDetails = () => {
   console.log("[EventDetails] Rendering EventDetailsContent with valid data");
   
   return (
-    <div className="container max-w-5xl mx-auto py-4">
+    <div className="container max-w-6xl mx-auto py-4">
       <Button variant="ghost" onClick={handleBack} className="mb-4">
         <ArrowLeft className="mr-2 h-4 w-4" />
         Voltar

@@ -53,12 +53,6 @@ export function EventInfo({ event, getLowStockAlert = () => null, soldOut = fals
         </div>
       </div>
       
-      <div>
-        {event.description && (
-          <p className="text-sm">{event.description}</p>
-        )}
-      </div>
-      
       {soldOut ? (
         <p className="text-sm text-red-600 font-medium">
           Ingressos esgotados

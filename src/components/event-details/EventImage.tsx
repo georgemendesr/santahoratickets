@@ -30,7 +30,7 @@ export function EventImage({ src, alt }: EventImageProps) {
         <img
           src={imageUrl}
           alt={alt}
-          className="w-full h-[600px] object-cover bg-gradient-to-b from-red-500 to-purple-600"
+          className="w-full aspect-[3/4] object-cover bg-gradient-to-b from-red-500 to-purple-600"
           onError={(e) => {
             console.log("Erro ao carregar imagem:", imageUrl);
             if (imageUrl !== "/lovable-uploads/c07e81e6-595c-4636-8fef-1f61c7240f65.png") {

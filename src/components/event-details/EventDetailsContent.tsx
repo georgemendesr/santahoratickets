@@ -40,25 +40,33 @@ export function EventDetailsContent({
 }: EventDetailsContentProps) {
   const navigate = useNavigate();
   
-  // Encontrar lote ativo
-  const activeBatch = batches?.find(batch => batch.status === 'active') || null;
+  // Safeguard batches to ensure it's always an array
+  const safeBatches = Array.isArray(batches) ? batches : [];
+  
+  // Find active batch
+  const activeBatch = safeBatches.find(batch => batch?.status === 'active') || null;
   const hasLoyaltyEnabled = true; // TODO: Verificar configuração de lealdade do evento
   const [selectedQuantities, setSelectedQuantities] = useState<Record<string, number>>({});
   
-  console.log("EventDetailsContent rendering with event:", event.title, "batches:", batches.length);
+  console.log("[EventDetailsContent] Rendering with:", {
+    eventId: event?.id,
+    eventTitle: event?.title,
+    batchesCount: safeBatches?.length,
+    activeBatchId: activeBatch?.id || 'none'
+  });
   
   useEffect(() => {
-    // Log para depuração
-    console.log("EventDetailsContent montado com:", {
+    // Debug log
+    console.log("[EventDetailsContent] Component mounted with:", {
       eventId: event?.id,
       eventTitle: event?.title,
-      batchesCount: batches?.length,
-      activeBatch: activeBatch?.id
+      batchesCount: safeBatches?.length,
+      activeBatchId: activeBatch?.id || 'none'
     });
-  }, [event, batches, activeBatch]);
+  }, [event, safeBatches, activeBatch]);
   
   const handleQuantityChange = (quantities: Record<string, number>) => {
-    console.log("Quantidades alteradas:", quantities);
+    console.log("[EventDetailsContent] Quantities changed:", quantities);
     setSelectedQuantities(quantities);
   };
   
@@ -74,15 +82,24 @@ export function EventDetailsContent({
   };
   
   const handlePurchase = () => {
-    // Encontre o lote e quantidade selecionados
+    // Find the selected batch and quantity
     for (const [batchId, quantity] of Object.entries(selectedQuantities)) {
       if (quantity > 0) {
-        console.log("Iniciando compra:", { batchId, quantity });
+        console.log("[EventDetailsContent] Starting purchase:", { batchId, quantity });
         onPurchase(batchId, quantity);
         return;
       }
     }
   };
+  
+  if (!event || !event.id) {
+    console.error("[EventDetailsContent] Event data is missing or invalid:", event);
+    return (
+      <div className="p-8 text-center">
+        <p className="text-red-500">Erro: Dados do evento inválidos ou não encontrados.</p>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-8 p-4 md:p-6">
@@ -95,7 +112,7 @@ export function EventDetailsContent({
         <div className="md:col-span-2">
           <div className="space-y-6">
             <BatchesTable 
-              batches={batches} 
+              batches={safeBatches} 
               onPurchase={onPurchase}
               isLoggedIn={isLoggedIn}
               onQuantityChange={handleQuantityChange}

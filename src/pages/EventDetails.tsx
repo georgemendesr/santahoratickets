@@ -20,7 +20,9 @@ const EventDetails = () => {
   const refCode = searchParams.get("ref") || undefined;
   const { session, userProfile, isAdmin } = useAuthStore();
   
-  // Use o hook useEventDetails
+  console.log(`[EventDetails] Page loaded for event ID: ${id}`);
+  
+  // Use the useEventDetails hook
   const {
     event,
     batches,
@@ -44,24 +46,30 @@ const EventDetails = () => {
     error: eventError
   } = useEventDetails(id);
   
-  // Contagem de tentativas automáticas
+  // Auto-retry count
   const [autoRetryCount, setAutoRetryCount] = useState(0);
   
-  console.log("EventDetails rendering with event:", event, "batches:", batches, "hasError:", hasError, "error:", eventError);
+  console.log(`[EventDetails] Rendering page with:`, {
+    eventId: event?.id || 'undefined',
+    eventTitle: event?.title || 'undefined',
+    batchesCount: batches?.length || 0,
+    hasError,
+    errorMessage: eventError?.message || 'none'
+  });
   
-  // Tentativa automática de recarga em caso de erro
+  // Automatic retry attempt on error
   useEffect(() => {
     if (hasError && autoRetryCount < MAX_AUTO_RETRY) {
-      console.log(`Iniciando tentativa automática ${autoRetryCount + 1} de ${MAX_AUTO_RETRY} para recarregar o evento...`);
+      console.log(`[EventDetails] Starting automatic retry ${autoRetryCount + 1} of ${MAX_AUTO_RETRY}...`);
       const timer = setTimeout(() => {
-        console.log(`Executando tentativa automática ${autoRetryCount + 1} de ${MAX_AUTO_RETRY} para recarregar o evento...`);
+        console.log(`[EventDetails] Executing automatic retry ${autoRetryCount + 1} of ${MAX_AUTO_RETRY}...`);
         refreshData();
         setAutoRetryCount(prev => prev + 1);
       }, 3000);
       
       return () => clearTimeout(timer);
     } else if (hasError && autoRetryCount >= MAX_AUTO_RETRY) {
-      console.log("Número máximo de tentativas automáticas atingido:", MAX_AUTO_RETRY);
+      console.log(`[EventDetails] Maximum number of automatic retries reached: ${MAX_AUTO_RETRY}`);
     }
   }, [hasError, autoRetryCount, refreshData]);
   
@@ -77,7 +85,7 @@ const EventDetails = () => {
         text: `Confira este evento: ${event.title}`,
         url: window.location.href
       }).catch(err => {
-        console.error("Erro ao compartilhar:", err);
+        console.error("Error sharing:", err);
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
@@ -100,7 +108,7 @@ const EventDetails = () => {
   };
   
   const handleRefresh = useCallback(() => {
-    console.log("Forçando recarregamento manual dos dados do evento");
+    console.log("[EventDetails] Forcing manual reload of event data");
     refreshData();
     setAutoRetryCount(0);
     toast.info("Recarregando informações do evento...");
@@ -123,7 +131,7 @@ const EventDetails = () => {
   }
   
   if (!event || hasError) {
-    console.error("Erro ao carregar evento:", eventError);
+    console.error("[EventDetails] Error loading event:", eventError);
     
     return (
       <div className="container max-w-5xl mx-auto py-4">
@@ -138,6 +146,9 @@ const EventDetails = () => {
             <p className="text-gray-500 mb-6">
               Ocorreu um erro ao buscar as informações do evento. 
               {autoRetryCount >= MAX_AUTO_RETRY ? " Tentativas automáticas esgotadas." : ""}
+            </p>
+            <p className="text-xs text-red-400 mb-6">
+              {eventError?.message || "Erro desconhecido"}
             </p>
             
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -164,7 +175,7 @@ const EventDetails = () => {
     );
   }
   
-  console.log("Renderizando EventDetailsContent com dados válidos");
+  console.log("[EventDetails] Rendering EventDetailsContent with valid data");
   
   return (
     <div className="container max-w-5xl mx-auto py-4">

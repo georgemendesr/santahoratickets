@@ -24,28 +24,35 @@ export function BatchesTable({
 }: BatchesTableProps) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   
-  console.log("BatchesTable rendering with batches:", batches);
+  // Validate batches input
+  const validBatches = Array.isArray(batches) ? batches.filter(batch => batch && batch.id) : [];
   
-  // Inicializar quantidades para cada lote
+  console.log("[BatchesTable] Rendering with:", {
+    batchesReceived: batches?.length || 0,
+    validBatches: validBatches.length,
+    batchIds: validBatches.map(b => b.id).join(', ')
+  });
+  
+  // Initialize quantities for each batch
   useEffect(() => {
-    if (!batches || batches.length === 0) {
-      console.log("Nenhum lote disponível para inicializar quantidades");
+    if (!validBatches || validBatches.length === 0) {
+      console.log("[BatchesTable] No valid batches available to initialize quantities");
       return;
     }
     
-    console.log("Inicializando quantidades para", batches.length, "lotes");
+    console.log("[BatchesTable] Initializing quantities for", validBatches.length, "batches");
     const initialQuantities: Record<string, number> = {};
-    batches.forEach(batch => {
+    validBatches.forEach(batch => {
       if (batch && batch.id) {
         initialQuantities[batch.id] = 0;
       } else {
-        console.warn("Lote inválido encontrado:", batch);
+        console.warn("[BatchesTable] Invalid batch found:", batch);
       }
     });
     setQuantities(initialQuantities);
-  }, [batches]);
+  }, [validBatches]);
   
-  // Notificar o componente pai sobre mudanças nas quantidades
+  // Notify parent component about quantity changes
   useEffect(() => {
     if (onQuantityChange) {
       onQuantityChange(quantities);
@@ -85,12 +92,12 @@ export function BatchesTable({
     try {
       return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR });
     } catch (e) {
-      console.error("Erro ao formatar data:", e, dateString);
+      console.error("[BatchesTable] Error formatting date:", e, dateString);
       return dateString;
     }
   };
   
-  if (!batches || batches.length === 0) {
+  if (!validBatches || validBatches.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -122,12 +129,7 @@ export function BatchesTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {batches.map(batch => {
-              if (!batch || !batch.id) {
-                console.warn("Lote inválido encontrado na renderização:", batch);
-                return null;
-              }
-              
+            {validBatches.map(batch => {
               const isSoldOut = batch.status === 'sold_out' || (batch.available_tickets !== undefined && batch.available_tickets <= 0);
               const isActive = batch.status === 'active';
               const isUpcoming = batch.status === 'upcoming';

@@ -9,7 +9,7 @@ import { Event, Batch, UserProfile } from "@/types";
 import { CheckoutProButton } from "../payment/CheckoutProButton";
 import { Session } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { EventImage } from "./EventImage";
 
 interface EventDetailsContentProps {
@@ -26,6 +26,10 @@ interface EventDetailsContentProps {
   session?: Session | null;
   generatedReferral?: string | null;
   onGenerateReferral?: () => Promise<void>;
+  isModalOpen?: boolean;
+  setIsModalOpen?: Dispatch<SetStateAction<boolean>>;
+  isShareModalOpen?: boolean;
+  setIsShareModalOpen?: Dispatch<SetStateAction<boolean>>;
 }
 
 export function EventDetailsContent({
@@ -41,7 +45,11 @@ export function EventDetailsContent({
   isLoggedIn,
   session,
   generatedReferral,
-  onGenerateReferral
+  onGenerateReferral,
+  isModalOpen,
+  setIsModalOpen,
+  isShareModalOpen,
+  setIsShareModalOpen
 }: EventDetailsContentProps) {
   const navigate = useNavigate();
   

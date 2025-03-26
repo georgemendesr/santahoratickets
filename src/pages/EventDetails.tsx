@@ -80,6 +80,10 @@ const EventDetails = () => {
     return <div className="flex justify-center items-center h-screen">Erro ao carregar detalhes do evento.</div>;
   }
   
+  const handleShare = () => {
+    setIsShareModalOpen(true);
+  };
+  
   return (
     <MainLayout>
       <EventDetailsContent 
@@ -94,9 +98,13 @@ const EventDetails = () => {
         isAdmin={false}
         profile={null}
         referrer={null}
-        onShare={() => setIsShareModalOpen(true)}
-        onPurchase={() => {}}
+        onShare={handleShare}
+        onPurchase={(batchId, quantity) => {
+          console.log(`Iniciando compra: lote ${batchId}, quantidade ${quantity}`);
+          // Aqui você implementaria a lógica de compra
+        }}
         isLoggedIn={!!userProfile}
+        generatedReferral={generatedReferral}
       />
     </MainLayout>
   );

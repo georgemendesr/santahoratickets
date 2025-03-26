@@ -1,9 +1,14 @@
 
+import { useState, useEffect } from "react";
 import { Batch } from "@/types";
-import { useState } from "react";
-import { MinusIcon, PlusIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/utils/format";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Minus, Plus, ShoppingBag } from "lucide-react";
 
 interface BatchesTableProps {
   batches: Batch[];
@@ -15,132 +20,186 @@ interface BatchesTableProps {
 export function BatchesTable({ 
   batches, 
   onPurchase, 
-  isLoggedIn,
+  isLoggedIn, 
   onQuantityChange 
 }: BatchesTableProps) {
-  const [quantities, setQuantities] = useState<Record<string, number>>(
-    batches.reduce((acc, batch) => ({ ...acc, [batch.id]: 0 }), {})
-  );
+  const navigate = useNavigate();
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
   
-  const handleIncrease = (batchId: string) => {
-    const batch = batches.find(b => b.id === batchId);
-    if (!batch) return;
-    
-    const newQuantity = Math.min(
-      (quantities[batchId] || 0) + 1,
-      batch.available_tickets,
-      batch.max_purchase || 10 // Limitar a 10 ingressos por padrão
-    );
-    
-    const newQuantities = { ...quantities, [batchId]: newQuantity };
-    setQuantities(newQuantities);
-    if (onQuantityChange) onQuantityChange(newQuantities);
+  // Inicializar quantidades para cada lote
+  useEffect(() => {
+    const initialQuantities: Record<string, number> = {};
+    batches.forEach(batch => {
+      initialQuantities[batch.id] = 0;
+    });
+    setQuantities(initialQuantities);
+  }, [batches]);
+  
+  // Notificar o componente pai sobre mudanças nas quantidades
+  useEffect(() => {
+    if (onQuantityChange) {
+      onQuantityChange(quantities);
+    }
+  }, [quantities, onQuantityChange]);
+  
+  const incrementQuantity = (batchId: string, max: number = Infinity) => {
+    setQuantities(prev => {
+      const current = prev[batchId] || 0;
+      if (current < max) {
+        return { ...prev, [batchId]: current + 1 };
+      }
+      return prev;
+    });
   };
   
-  const handleDecrease = (batchId: string) => {
-    const newQuantity = Math.max((quantities[batchId] || 0) - 1, 0);
-    const newQuantities = { ...quantities, [batchId]: newQuantity };
-    setQuantities(newQuantities);
-    if (onQuantityChange) onQuantityChange(newQuantities);
+  const decrementQuantity = (batchId: string, min: number = 0) => {
+    setQuantities(prev => {
+      const current = prev[batchId] || 0;
+      if (current > min) {
+        return { ...prev, [batchId]: current - 1 };
+      }
+      return prev;
+    });
   };
   
-  const renderStatus = (batch: Batch) => {
-    if (batch.status === 'active') {
-      return (
-        <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
-          Disponível
-        </span>
-      );
+  const handlePurchase = (batchId: string) => {
+    const quantity = quantities[batchId] || 0;
+    if (quantity > 0) {
+      onPurchase(batchId, quantity);
     }
-    if (batch.status === 'coming_soon') {
-      return (
-        <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-          Em breve
-        </span>
-      );
+  };
+  
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR });
+    } catch (e) {
+      return dateString;
     }
+  };
+  
+  if (!batches || batches.length === 0) {
     return (
-      <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
-        Esgotado
-      </span>
+      <Card>
+        <CardHeader>
+          <CardTitle>Ingressos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Não há lotes disponíveis para este evento no momento.
+          </p>
+        </CardContent>
+      </Card>
     );
-  };
+  }
   
   return (
-    <div className="overflow-hidden rounded-xl border border-border/50">
-      <table className="w-full text-sm">
-        <thead className="bg-muted/50">
-          <tr>
-            <th className="px-4 py-3 text-left font-medium">Lote</th>
-            <th className="px-4 py-3 text-left font-medium">Preço</th>
-            <th className="px-4 py-3 text-left font-medium hidden sm:table-cell">Encerra em</th>
-            <th className="px-4 py-3 text-left font-medium">Status</th>
-            <th className="px-4 py-3 text-center font-medium">Quantidade</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border/50">
-          {batches.map((batch) => {
-            const isActive = batch.status === 'active';
-            const isSoldOut = batch.available_tickets <= 0 || batch.status === 'sold_out';
-            
-            return (
-              <tr key={batch.id} className="hover:bg-muted/30">
-                <td className="px-4 py-3">{batch.title}</td>
-                <td className="px-4 py-3 font-medium">{formatCurrency(batch.price)}</td>
-                <td className="px-4 py-3 hidden sm:table-cell">
-                  {batch.end_date ? new Date(batch.end_date).toLocaleString('pt-BR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  }) : '-'}
-                </td>
-                <td className="px-4 py-3">
-                  {renderStatus(batch)}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center justify-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8"
-                      disabled={!isActive || isSoldOut || quantities[batch.id] <= 0}
-                      onClick={() => handleDecrease(batch.id)}
-                    >
-                      <MinusIcon className="h-3 w-3" />
-                    </Button>
-                    <span className="w-6 text-center">{quantities[batch.id] || 0}</span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8"
-                      disabled={!isActive || isSoldOut || quantities[batch.id] >= batch.available_tickets}
-                      onClick={() => handleIncrease(batch.id)}
-                    >
-                      <PlusIcon className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      
-      <div className="flex justify-end p-4 bg-muted/10 border-t border-border/50">
-        <Button
-          onClick={() => {
-            const selectedBatchId = Object.entries(quantities).find(([_, q]) => q > 0)?.[0];
-            if (selectedBatchId) {
-              onPurchase(selectedBatchId, quantities[selectedBatchId]);
-            }
-          }}
-          disabled={!Object.values(quantities).some(q => q > 0)}
-          className="px-6"
-        >
-          Comprar
-        </Button>
-      </div>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Ingressos Disponíveis</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Lote</TableHead>
+              <TableHead>Disponível</TableHead>
+              <TableHead>Valor</TableHead>
+              <TableHead>Quantidade</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {batches.map(batch => {
+              const isSoldOut = batch.status === 'sold_out' || batch.available_tickets <= 0;
+              const isActive = batch.status === 'active';
+              const isUpcoming = batch.status === 'upcoming';
+              const canBuy = isActive && !isSoldOut;
+              const quantity = quantities[batch.id] || 0;
+              const maxPurchase = batch.max_purchase || batch.available_tickets;
+              
+              return (
+                <TableRow key={batch.id}>
+                  <TableCell>
+                    <div>
+                      <p className="font-medium">{batch.title}</p>
+                      {batch.description && (
+                        <p className="text-xs text-muted-foreground">{batch.description}</p>
+                      )}
+                      {isUpcoming && (
+                        <p className="text-xs text-muted-foreground">
+                          Inicia em {formatDate(batch.start_date)}
+                        </p>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {isSoldOut ? (
+                      <span className="text-destructive">Esgotado</span>
+                    ) : (
+                      batch.available_tickets
+                    )}
+                  </TableCell>
+                  <TableCell>{formatCurrency(batch.price)}</TableCell>
+                  <TableCell>
+                    {canBuy && (
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => decrementQuantity(batch.id)}
+                          disabled={quantity <= 0}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="w-8 text-center">{quantity}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => incrementQuantity(batch.id, maxPurchase)}
+                          disabled={quantity >= maxPurchase}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {canBuy && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handlePurchase(batch.id)}
+                        disabled={quantity <= 0}
+                      >
+                        <ShoppingBag className="mr-2 h-4 w-4" />
+                        Comprar
+                      </Button>
+                    )}
+                    {isUpcoming && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled
+                      >
+                        Em breve
+                      </Button>
+                    )}
+                    {isSoldOut && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled
+                      >
+                        Esgotado
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 }

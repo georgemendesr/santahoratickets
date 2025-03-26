@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
 import { useEventDetails } from "@/hooks/useEventDetails";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 const EventDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -34,8 +35,26 @@ const EventDetails = () => {
     setPhone,
     createProfileMutation,
     createReferralMutation,
-    isLoading
+    refreshData,
+    isLoading,
+    hasError
   } = useEventDetails(id);
+  
+  // Contagem de tentativas
+  const [retryCount, setRetryCount] = useState(0);
+  
+  // Tentativa automática de recarga em caso de erro
+  useEffect(() => {
+    if (hasError && retryCount < 2) {
+      const timer = setTimeout(() => {
+        console.log(`Tentativa automática ${retryCount + 1} de recarregar o evento...`);
+        refreshData();
+        setRetryCount(prev => prev + 1);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [hasError, retryCount, refreshData]);
   
   // Handle back navigation
   const handleBack = () => {
@@ -53,7 +72,7 @@ const EventDetails = () => {
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert("Link copiado para a área de transferência!");
+      toast.success("Link copiado para a área de transferência!");
     }
   };
   
@@ -69,6 +88,11 @@ const EventDetails = () => {
   const handleSubmitProfile = (e: React.FormEvent) => {
     e.preventDefault();
     createProfileMutation.mutate();
+  };
+  
+  const handleRefresh = () => {
+    refreshData();
+    toast.info("Recarregando informações do evento...");
   };
   
   if (isLoading) {
@@ -97,7 +121,16 @@ const EventDetails = () => {
         <Card>
           <CardContent className="text-center py-8">
             <h3 className="text-lg font-medium">Não foi possível carregar o evento</h3>
-            <p className="text-gray-500">Tente novamente mais tarde</p>
+            <p className="text-gray-500 mb-4">Tente novamente mais tarde</p>
+            
+            <Button 
+              onClick={handleRefresh}
+              variant="outline"
+              className="mx-auto"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Tentar novamente
+            </Button>
           </CardContent>
         </Card>
       </div>

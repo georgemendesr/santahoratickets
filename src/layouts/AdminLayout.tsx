@@ -8,6 +8,8 @@ import { LogoHeader } from '@/components/layout/LogoHeader';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from "sonner";
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -15,9 +17,10 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps) {
-  const { isAdmin, loading, initialized, session, debugAuth } = useAuth();
+  const { isAdmin, loading, initialized, session, debugAuth, resetAuth, authTimeoutOccurred } = useAuth();
   const navigate = useNavigate();
   const [isVerifying, setIsVerifying] = useState(true);
+  const [verificationTimeoutOccurred, setVerificationTimeoutOccurred] = useState(false);
   
   // Debug authentication on component mount
   useEffect(() => {
@@ -29,6 +32,23 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
     
     debug();
   }, [debugAuth]);
+  
+  // Set up verification timeout
+  useEffect(() => {
+    let verificationTimeoutId: NodeJS.Timeout;
+    
+    if (loading || !initialized) {
+      verificationTimeoutId = setTimeout(() => {
+        console.error("AdminLayout - TIMEOUT: Verificação de permissões demorou demais");
+        setVerificationTimeoutOccurred(true);
+        setIsVerifying(false);
+      }, 8000); // 8-second timeout
+    }
+    
+    return () => {
+      if (verificationTimeoutId) clearTimeout(verificationTimeoutId);
+    };
+  }, [loading, initialized]);
   
   // Verificar permissões após inicialização da autenticação
   useEffect(() => {
@@ -49,8 +69,10 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
     }
   }, [loading, initialized, isAdmin, requiresAdmin, navigate]);
   
-  // Mostrar estado de carregamento
+  // Mostrar estado de carregamento ou tela de emergência quando timeout ocorreu
   if (loading || isVerifying) {
+    const showEmergencyButton = authTimeoutOccurred || verificationTimeoutOccurred;
+    
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center">
@@ -59,6 +81,20 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
           <span className="mt-2 text-sm text-gray-400">
             {loading ? "Carregando autenticação..." : "Verificando perfil de administrador..."}
           </span>
+          
+          {showEmergencyButton && (
+            <div className="mt-8 flex flex-col items-center">
+              <p className="text-red-500 mb-2">Parece que está demorando muito tempo.</p>
+              <Button 
+                variant="destructive" 
+                onClick={resetAuth}
+                className="flex items-center"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Reiniciar autenticação
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );

@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -17,14 +17,28 @@ export function useAuth() {
   } = useAuthStore();
   
   const [authInitialized, setAuthInitialized] = useState(false);
+  const [authTimeoutOccurred, setAuthTimeoutOccurred] = useState(false);
 
-  // Initialize authentication on first render
+  // Initialize authentication on first render with timeout protection
   useEffect(() => {
     if (!authInitialized) {
       const initAuth = async () => {
         try {
           console.log("useAuth - Inicializando autenticação");
+          
+          // Set up authentication timeout
+          const timeoutId = setTimeout(() => {
+            console.error("useAuth - TIMEOUT: Autenticação demorou demais para responder");
+            setAuthTimeoutOccurred(true);
+            setAuthInitialized(true); // Mark as initialized to prevent further attempts
+            toast.error("Tempo limite de autenticação excedido. Tente novamente mais tarde.");
+          }, 10000); // 10-second timeout
+          
           await initialize();
+          
+          // Clear timeout if auth completes successfully
+          clearTimeout(timeoutId);
+          
           console.log("useAuth - Autenticação inicializada com sucesso");
           setAuthInitialized(true);
         } catch (err) {
@@ -37,6 +51,33 @@ export function useAuth() {
       initAuth();
     }
   }, [initialize, authInitialized]);
+
+  // Force reset authentication
+  const resetAuth = useCallback(async () => {
+    console.log("useAuth - Forçando reset da autenticação");
+    try {
+      // Clear any existing session
+      await signOut();
+      
+      // Clear local storage authentication data
+      localStorage.removeItem('supabase.auth.token');
+      
+      // Reset states
+      setAuthInitialized(false);
+      setAuthTimeoutOccurred(false);
+      
+      // Reload the page to start fresh
+      window.location.href = '/';
+      
+      toast.success("Autenticação reiniciada. Por favor, faça login novamente.");
+    } catch (err) {
+      console.error("Erro ao resetar autenticação:", err);
+      toast.error("Erro ao resetar autenticação");
+      
+      // Last resort - force reload
+      window.location.reload();
+    }
+  }, [signOut]);
 
   // Debug function to help troubleshoot auth issues
   const debugAuth = async () => {
@@ -64,6 +105,8 @@ export function useAuth() {
     refreshSession: refreshAuth,
     isAdmin,
     initialized: authInitialized,
-    userProfile
+    userProfile,
+    resetAuth,
+    authTimeoutOccurred
   };
 }

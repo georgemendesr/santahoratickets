@@ -22,22 +22,28 @@ export function SignInForm() {
     const password = formData.get("password") as string;
 
     try {
-      console.log("Tentando fazer login com:", { email });
+      console.log("SignInForm - Tentando fazer login com:", { email });
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        console.error("Erro de login:", error);
+        console.error("SignInForm - Erro de login:", error);
         throw error;
       }
 
-      console.log("Login bem-sucedido:", data);
+      console.log("SignInForm - Login bem-sucedido:", data);
       toast.success("Login realizado com sucesso!");
-      navigate("/");
+      
+      // Set a timeout to ensure user experience doesn't get stuck
+      const redirectTimeout = setTimeout(() => {
+        navigate("/");
+      }, 1000);
+      
+      return () => clearTimeout(redirectTimeout);
     } catch (error: any) {
-      console.error("Erro completo:", error);
+      console.error("SignInForm - Erro completo:", error);
       let mensagem = "Erro ao fazer login";
       
       if (error.message) {

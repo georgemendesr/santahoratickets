@@ -52,45 +52,92 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       
+      console.log("AuthStore - Iniciando processo de inicialização");
+      
+      // First, set up the auth state listener
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, newSession) => {
+          console.log("AuthStore - Auth state changed:", event);
+          
+          if (event === 'SIGNED_OUT') {
+            console.log("AuthStore - User signed out, limpando dados");
+            get().setSession(null);
+            get().setUserProfile(null);
+            get().setUserRole(null);
+          } else if (newSession) {
+            console.log("AuthStore - Nova sessão detectada");
+            get().setSession(newSession);
+          }
+        }
+      );
+      
       // Get the current session
+      console.log("AuthStore - Buscando sessão atual");
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
+        console.log("AuthStore - Nenhuma sessão encontrada");
         set({ isLoading: false, initialized: true });
         return;
       }
       
+      console.log("AuthStore - Sessão encontrada, configurando usuário");
       get().setSession(session);
       
       // Fetch the user profile
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
+      try {
+        console.log("AuthStore - Buscando perfil do usuário");
+        const { data: profile, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle();
         
-      if (profile) {
-        get().setUserProfile(profile as UserProfile);
+        if (profileError) {
+          console.error("AuthStore - Erro ao buscar perfil:", profileError);
+        } else if (profile) {
+          console.log("AuthStore - Perfil encontrado");
+          get().setUserProfile(profile as UserProfile);
+        } else {
+          console.log("AuthStore - Perfil não encontrado");
+        }
+      } catch (profileErr) {
+        console.error("AuthStore - Exceção ao buscar perfil:", profileErr);
       }
       
       // Fetch the user role
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .single();
-      
-      if (roleData) {
-        // Ensure we're using the UserRole type
-        const userRole: UserRole = {
-          id: roleData.id,
-          user_id: roleData.user_id,
-          role: roleData.role as UserRoleType,
-          created_at: roleData.created_at
-        };
-        get().setUserRole(userRole);
-      } else {
-        // Default role is 'user' if no role is set
+      try {
+        console.log("AuthStore - Buscando papel do usuário");
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        
+        if (roleError) {
+          console.error("AuthStore - Erro ao buscar papel:", roleError);
+        } else if (roleData) {
+          console.log("AuthStore - Papel encontrado:", roleData.role);
+          // Ensure we're using the UserRole type
+          const userRole: UserRole = {
+            id: roleData.id,
+            user_id: roleData.user_id,
+            role: roleData.role as UserRoleType,
+            created_at: roleData.created_at
+          };
+          get().setUserRole(userRole);
+        } else {
+          console.log("AuthStore - Nenhum papel encontrado, definindo como usuário padrão");
+          // Default role is 'user' if no role is set
+          get().setUserRole({
+            id: '',
+            user_id: session.user.id,
+            role: 'user'
+          });
+        }
+      } catch (roleErr) {
+        console.error("AuthStore - Exceção ao buscar papel:", roleErr);
+        // Set default role on error
         get().setUserRole({
           id: '',
           user_id: session.user.id,
@@ -98,18 +145,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         });
       }
       
-      // Set up authentication state listener
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (event, newSession) => {
-          get().setSession(newSession);
-          
-          if (event === 'SIGNED_OUT') {
-            get().setUserProfile(null);
-            get().setUserRole(null);
-          }
-        }
-      );
-      
+      console.log("AuthStore - Inicialização completa");
       set({ initialized: true, isLoading: false });
     } catch (error) {
       console.error("Error initializing auth:", error);
@@ -130,13 +166,35 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   
   signOut: async () => {
-    await supabase.auth.signOut();
-    set({ 
-      session: null, 
-      user: null, 
-      userProfile: null, 
-      userRole: null,
-      isAdmin: false
-    });
+    try {
+      console.log("AuthStore - Iniciando processo de logout");
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("AuthStore - Erro ao fazer logout:", error);
+        throw error;
+      }
+      
+      console.log("AuthStore - Logout bem-sucedido, limpando dados");
+      set({ 
+        session: null, 
+        user: null, 
+        userProfile: null, 
+        userRole: null,
+        isAdmin: false,
+        initialized: true
+      });
+    } catch (e) {
+      console.error("AuthStore - Exceção durante logout:", e);
+      // Still reset state on error
+      set({ 
+        session: null, 
+        user: null, 
+        userProfile: null, 
+        userRole: null,
+        isAdmin: false,
+        initialized: true
+      });
+    }
   }
 }));

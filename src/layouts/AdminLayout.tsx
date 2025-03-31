@@ -26,8 +26,6 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
   const navigate = useNavigate();
   const [isVerifying, setIsVerifying] = useState(true);
   const [verificationTimeoutOccurred, setVerificationTimeoutOccurred] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState("Verificando autenticação...");
-  const [loadingStage, setLoadingStage] = useState(0);
   
   // Debug authentication state on mount
   useEffect(() => {
@@ -47,28 +45,6 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
     }
   }, [session?.user?.id]);
   
-  // Show different loading messages
-  useEffect(() => {
-    if (authLoading || roleLoading || !initialized) {
-      const stages = [
-        "Verificando autenticação...",
-        "Carregando perfil de usuário...",
-        "Verificando permissões...",
-        "Finalizando carregamento..."
-      ];
-      
-      const interval = setInterval(() => {
-        setLoadingStage(prev => {
-          const newStage = prev < stages.length - 1 ? prev + 1 : prev;
-          setLoadingMessage(stages[newStage]);
-          return newStage;
-        });
-      }, 1000);
-      
-      return () => clearInterval(interval);
-    }
-  }, [authLoading, roleLoading, initialized]);
-  
   // Timeout for verification
   useEffect(() => {
     let verificationTimeoutId: NodeJS.Timeout;
@@ -78,7 +54,7 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
         console.error("AdminLayout - TIMEOUT: Verificação de permissões demorou demais");
         setVerificationTimeoutOccurred(true);
         setIsVerifying(false);
-      }, 10000); // Increased from 5s to 10s
+      }, 10000); // 10 segundos para timeout
     }
     
     return () => {
@@ -119,12 +95,12 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center max-w-md w-full p-6">
           <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-amber-500"></div>
-          <span className="mt-4 text-gray-600 font-medium">{loadingMessage}</span>
+          <span className="mt-4 text-gray-600 font-medium">Verificando permissões...</span>
           
           <div className="w-full mt-4 bg-gray-200 rounded-full h-2.5">
             <div 
               className="bg-amber-500 h-2.5 rounded-full transition-all duration-300" 
-              style={{ width: `${Math.min((loadingStage + 1) * 25, 100)}%` }}
+              style={{ width: `${authLoading || roleLoading ? "60%" : "100%"}` }}
             ></div>
           </div>
           

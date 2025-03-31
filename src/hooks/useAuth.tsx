@@ -1,147 +1,129 @@
 
-import { useEffect, useState, useCallback } from "react";
-import { useAuthStore } from "@/store/auth";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
+import { useRoleStore } from "@/store/auth/roleStore";
+import { useAuthStore } from "@/store/auth/index";
+import { UserProfile } from "@/types/user.types";
 
-export function useAuth() {
+// Define tipos para os valores de retorno do hook
+interface UseAuthReturn {
+  session: Session | null;
+  user: User | null;
+  userProfile: UserProfile | null;
+  loading: boolean;
+  initialized: boolean;
+  isAdmin: boolean;
+  error: Error | null;
+  signOut: () => Promise<void>;
+  resetAuth: () => Promise<void>;
+  debugAuth: () => Promise<any>;
+  authTimeoutOccurred: boolean;
+}
+
+/**
+ * Hook personalizado para gerenciar autenticação
+ */
+export function useAuth(): UseAuthReturn {
+  // Utilizar os stores compostos
   const { 
     session, 
-    isLoading,
-    error, 
-    initialize, 
-    signOut, 
-    refreshAuth,
-    isAdmin,
+    user, 
     userProfile,
-    setSession
+    isLoading, 
+    initialized,
+    error,
+    refreshAuth,
+    signOut: storeSignOut
   } = useAuthStore();
   
-  const [authInitialized, setAuthInitialized] = useState(false);
+  // Pegar status admin do RoleStore
+  const { isAdmin, isLoadingRole } = useRoleStore();
+  
+  // Estado para timeout de autenticação
   const [authTimeoutOccurred, setAuthTimeoutOccurred] = useState(false);
-
-  // Using React Query for session check with simpler pattern
-  const { isLoading: isSessionLoading } = useQuery({
-    queryKey: ['authSession'],
-    queryFn: async () => {
-      if (authInitialized) return session;
-      
-      console.log("useAuth - Buscando sessão via React Query");
-      try {
-        const timeoutId = setTimeout(() => {
-          console.error("useAuth - TIMEOUT: Verificação de sessão demorou demais para responder");
-          setAuthTimeoutOccurred(true);
-        }, 5000); // 5-second timeout
-        
-        const { data } = await supabase.auth.getSession();
-        clearTimeout(timeoutId);
-        
-        if (data.session) {
-          console.log("useAuth - Sessão encontrada:", data.session.user.id);
-          setSession(data.session);
-          return data.session;
-        }
-        console.log("useAuth - Nenhuma sessão encontrada");
-        return null;
-      } catch (err) {
-        console.error("useAuth - Erro ao verificar sessão:", err);
-        return null;
-      }
-    },
-    staleTime: 1000 * 60 * 2, // Cache por 2 minutos
-    retry: 1,
-    enabled: !authInitialized
-  });
-
-  // Initialize authentication when query completes
+  
+  // Inicializar autenticação na montagem
   useEffect(() => {
-    if (!authInitialized && !isSessionLoading) {
-      const initAuth = async () => {
-        try {
-          console.log("useAuth - Inicializando autenticação");
-          
-          // Set up authentication timeout
-          const timeoutId = setTimeout(() => {
-            console.error("useAuth - TIMEOUT: Autenticação demorou demais para responder");
-            setAuthTimeoutOccurred(true);
-            setAuthInitialized(true); // Mark as initialized to prevent further attempts
-            toast.error("Tempo limite de autenticação excedido. Tente novamente mais tarde.");
-          }, 10000); // Increased from 7s to 10s timeout
-          
-          await initialize();
-          
-          // Clear timeout if auth completes successfully
-          clearTimeout(timeoutId);
-          
-          console.log("useAuth - Autenticação inicializada com sucesso");
-          setAuthInitialized(true);
-        } catch (err) {
-          console.error("Falha ao inicializar autenticação:", err);
-          toast.error("Falha ao inicializar autenticação");
-          setAuthInitialized(true); // Still mark as initialized to prevent infinite retries
+    if (!initialized) {
+      console.log("useAuth - Inicializando autenticação");
+      useAuthStore.getState().initialize().catch(err => {
+        console.error("useAuth - Erro ao inicializar:", err);
+      });
+      
+      // Adicionar timeout para detectar problemas de inicialização
+      const timeoutId = setTimeout(() => {
+        if (!useAuthStore.getState().initialized) {
+          console.error("useAuth - TIMEOUT: Inicialização demorou demais");
+          setAuthTimeoutOccurred(true);
         }
+      }, 10000);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [initialized]);
+  
+  // Função para debugar o estado da autenticação
+  const debugAuth = useCallback(async () => {
+    try {
+      console.log("Auth Debug - Inicializando debug");
+      
+      // Verificar sessão atual diretamente pela API
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      // Verificar usuário atual diretamente pela API
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      console.log("Auth Debug - Usuário atual:", userData);
+      
+      // Retornar todos os dados para inspeção
+      return {
+        session: sessionData,
+        user: userData,
       };
-      
-      initAuth();
-    }
-  }, [initialize, authInitialized, isSessionLoading]);
-
-  // Force reset authentication
-  const resetAuth = useCallback(async () => {
-    console.log("useAuth - Forçando reset da autenticação");
-    try {
-      // Clear any existing session
-      await signOut();
-      
-      // Clear local storage authentication data
-      localStorage.removeItem('supabase.auth.token');
-      
-      // Reset states
-      setAuthInitialized(false);
-      setAuthTimeoutOccurred(false);
-      
-      // Reload the page to start fresh
-      window.location.href = '/';
-      
-      toast.success("Autenticação reiniciada. Por favor, faça login novamente.");
-    } catch (err) {
-      console.error("Erro ao resetar autenticação:", err);
-      toast.error("Erro ao resetar autenticação");
-      
-      // Last resort - force reload
-      window.location.reload();
-    }
-  }, [signOut]);
-
-  // Debug function to help troubleshoot auth issues
-  const debugAuth = async () => {
-    try {
-      const sessionResult = await supabase.auth.getSession();
-      console.log("Auth Debug - Sessão atual:", sessionResult);
-      
-      const userResult = await supabase.auth.getUser();
-      console.log("Auth Debug - Usuário atual:", userResult);
-      
-      return { session: sessionResult, user: userResult };
     } catch (error) {
-      console.error("Erro ao debugar autenticação:", error);
+      console.error("Auth Debug - Erro:", error);
       return { error };
     }
-  };
-
+  }, []);
+  
+  // Função para reiniciar autenticação
+  const resetAuth = useCallback(async () => {
+    try {
+      console.log("useAuth - Reiniciando autenticação");
+      await refreshAuth();
+      setAuthTimeoutOccurred(false);
+    } catch (error) {
+      console.error("useAuth - Erro ao reiniciar:", error);
+    }
+  }, [refreshAuth]);
+  
+  // Função de signOut com navegação
+  const signOut = useCallback(async () => {
+    try {
+      await storeSignOut();
+      window.location.href = "/";
+    } catch (error) {
+      console.error("useAuth - Erro ao fazer logout:", error);
+    }
+  }, [storeSignOut]);
+  
+  // Calcular loading com base em todos os estados de carregamento
+  const loading = useMemo(() => {
+    return isLoading || isLoadingRole;
+  }, [isLoading, isLoadingRole]);
+  
   return {
     session,
-    user: session?.user || null,
-    loading: isLoading || isSessionLoading,
+    user,
+    userProfile,
+    loading,
+    initialized,
+    isAdmin,
     error,
     signOut,
-    debugAuth,
-    refreshSession: refreshAuth,
-    isAdmin,
-    initialized: authInitialized,
-    userProfile,
     resetAuth,
+    debugAuth,
     authTimeoutOccurred
   };
 }

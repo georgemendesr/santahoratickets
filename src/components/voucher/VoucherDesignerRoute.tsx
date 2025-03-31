@@ -2,18 +2,30 @@
 import { VoucherDesigner } from "@/components/admin/VoucherDesigner";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRole } from "@/hooks/useRole";
+import { useRoleStore } from "@/store/auth/roleStore";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useEffect } from "react-router-dom";
 
 const VoucherDesignerRoute = () => {
   const { session } = useAuth();
-  const { isAdmin } = useRole(session);
+  const { isAdmin } = useRoleStore();
   const navigate = useNavigate();
   
+  // Atualizar o role ao carregar a página
+  useEffect(() => {
+    if (session?.user?.id) {
+      useRoleStore.getState().fetchUserRole(session.user.id);
+    }
+  }, [session?.user?.id]);
+  
   // Redirecionar se não for admin
+  useEffect(() => {
+    if (!isAdmin) {
+      navigate("/");
+    }
+  }, [isAdmin, navigate]);
+  
   if (!isAdmin) {
-    navigate("/");
     return null;
   }
   

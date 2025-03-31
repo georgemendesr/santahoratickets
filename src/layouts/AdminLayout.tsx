@@ -7,7 +7,7 @@ import { MainFooter } from '@/components/layout/MainFooter';
 import { LogoHeader } from '@/components/layout/LogoHeader';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { useAuth } from '@/hooks/useAuth';
-import { useRole } from '@/hooks/useRole';
+import { useRoleStore } from '@/store/auth/roleStore';
 import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
@@ -20,9 +20,7 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps) {
   const auth = useAuth();
-  const { isAdmin, isLoading: roleLoading } = auth.session ? 
-    useRole(auth.session) : 
-    { isAdmin: false, isLoading: false };
+  const { isAdmin, isLoadingRole: roleLoading } = useRoleStore();
     
   const { loading: authLoading, initialized, session, debugAuth, resetAuth, authTimeoutOccurred } = auth;
   const navigate = useNavigate();
@@ -41,6 +39,13 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
     
     debug();
   }, [debugAuth]);
+  
+  // Atualizar o role ao carregar a página
+  useEffect(() => {
+    if (session?.user?.id) {
+      useRoleStore.getState().fetchUserRole(session.user.id);
+    }
+  }, [session?.user?.id]);
   
   // Show different loading messages
   useEffect(() => {

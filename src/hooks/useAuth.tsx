@@ -47,13 +47,13 @@ export function useAuth(): UseAuthReturn {
   useEffect(() => {
     if (!initialized) {
       console.log("useAuth - Inicializando autenticação");
-      useAuthStore.getState().initialize().catch(err => {
+      refreshAuth().catch(err => {
         console.error("useAuth - Erro ao inicializar:", err);
       });
       
       // Adicionar timeout para detectar problemas de inicialização
       const timeoutId = setTimeout(() => {
-        if (!useAuthStore.getState().initialized) {
+        if (!initialized) {
           console.error("useAuth - TIMEOUT: Inicialização demorou demais");
           setAuthTimeoutOccurred(true);
         }
@@ -61,7 +61,7 @@ export function useAuth(): UseAuthReturn {
       
       return () => clearTimeout(timeoutId);
     }
-  }, [initialized]);
+  }, [initialized, refreshAuth]);
   
   // Função para debugar o estado da autenticação
   const debugAuth = useCallback(async () => {

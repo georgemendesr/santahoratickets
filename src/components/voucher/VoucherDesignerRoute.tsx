@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRoleStore } from "@/store/auth/roleStore";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect } from "react"; // Importando corretamente de react
 
 const VoucherDesignerRoute = () => {
   const { session } = useAuth();

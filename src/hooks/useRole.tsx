@@ -5,18 +5,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { UserRoleType } from "@/types/user.types";
 
-// Simple interface for the hook return type
+// Interface para o retorno do hook
 interface UseRoleResult {
   role: UserRoleType | string;
   isAdmin: boolean;
   isLoading: boolean;
+  error: Error | null;
 }
 
 export function useRole(session: Session | null): UseRoleResult {
-  // Local state that doesn't depend on Zustand
+  // Local state que não depende do Zustand
   const [roleState, setRoleState] = useState<UserRoleType | string>("user");
+  const [errorState, setErrorState] = useState<Error | null>(null);
   
-  // Use React Query for caching but with simplified pattern
+  // Usar React Query para cache, mas com padrão simplificado
   const { isLoading } = useQuery({
     queryKey: ['userRole', session?.user?.id],
     queryFn: async () => {
@@ -33,6 +35,7 @@ export function useRole(session: Session | null): UseRoleResult {
         
         if (error) {
           console.error("useRole - Erro ao verificar função:", error);
+          setErrorState(new Error(error.message));
           return null;
         }
         
@@ -42,34 +45,39 @@ export function useRole(session: Session | null): UseRoleResult {
           return data.role;
         }
         
-        // Default role
+        // Papel padrão
         console.log("useRole - Nenhuma função encontrada, definindo como usuário padrão");
         setRoleState("user");
         return "user";
       } catch (err) {
         console.error("useRole - Exceção ao verificar função:", err);
+        setErrorState(err instanceof Error ? err : new Error(String(err)));
         setRoleState("user");
         return "user";
       }
     },
     enabled: !!session?.user?.id,
-    staleTime: 1000 * 60 * 5, // Cache por 5 minutos
-    gcTime: 1000 * 60 * 10, // Manter no cache por 10 minutos
-    retry: 1 // Limitar tentativas de retry
+    staleTime: 1000 * 60, // Cache por 1 minuto (reduzido para teste)
+    gcTime: 1000 * 60 * 5, // Manter no cache por 5 minutos
+    retry: 1, // Limitar tentativas de retry
+    refetchOnWindowFocus: true, // Recarregar ao focar na janela
+    refetchOnMount: true, // Recarregar ao montar o componente
   });
   
-  // Default when no session exists
+  // Default quando não existe sessão
   if (!session) {
     return {
       role: "user",
       isAdmin: false,
-      isLoading: false
+      isLoading: false,
+      error: null
     };
   }
   
   return {
     role: roleState,
     isAdmin: roleState === "admin",
-    isLoading
+    isLoading,
+    error: errorState
   };
 }

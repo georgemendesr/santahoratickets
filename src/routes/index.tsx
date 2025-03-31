@@ -1,3 +1,4 @@
+
 import { lazy } from "react";
 
 // Use lazy loading para evitar circular dependencies
@@ -11,6 +12,7 @@ const MyVouchers = lazy(() => import("@/pages/MyVouchers"));
 const Checkout = lazy(() => import("@/pages/Checkout"));
 const CheckoutFinish = lazy(() => import("@/pages/CheckoutFinish"));
 const PaymentStatus = lazy(() => import("@/pages/PaymentStatus"));
+const DiagnosticPage = lazy(() => import("@/pages/DiagnosticPage"));
 // Admin imports
 const Admin = lazy(() => import("@/pages/Admin"));
 const AdminEventos = lazy(() => import("@/pages/AdminEventos"));
@@ -52,6 +54,11 @@ export const routes = [
     path: '/meus-vouchers',
     component: MyVouchers,
     private: true,
+  },
+  {
+    path: '/diagnostico',
+    component: DiagnosticPage,
+    private: false,
   },
   {
     path: '/eventos/:eventId',
@@ -167,6 +174,7 @@ export const ROUTES = {
   PROFILE: '/profile',
   REWARDS: '/recompensas',
   VOUCHERS: '/meus-vouchers',
+  DIAGNOSTIC: '/diagnostico',
   EVENTS: {
     DETAILS: (id: string) => `/eventos/${id}`,
     EDIT: (id: string) => `/eventos/${id}/edit`,

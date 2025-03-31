@@ -8,10 +8,21 @@ import {
 } from "@/components/ui/navigation-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { User, Settings, PlusCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export function MainHeader() {
   const { session, signOut, isAdmin, loading } = useAuth();
+  const navigate = useNavigate();
+
+  const handleAdminClick = () => {
+    if (isAdmin) {
+      navigate("/admin");
+    } else {
+      navigate("/diagnostico");
+      toast.info("Verificando suas permissões de administrador...");
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -34,13 +45,17 @@ export function MainHeader() {
               </NavigationMenuItem>
             )}
 
-            {/* Link único para administração - só mostra se não estiver carregando e for admin */}
-            {!loading && isAdmin && (
+            {/* Link para administração - redireciona para diagnóstico se não for admin */}
+            {session && (
               <NavigationMenuItem>
-                <Link to="/admin" className={navigationMenuTriggerStyle()}>
+                <Button 
+                  variant="ghost" 
+                  className={navigationMenuTriggerStyle()} 
+                  onClick={handleAdminClick}
+                >
                   <Settings className="h-4 w-4 mr-2" />
                   Administração
-                </Link>
+                </Button>
               </NavigationMenuItem>
             )}
           </NavigationMenuList>

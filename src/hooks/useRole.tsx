@@ -14,11 +14,11 @@ interface UseRoleResult {
 }
 
 export function useRole(session: Session | null): UseRoleResult {
-  // Local state que não depende do Zustand
   const [roleState, setRoleState] = useState<UserRoleType | string>("user");
+  const [isAdminState, setIsAdminState] = useState<boolean>(false);
   const [errorState, setErrorState] = useState<Error | null>(null);
   
-  // Usar React Query para cache, mas com padrão simplificado
+  // Usar React Query para cache, com padrão simplificado
   const { isLoading } = useQuery({
     queryKey: ['userRole', session?.user?.id],
     queryFn: async () => {
@@ -42,27 +42,40 @@ export function useRole(session: Session | null): UseRoleResult {
         if (data) {
           console.log("useRole - Função verificada:", data.role);
           setRoleState(data.role);
+          setIsAdminState(data.role === 'admin');
           return data.role;
         }
         
         // Papel padrão
         console.log("useRole - Nenhuma função encontrada, definindo como usuário padrão");
         setRoleState("user");
+        setIsAdminState(false);
         return "user";
       } catch (err) {
         console.error("useRole - Exceção ao verificar função:", err);
         setErrorState(err instanceof Error ? err : new Error(String(err)));
         setRoleState("user");
+        setIsAdminState(false);
         return "user";
       }
     },
     enabled: !!session?.user?.id,
-    staleTime: 1000 * 60, // Cache por 1 minuto (reduzido para teste)
+    staleTime: 0, // Forçar revalidação a cada montagem
     gcTime: 1000 * 60 * 5, // Manter no cache por 5 minutos
     retry: 1, // Limitar tentativas de retry
     refetchOnWindowFocus: true, // Recarregar ao focar na janela
     refetchOnMount: true, // Recarregar ao montar o componente
   });
+  
+  // Log para depuração
+  useEffect(() => {
+    console.log("useRole - Estado atual:", { 
+      role: roleState, 
+      isAdmin: isAdminState, 
+      session: !!session,
+      userId: session?.user?.id 
+    });
+  }, [roleState, isAdminState, session]);
   
   // Default quando não existe sessão
   if (!session) {
@@ -76,7 +89,7 @@ export function useRole(session: Session | null): UseRoleResult {
   
   return {
     role: roleState,
-    isAdmin: roleState === "admin",
+    isAdmin: isAdminState,
     isLoading,
     error: errorState
   };

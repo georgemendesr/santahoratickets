@@ -1,5 +1,4 @@
 
-// Tipos compartilhados entre os hooks de lote
 export interface BatchFormData {
   title: string;
   price: string;

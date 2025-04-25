@@ -3,12 +3,13 @@ import { useState } from "react";
 import { BatchFormData } from "./types";
 
 export const useBatchFormState = () => {
-  const [formData, setFormData] = useState<BatchFormData>({
+  // Valor inicial para o formulário
+  const initialFormData: BatchFormData = {
     title: "",
     price: "",
     totalTickets: "",
-    startDate: "",
-    startTime: "",
+    startDate: new Date().toISOString().split("T")[0], // Data atual como padrão
+    startTime: "12:00", // Meio-dia como horário padrão
     endDate: "",
     endTime: "",
     visibility: "public",
@@ -17,8 +18,9 @@ export const useBatchFormState = () => {
     minPurchase: "1",
     maxPurchase: "5",
     batchGroup: ""
-  });
-  
+  };
+
+  const [formData, setFormData] = useState<BatchFormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -27,21 +29,7 @@ export const useBatchFormState = () => {
   };
 
   const resetForm = () => {
-    setFormData({
-      title: "",
-      price: "",
-      totalTickets: "",
-      startDate: "",
-      startTime: "",
-      endDate: "",
-      endTime: "",
-      visibility: "public",
-      isVisible: true,
-      description: "",
-      minPurchase: "1",
-      maxPurchase: "5",
-      batchGroup: ""
-    });
+    setFormData(initialFormData);
   };
 
   return {

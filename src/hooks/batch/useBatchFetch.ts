@@ -1,17 +1,15 @@
 
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useFeedback } from "@/context/FeedbackContext";
 import { Batch } from "@/types/event.types";
 import { BatchFormData } from "./types";
 
 export const useBatchFetch = (
   batchId: string | null | undefined,
-  setFormData: (data: BatchFormData) => void,
-  setIsLoading: (loading: boolean) => void
+  setFormData: React.Dispatch<React.SetStateAction<BatchFormData>>,
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
 ) => {
-  const { showError } = useFeedback();
-
+  // Carregar os dados do lote se estiver editando
   useEffect(() => {
     if (!batchId) return;
 
@@ -60,12 +58,11 @@ export const useBatchFetch = (
         }
       } catch (error) {
         console.error('Erro ao buscar dados do lote:', error);
-        showError('Não foi possível carregar os dados do lote');
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchBatchData();
-  }, [batchId, setFormData, setIsLoading, showError]);
+  }, [batchId, setFormData, setIsLoading]);
 };

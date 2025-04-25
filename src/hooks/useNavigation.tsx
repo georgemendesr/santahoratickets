@@ -23,6 +23,10 @@ export const useNavigation = () => {
     navigate('/admin/eventos');
   }, [navigate]);
 
+  const goToAdminVouchers = useCallback(() => {
+    navigate(ROUTES.ADMIN.VOUCHERS);
+  }, [navigate]);
+
   const goToAdminBatches = useCallback((eventId?: string) => {
     navigate(getAdminBatchesUrl(eventId));
   }, [navigate]);
@@ -40,6 +44,7 @@ export const useNavigation = () => {
     goToRewards,
     goToMyVouchers,
     goToAdminEvents,
+    goToAdminVouchers,
     goToAdminBatches,
     goToEventDetails,
     navigateTo

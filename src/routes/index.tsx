@@ -1,4 +1,3 @@
-
 import { lazy } from "react";
 
 // Use lazy loading para evitar circular dependencies
@@ -26,6 +25,8 @@ const AdminParticipantsList = lazy(() => import("@/pages/AdminParticipantsList")
 const AdminParticipantsSales = lazy(() => import("@/pages/AdminParticipantsSales"));
 const AdminLoyalty = lazy(() => import("@/pages/AdminLoyalty"));
 const AdminReferrals = lazy(() => import("@/pages/AdminReferrals"));
+const VoucherDesignerRoute = lazy(() => import("@/components/voucher/VoucherDesignerRoute"));
+const ManualOrderRoute = lazy(() => import("@/components/voucher/ManualOrderRoute"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
 export const routes = [
@@ -117,6 +118,18 @@ export const routes = [
     adminOnly: true
   },
   {
+    path: '/admin/vouchers/design',
+    component: VoucherDesignerRoute,
+    private: true,
+    adminOnly: true
+  },
+  {
+    path: '/admin/vouchers/manual-order',
+    component: ManualOrderRoute,
+    private: true,
+    adminOnly: true
+  },
+  {
     path: '/admin/analytics',
     component: AdminAnalytics,
     private: true,
@@ -185,6 +198,8 @@ export const ROUTES = {
     USERS: '/admin/usuarios',
     FINANCIAL: '/admin/financeiro',
     VOUCHERS: '/admin/vouchers',
+    VOUCHER_DESIGN: '/admin/vouchers/design',
+    MANUAL_ORDER: '/admin/vouchers/manual-order',
     ANALYTICS: '/admin/analytics',
     PARTICIPANTS: '/admin/participantes',
     PARTICIPANTS_LIST: '/admin/participantes/lista',

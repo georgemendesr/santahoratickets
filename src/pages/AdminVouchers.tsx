@@ -11,6 +11,7 @@ import {
 import { Link } from "react-router-dom";
 import { Ticket, PencilRuler, PlusCircle } from "lucide-react";
 import { useNavigation } from "@/hooks/useNavigation";
+import { ROUTES } from "@/routes";
 
 const AdminVouchers = () => {
   const { goToAdminEvents, goToAdminBatches } = useNavigation();
@@ -58,7 +59,7 @@ const AdminVouchers = () => {
             </CardHeader>
             <CardContent className="flex flex-col items-center">
               <PencilRuler className="h-16 w-16 text-primary mb-4" />
-              <Link to="/admin/vouchers/design">
+              <Link to={ROUTES.ADMIN.VOUCHER_DESIGN}>
                 <Button className="w-full">
                   Designer de Vouchers
                 </Button>
@@ -73,7 +74,7 @@ const AdminVouchers = () => {
             </CardHeader>
             <CardContent className="flex flex-col items-center">
               <PlusCircle className="h-16 w-16 text-primary mb-4" />
-              <Link to="/admin/vouchers/manual-order">
+              <Link to={ROUTES.ADMIN.MANUAL_ORDER}>
                 <Button className="w-full">
                   Adicionar Pedido
                 </Button>

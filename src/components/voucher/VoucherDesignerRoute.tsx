@@ -1,6 +1,6 @@
 
 import { VoucherDesigner } from "@/components/admin/VoucherDesigner";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/layouts/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -22,7 +22,7 @@ const VoucherDesignerRoute = () => {
   }
   
   return (
-    <MainLayout>
+    <AdminLayout>
       <div className="container mx-auto px-4 py-8">
         <Card>
           <CardHeader>
@@ -33,7 +33,7 @@ const VoucherDesignerRoute = () => {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 };
 

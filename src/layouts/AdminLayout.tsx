@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { MainHeader } from '@/components/layout/MainHeader';
@@ -19,11 +19,12 @@ interface AdminLayoutProps {
 export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps) {
   const { session, isAdmin, loading, initialized, authTimeoutOccurred, resetAuth } = useAuth();
   const navigate = useNavigate();
+  const [authChecked, setAuthChecked] = useState(false);
   
   // Lidar com redirecionamento para usuários não autorizados
   useEffect(() => {
     // Só verificar autorização após inicialização completa e sem carregamento em andamento
-    if (!loading && initialized) {
+    if (!loading && initialized && !authChecked) {
       console.log("AdminLayout - Autenticação inicializada. isAdmin:", isAdmin, "requiresAdmin:", requiresAdmin);
       
       if (requiresAdmin && !isAdmin) {
@@ -43,8 +44,10 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
       } else {
         console.log("AdminLayout - Usuário autorizado, carregando dashboard");
       }
+      
+      setAuthChecked(true);
     }
-  }, [loading, initialized, isAdmin, requiresAdmin, navigate, session]);
+  }, [loading, initialized, isAdmin, requiresAdmin, navigate, session, authChecked]);
   
   if (loading || !initialized) {
     return (

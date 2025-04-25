@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { MainHeader } from '@/components/layout/MainHeader';
@@ -7,11 +7,9 @@ import { MainFooter } from '@/components/layout/MainFooter';
 import { LogoHeader } from '@/components/layout/LogoHeader';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { useAuth } from '@/hooks/useAuth';
-import { useRoleStore } from '@/store/auth/roleStore';
 import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -19,54 +17,14 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps) {
-  const auth = useAuth();
-  const { isAdmin, isLoadingRole: roleLoading } = useRoleStore();
-    
-  const { loading: authLoading, initialized, session, debugAuth, resetAuth, authTimeoutOccurred } = auth;
+  const { session, isAdmin, loading, initialized, authTimeoutOccurred, resetAuth } = useAuth();
   const navigate = useNavigate();
-  const [isVerifying, setIsVerifying] = useState(true);
-  const [verificationTimeoutOccurred, setVerificationTimeoutOccurred] = useState(false);
   
-  // Debug authentication state on mount
+  // Lidar com redirecionamento para usuários não autorizados
   useEffect(() => {
-    const debug = async () => {
-      console.log("AdminLayout - Debugging auth state");
-      const result = await debugAuth();
-      console.log("AdminLayout - Auth debug result:", result);
-    };
-    
-    debug();
-  }, [debugAuth]);
-  
-  // Atualizar o role ao carregar a página
-  useEffect(() => {
-    if (session?.user?.id) {
-      useRoleStore.getState().fetchUserRole(session.user.id);
-    }
-  }, [session?.user?.id]);
-  
-  // Timeout for verification
-  useEffect(() => {
-    let verificationTimeoutId: NodeJS.Timeout;
-    
-    if (authLoading || roleLoading || !initialized) {
-      verificationTimeoutId = setTimeout(() => {
-        console.error("AdminLayout - TIMEOUT: Verificação de permissões demorou demais");
-        setVerificationTimeoutOccurred(true);
-        setIsVerifying(false);
-      }, 10000); // 10 segundos para timeout
-    }
-    
-    return () => {
-      if (verificationTimeoutId) clearTimeout(verificationTimeoutId);
-    };
-  }, [authLoading, roleLoading, initialized]);
-  
-  // Handle redirect for non-admin users
-  useEffect(() => {
-    if (!authLoading && !roleLoading && initialized) {
+    // Só verificar autorização após inicialização completa e sem carregamento em andamento
+    if (!loading && initialized) {
       console.log("AdminLayout - Autenticação inicializada. isAdmin:", isAdmin, "requiresAdmin:", requiresAdmin);
-      setIsVerifying(false);
       
       if (requiresAdmin && !isAdmin) {
         console.log("AdminLayout - Usuário não autorizado, redirecionando");
@@ -86,11 +44,9 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
         console.log("AdminLayout - Usuário autorizado, carregando dashboard");
       }
     }
-  }, [authLoading, roleLoading, initialized, isAdmin, requiresAdmin, navigate, session]);
+  }, [loading, initialized, isAdmin, requiresAdmin, navigate, session]);
   
-  if (authLoading || roleLoading || isVerifying) {
-    const showEmergencyButton = authTimeoutOccurred || verificationTimeoutOccurred;
-    
+  if (loading || !initialized) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center max-w-md w-full p-6">
@@ -100,17 +56,11 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
           <div className="w-full mt-4 bg-gray-200 rounded-full h-2.5">
             <div 
               className="bg-amber-500 h-2.5 rounded-full transition-all duration-300" 
-              style={{ width: `${authLoading || roleLoading ? "60%" : "100%"}` }}
+              style={{ width: "60%" }}
             ></div>
           </div>
           
-          <div className="w-full mt-6 space-y-3">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
-          
-          {showEmergencyButton && (
+          {authTimeoutOccurred && (
             <div className="mt-8 flex flex-col items-center">
               <p className="text-red-500 mb-2">Parece que está demorando muito tempo.</p>
               <Button 
@@ -128,6 +78,7 @@ export function AdminLayout({ children, requiresAdmin = true }: AdminLayoutProps
     );
   }
   
+  // Se já analisamos e ainda estamos aqui, permissão foi garantida
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full flex-col">

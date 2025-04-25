@@ -26,34 +26,22 @@ interface UseAuthReturn {
  */
 export function useAuth(): UseAuthReturn {
   // Utilizar os stores compostos
-  const { 
-    session, 
-    user, 
-    userProfile,
-    isLoading, 
-    initialized,
-    error,
-    refreshAuth,
-    signOut: storeSignOut
-  } = useAuthStore();
-  
-  // Pegar status admin do RoleStore
-  const { isAdmin, isLoadingRole } = useRoleStore();
+  const authStore = useAuthStore();
   
   // Estado para timeout de autenticação
   const [authTimeoutOccurred, setAuthTimeoutOccurred] = useState(false);
   
   // Inicializar autenticação na montagem
   useEffect(() => {
-    if (!initialized) {
+    if (!authStore.initialized) {
       console.log("useAuth - Inicializando autenticação");
-      refreshAuth().catch(err => {
+      authStore.refreshAuth().catch(err => {
         console.error("useAuth - Erro ao inicializar:", err);
       });
       
       // Adicionar timeout para detectar problemas de inicialização
       const timeoutId = setTimeout(() => {
-        if (!initialized) {
+        if (!authStore.initialized) {
           console.error("useAuth - TIMEOUT: Inicialização demorou demais");
           setAuthTimeoutOccurred(true);
         }
@@ -61,7 +49,7 @@ export function useAuth(): UseAuthReturn {
       
       return () => clearTimeout(timeoutId);
     }
-  }, [initialized, refreshAuth]);
+  }, [authStore.initialized, authStore.refreshAuth]);
   
   // Função para debugar o estado da autenticação
   const debugAuth = useCallback(async () => {
@@ -91,36 +79,31 @@ export function useAuth(): UseAuthReturn {
   const resetAuth = useCallback(async () => {
     try {
       console.log("useAuth - Reiniciando autenticação");
-      await refreshAuth();
+      await authStore.refreshAuth();
       setAuthTimeoutOccurred(false);
     } catch (error) {
       console.error("useAuth - Erro ao reiniciar:", error);
     }
-  }, [refreshAuth]);
+  }, [authStore]);
   
   // Função de signOut com navegação
   const signOut = useCallback(async () => {
     try {
-      await storeSignOut();
+      await authStore.signOut();
       window.location.href = "/";
     } catch (error) {
       console.error("useAuth - Erro ao fazer logout:", error);
     }
-  }, [storeSignOut]);
-  
-  // Calcular loading com base em todos os estados de carregamento
-  const loading = useMemo(() => {
-    return isLoading || isLoadingRole;
-  }, [isLoading, isLoadingRole]);
+  }, [authStore]);
   
   return {
-    session,
-    user,
-    userProfile,
-    loading,
-    initialized,
-    isAdmin,
-    error,
+    session: authStore.session,
+    user: authStore.user,
+    userProfile: authStore.userProfile,
+    loading: authStore.isLoading,
+    initialized: authStore.initialized,
+    isAdmin: authStore.isAdmin,
+    error: authStore.error,
     signOut,
     resetAuth,
     debugAuth,
